@@ -1,8 +1,41 @@
 ﻿<Configuracion>
+
 	<Archivo nombre="Categorias">
 		<Columnas>
 			<Columna nombre="NombreCategoria" tipo="texto" largoMaximo="50" />
 			<Columna nombre="Codigo" tipo="int" largoMaximo="10" />
 		</Columnas>
 	</Archivo>
+
+	<Archivo nombre="Padron">
+		<Columnas>
+			<Columna nombre="NumeroSocio" tipo="int" largoMaximo="10" />
+			<Columna nombre="Nombre" tipo="texto" largoMaximo="100" />
+			<Columna nombre="Categoria" tipo="texto" largoMaximo="50" />
+		</Columnas>
+	</Archivo>
+
+	<Archivo nombre="Consumos">
+		<Columnas>
+			<Columna nombre="NumeroConsumo" tipo="int" largoMaximo="10" />
+			<Columna nombre="NumeroSocio" tipo="int" largoMaximo="10" />
+			<Columna nombre="Importe" tipo="decimal" largoMaximo="15" />
+		</Columnas>
+	</Archivo>
+
+	<Archivo nombre="ConsumosDetalle">
+		<Columnas>
+			<Columna nombre="NumeroConsumo" tipo="int" largoMaximo="10" />
+			<Columna nombre="Periodo" tipo="texto" largoMaximo="6" />
+			<Columna nombre="Vencimiento1" tipo="fecha" largoMaximo="20" />
+		</Columnas>
+	</Archivo>
+
+	<Archivo nombre="Servicios">
+		<Columnas>
+			<Columna nombre="CodigoServicio" tipo="int" largoMaximo="10" />
+			<Columna nombre="NumeroSocio" tipo="int" largoMaximo="10" />
+		</Columnas>
+	</Archivo>
+
 </Configuracion>

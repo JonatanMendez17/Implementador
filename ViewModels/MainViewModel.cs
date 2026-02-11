@@ -1,16 +1,11 @@
 using MigradorCUAD.Commands;
 using System.Collections.ObjectModel;
-using System.Windows;
 using System.Windows.Input;
 using MigradorCUAD.Models;
 using Microsoft.Win32;
 using System.IO;
 using MigradorCUAD.Services;
 using System.Globalization;
-
-
-
-
 namespace MigradorCUAD.ViewModels
 {
     public class MainViewModel : ViewModelBase
@@ -110,10 +105,11 @@ namespace MigradorCUAD.ViewModels
         // Logs
         public ObservableCollection<string> Logs { get; set; }
 
-
+        // Listas de selección
         public ObservableCollection<Empleador> Empleadores { get; set; }
         public ObservableCollection<Entidad> Entidades { get; set; }
 
+        // Comandos
         public ICommand SeleccionarCategoriasCommand { get; }
         public ICommand SeleccionarPadronCommand { get; }
         public ICommand SeleccionarConsumosCommand { get; }
@@ -121,7 +117,7 @@ namespace MigradorCUAD.ViewModels
         public ICommand SeleccionarServiciosCommand { get; }
         public ICommand ValidarCommand { get; }
 
-
+        // Constructor
         public MainViewModel()
         {
             Logs = new ObservableCollection<string>();
@@ -146,9 +142,9 @@ namespace MigradorCUAD.ViewModels
             SeleccionarServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("Servicios"));
 
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
-
         }
 
+        // Métodos de selección de archivos
         private void SeleccionarArchivo(string tipo)
         {
             OpenFileDialog dialog = new OpenFileDialog();
@@ -181,6 +177,7 @@ namespace MigradorCUAD.ViewModels
             }
         }
 
+        // Método principal de validación   
         private void ValidarArchivos()
         {
             Logs.Clear();
@@ -212,10 +209,21 @@ namespace MigradorCUAD.ViewModels
 
             if (Logs.Count == 0)
             {
-                ValidarArchivoCategorias();
+                bool okCategorias = ValidarArchivo("Categorias", ArchivoCategorias);
+                bool okPadron = ValidarArchivo("Padron", ArchivoPadron);
+                bool okConsumos = ValidarArchivo("Consumos", ArchivoConsumos);
+                bool okConsumosDetalle = ValidarArchivo("ConsumosDetalle", ArchivoConsumosDetalle);
+                bool okServicios = ValidarArchivo("Servicios", ArchivoServicios);
+
+                if (okCategorias && okPadron && okConsumos && okConsumosDetalle && okServicios)
+                {
+                    Logs.Add("🎉 Todos los archivos fueron validados correctamente.");
+                }
             }
+
         }
 
+        // Validación específica del archivo de Categorías
         private void ValidarArchivoCategorias()
         {
             try
@@ -274,6 +282,7 @@ namespace MigradorCUAD.ViewModels
             }
         }
 
+        // Validación de tipo de dato individual según configuración
         private bool ValidarTipoDato(string valor, ColumnaConfiguracion config)
         {
             if (valor.Length > config.LargoMaximo)
@@ -297,5 +306,89 @@ namespace MigradorCUAD.ViewModels
                     return false;
             }
         }
+
+        private bool ValidarArchivo(string nombreLogico, string? rutaArchivo)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(rutaArchivo))
+                {
+                    Logs.Add($"❌ Ruta no válida para {nombreLogico}");
+                    return false;
+                }
+
+                if (!File.Exists(rutaArchivo))
+                {
+                    Logs.Add($"❌ El archivo {nombreLogico} no existe.");
+                    return false;
+                }
+
+                var configService = new ConfiguracionService();
+                var columnasConfig = configService.ObtenerColumnas(nombreLogico);
+
+                if (columnasConfig.Count == 0)
+                {
+                    Logs.Add($"❌ No existe configuración XML para {nombreLogico}");
+                    return false;
+                }
+
+                var lineas = File.ReadAllLines(rutaArchivo);
+
+                if (lineas.Length == 0)
+                {
+                    Logs.Add($"❌ Archivo {nombreLogico} vacío.");
+                    return false;
+                }
+
+                var encabezado = lineas[0].Split(',');
+
+                if (encabezado.Length != columnasConfig.Count)
+                {
+                    Logs.Add($"❌ Cantidad de columnas incorrecta en {nombreLogico}");
+                    return false;
+                }
+
+                for (int i = 0; i < encabezado.Length; i++)
+                {
+                    if (encabezado[i] != columnasConfig[i].Nombre)
+                    {
+                        Logs.Add($"❌ Columna incorrecta en {nombreLogico}: {encabezado[i]}");
+                        return false;
+                    }
+                }
+
+                // Validar registros
+                for (int i = 1; i < lineas.Length; i++)
+                {
+                    var valores = lineas[i].Split(',');
+
+                    if (valores.Length != columnasConfig.Count)
+                    {
+                        Logs.Add($"❌ Fila {i + 1} con cantidad de columnas incorrecta en {nombreLogico}");
+                        continue;
+                    }
+
+                    for (int j = 0; j < columnasConfig.Count; j++)
+                    {
+                        var valor = valores[j];
+                        var config = columnasConfig[j];
+
+                        if (!ValidarTipoDato(valor, config))
+                        {
+                            Logs.Add($"❌ Error en {nombreLogico} - Fila {i + 1}, Columna {config.Nombre}");
+                        }
+                    }
+                }
+
+                Logs.Add($"✅ {nombreLogico} validado correctamente.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logs.Add($"❌ Error validando {nombreLogico}: {ex.Message}");
+                return false;
+            }
+        }
+
     }
 }
