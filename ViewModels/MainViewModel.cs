@@ -1,11 +1,12 @@
-using MigradorCUAD.Commands;
-using System.Collections.ObjectModel;
-using System.Windows.Input;
-using MigradorCUAD.Models;
 using Microsoft.Win32;
-using System.IO;
+using MigradorCUAD.Commands;
+using MigradorCUAD.Data;
+using MigradorCUAD.Models;
 using MigradorCUAD.Services;
+using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
+using System.Windows.Input;
 namespace MigradorCUAD.ViewModels
 {
     public class MainViewModel : ViewModelBase
@@ -97,6 +98,10 @@ namespace MigradorCUAD.ViewModels
             }
         }
 
+        // Data
+        private readonly IDataRepository _repository;
+
+
         // Progreso
         private int _progreso;
         public int Progreso
@@ -149,6 +154,8 @@ namespace MigradorCUAD.ViewModels
             SeleccionarServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("Servicios"));
 
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
+
+            _repository = new SqlDataRepository();
         }
 
         // Métodos de selección de archivos
