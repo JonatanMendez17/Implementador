@@ -10,6 +10,13 @@ namespace MigradorCUAD.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
+
+        //Temporal --------------
+        private HashSet<int> _numerosSocioPadron = new();
+        private HashSet<int> _numerosConsumo = new();
+        private HashSet<string> _categorias = new();
+
+
         // Empleador
         private string? _empleadorSeleccionado;
         public string? EmpleadorSeleccionado
@@ -377,6 +384,45 @@ namespace MigradorCUAD.ViewModels
                         {
                             Logs.Add($"❌ Error en {nombreLogico} - Fila {i + 1}, Columna {config.Nombre}");
                         }
+
+
+                        //Temporal --------------
+
+                        _numerosSocioPadron.Clear();
+                        _numerosConsumo.Clear();
+                        _categorias.Clear();
+
+                        if (nombreLogico == "Padron")
+                        {
+                            int numeroSocio = int.Parse(valores[0]);
+                            string categoria = valores[2];
+
+                            if (!_numerosSocioPadron.Add(numeroSocio))
+                                Logs.Add($"❌ Número de socio duplicado en Padrón: {numeroSocio}");
+
+                            _categorias.Add(categoria);
+                        }
+
+                        if (nombreLogico == "Consumos")
+                        {
+                            int numeroConsumo = int.Parse(valores[0]);
+                            int numeroSocio = int.Parse(valores[1]);
+
+                            if (!_numerosConsumo.Add(numeroConsumo))
+                                Logs.Add($"❌ Número de consumo duplicado: {numeroConsumo}");
+
+                            if (!_numerosSocioPadron.Contains(numeroSocio))
+                                Logs.Add($"❌ Socio {numeroSocio} no existe en Padrón");
+                        }
+
+                        if (nombreLogico == "ConsumosDetalle")
+                        {
+                            int numeroConsumo = int.Parse(valores[0]);
+
+                            if (!_numerosConsumo.Contains(numeroConsumo))
+                                Logs.Add($"❌ Consumo {numeroConsumo} no existe para detalle");
+                        }
+
                     }
                 }
 
