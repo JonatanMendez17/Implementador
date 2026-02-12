@@ -142,7 +142,7 @@ namespace MigradorCUAD.ViewModels
         public ObservableCollection<string> Logs { get; set; }
 
         // Listas de selección
-        public ObservableCollection<Empleador> Empleadores { get; set; }
+        public ObservableCollection<Empleador> Empleador { get; set; }
         public ObservableCollection<Entidad> Entidades { get; set; }
 
         // Comandos
@@ -161,17 +161,20 @@ namespace MigradorCUAD.ViewModels
             Logs = new ObservableCollection<string>();
             Progreso = 0;
 
-            Empleadores = new ObservableCollection<Empleador>
+            // Cargar datos de Empleadores y Entidades desde la base de datos
+            using (var db = new AppDbContext())
             {
-                new Empleador { Id = 1, Nombre = "Liquidador Tierra del Fuego" },
-                new Empleador { Id = 2, Nombre = "Liquidador Santa Fe" }
-            };
+                var empleadorDb = db.Empleador
+                    .OrderBy(e => e.Nombre)
+                    .ToList();
 
-            Entidades = new ObservableCollection<Entidad>
-            {
-                new Entidad { Id = 1, Nombre = "Entidad A" },
-                new Entidad { Id = 2, Nombre = "Entidad B" }
-            };
+                var entidadesDb = db.Entidades
+                    .OrderBy(e => e.Nombre)
+                    .ToList();
+
+                Empleador = new ObservableCollection<Empleador>(empleadorDb);
+                Entidades = new ObservableCollection<Entidad>(entidadesDb);
+            }
 
             SeleccionarCategoriasCommand = new RelayCommand(_ => SeleccionarArchivo("Categorias"));
             SeleccionarPadronCommand = new RelayCommand(_ => SeleccionarArchivo("Padron"));

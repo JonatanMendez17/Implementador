@@ -16,7 +16,7 @@
                        FontWeight="Bold"
                        Margin="0,0,0,5" />
 
-            <ComboBox ItemsSource="{Binding Empleadores}"
+            <ComboBox ItemsSource="{Binding Empleador}"
                       SelectedItem="{Binding EmpleadorSeleccionado}"
                       DisplayMemberPath="Nombre"
                       Height="30"

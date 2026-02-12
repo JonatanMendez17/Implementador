@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
+using MigradorCUAD.Models;
 using TuProyecto.Models;
 
 namespace TuProyecto.Data
@@ -9,6 +10,8 @@ namespace TuProyecto.Data
     public class AppDbContext : DbContext
     {
         public DbSet<DatosPadron> DatosPadron { get; set; }
+        public DbSet<Empleador> Empleador { get; set; }
+        public DbSet<Entidad> Entidades { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -32,6 +35,24 @@ namespace TuProyecto.Data
             modelBuilder.Entity<DatosPadron>()
                 .Property(x => x.Importe)
                 .HasColumnType("decimal(18,2)");
+
+            // Configuración opcional para Empleador
+            modelBuilder.Entity<Empleador>()
+                .Property(e => e.Nombre)
+                .HasMaxLength(150);
+
+            modelBuilder.Entity<Empleador>()
+                .Property(e => e.Cuit)
+                .HasMaxLength(20);
+
+            // Configuración opcional para Entidad
+            modelBuilder.Entity<Entidad>()
+                .Property(e => e.Nombre)
+                .HasMaxLength(150);
+
+            modelBuilder.Entity<Entidad>()
+                .Property(e => e.Codigo)
+                .HasMaxLength(20);
         }
     }
 }
