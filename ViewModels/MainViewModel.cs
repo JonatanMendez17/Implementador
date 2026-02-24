@@ -19,6 +19,7 @@ namespace MigradorCUAD.ViewModels
         private string? _archivoConsumos;
         private string? _archivoConsumosDetalle;
         private string? _archivoServicios;
+        private string? _archivoCatalogoServicios;
         private int _progreso;
         private bool _estaProcesando;
         private bool _validacionFinalizada;
@@ -64,6 +65,12 @@ namespace MigradorCUAD.ViewModels
             set => SetProperty(ref _archivoServicios, value);
 
         }
+        public string? ArchivoCatalogoServicios
+        {
+            get => _archivoCatalogoServicios;
+            set => SetProperty(ref _archivoCatalogoServicios, value);
+
+        }
         public int Progreso
         {
             get => _progreso;
@@ -92,6 +99,7 @@ namespace MigradorCUAD.ViewModels
         public ICommand SeleccionarConsumosCommand { get; }
         public ICommand SeleccionarConsumosDetalleCommand { get; }
         public ICommand SeleccionarServiciosCommand { get; }
+        public ICommand SeleccionarCatalogoServiciosCommand { get; }
         public ICommand ValidarCommand { get; }
         public ICommand CopiarABaseCommand {  get; }
         public ICommand CopiarCommand { get; }
@@ -125,6 +133,7 @@ namespace MigradorCUAD.ViewModels
             SeleccionarConsumosCommand = new RelayCommand(_ => SeleccionarArchivo("Consumos"));
             SeleccionarConsumosDetalleCommand = new RelayCommand(_ => SeleccionarArchivo("ConsumosDetalle"));
             SeleccionarServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("Servicios"));
+            SeleccionarCatalogoServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("CatalogoServicios"));
 
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
 
@@ -180,6 +189,10 @@ namespace MigradorCUAD.ViewModels
                     case "Servicios":
                         ArchivoServicios = dialog.FileName;
                         break;
+
+                    case "CatalogoServicios":
+                        ArchivoCatalogoServicios = dialog.FileName;
+                        break;
                 }
             }
         }
@@ -214,6 +227,9 @@ namespace MigradorCUAD.ViewModels
             if (string.IsNullOrWhiteSpace(ArchivoServicios))
                 Logs.Add("❌ Archivo de Servicios no seleccionado.");
 
+            if (string.IsNullOrWhiteSpace(ArchivoCatalogoServicios))
+                Logs.Add("❌ Archivo de Catálogo de Servicios no seleccionado.");
+
             if (Logs.Count == 0)
             {
                 // Validación estructural de todos los archivos
@@ -222,13 +238,15 @@ namespace MigradorCUAD.ViewModels
                 var datosConsumos = ValidarArchivo("Consumos", ArchivoConsumos);
                 var datosConsumosDetalle = ValidarArchivo("ConsumosDetalle", ArchivoConsumosDetalle);
                 var datosServicios = ValidarArchivo("Servicios", ArchivoServicios);
+                var datosCatalogoServicios = ValidarArchivo("CatalogoServicios", ArchivoCatalogoServicios);
 
                 // Si todos devolvieron registros válidos, se realiza la validación cruzada
                 if (datosCategorias != null &&
                     datosPadron != null &&
                     datosConsumos != null &&
                     datosConsumosDetalle != null &&
-                    datosServicios != null)
+                    datosServicios != null &&
+                    datosCatalogoServicios != null)
                 {
                     // Guardar datos validados de padrón para la copia a base
                     _datosValidados = datosPadron;
@@ -456,6 +474,7 @@ namespace MigradorCUAD.ViewModels
             ArchivoConsumos = null;
             ArchivoConsumosDetalle = null;
             ArchivoServicios = null;
+            ArchivoCatalogoServicios = null;
 
             // Limpiar logs y estado
             Logs.Clear();

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="av"
         Title="Migrador CUAD"
-        Height="620"
+        Height="640"
         Width="920"
         WindowStartupLocation="CenterScreen"
         Background="#FF101010">
@@ -242,10 +242,18 @@
                         </StackPanel>
 
                         <!-- Servicios -->
-                        <StackPanel Margin="0,4,0,0">
+                        <StackPanel Margin="0,4,0,6">
                             <Button Content="Seleccionar Servicios"
                                     Command="{Binding SeleccionarServiciosCommand}" />
                             <TextBlock Text="{Binding ArchivoServicios}"
+                                       Style="{StaticResource CaptionTextBlockStyle}" />
+                        </StackPanel>
+
+                        <!-- Catálogo de Servicios -->
+                        <StackPanel Margin="0,4,0,0">
+                            <Button Content="Seleccionar Catálogo de Servicios"
+                                    Command="{Binding SeleccionarCatalogoServiciosCommand}" />
+                            <TextBlock Text="{Binding ArchivoCatalogoServicios}"
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
                     </StackPanel>
