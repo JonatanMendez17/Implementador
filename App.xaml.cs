@@ -1,5 +1,5 @@
 using System.Windows;
-using TuProyecto.Data;
+using MigradorCUAD.Data;
 
 namespace MigradorCUAD
 {

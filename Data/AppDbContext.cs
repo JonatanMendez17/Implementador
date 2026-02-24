@@ -1,11 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.IO;
 using MigradorCUAD.Models;
-using TuProyecto.Models;
 
-namespace TuProyecto.Data
+namespace MigradorCUAD.Data
 {
     public class AppDbContext : DbContext
     {

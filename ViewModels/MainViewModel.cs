@@ -6,8 +6,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Windows.Input;
-using TuProyecto.Data;
-using TuProyecto.Models;
+using MigradorCUAD.Data;
 namespace MigradorCUAD.ViewModels
 {
     public class MainViewModel : ViewModelBase

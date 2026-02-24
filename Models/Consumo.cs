@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MigradorCUAD.Models
+﻿namespace MigradorCUAD.Models
 {
     public class Consumo
     {

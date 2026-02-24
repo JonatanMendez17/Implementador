@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace TuProyecto.Models
+namespace MigradorCUAD.Models
 {
     public class DatosPadron
     {

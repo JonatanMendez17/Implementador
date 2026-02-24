@@ -2,14 +2,9 @@
 
 namespace MigradorCUAD.Services
 {
-    public class DatabaseService
+    public class DatabaseService(string connectionString)
     {
-        private readonly string _connectionString;
-
-        public DatabaseService(string connectionString)
-        {
-            _connectionString = connectionString;
-        }
+        private readonly string _connectionString = connectionString;
 
         public bool ProbarConexion()
         {

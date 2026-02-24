@@ -1,7 +1,6 @@
-using System.Linq;
 using MigradorCUAD.Models;
 
-namespace TuProyecto.Data
+namespace MigradorCUAD.Data
 {
     public static class DbInitializer
     {

@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System.Configuration;
 using System.IO;
 
 namespace MigradorCUAD.Services
