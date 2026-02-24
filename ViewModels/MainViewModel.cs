@@ -7,6 +7,8 @@ using System.Globalization;
 using System.IO;
 using System.Windows.Input;
 using MigradorCUAD.Data;
+using ExcelDataReader;
+using System.Text;
 namespace MigradorCUAD.ViewModels
 {
     public class MainViewModel : ViewModelBase
@@ -161,10 +163,55 @@ namespace MigradorCUAD.ViewModels
 
 
         //Metodos privados
+        private string[] LeerLineasArchivo(string rutaArchivo)
+        {
+            var extension = Path.GetExtension(rutaArchivo).ToLowerInvariant();
+
+            if (extension == ".csv" || extension == ".txt")
+            {
+                return File.ReadAllLines(rutaArchivo);
+            }
+
+            if (extension == ".xls" || extension == ".xlsx")
+            {
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+                var filas = new List<string>();
+                var builder = new StringBuilder();
+
+                using (var stream = File.Open(rutaArchivo, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var reader = ExcelReaderFactory.CreateReader(stream))
+                {
+                    do
+                    {
+                        while (reader.Read())
+                        {
+                            builder.Clear();
+
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                if (i > 0)
+                                    builder.Append(',');
+
+                                var valor = reader.GetValue(i)?.ToString() ?? string.Empty;
+                                builder.Append(valor);
+                            }
+
+                            filas.Add(builder.ToString());
+                        }
+                    } while (reader.NextResult());
+                }
+
+                return filas.ToArray();
+            }
+
+            // Por defecto, intentar leer como texto plano
+            return File.ReadAllLines(rutaArchivo);
+        }
         private void SeleccionarArchivo(string tipo)
         {
             OpenFileDialog dialog = new OpenFileDialog();
-            dialog.Filter = "Archivos CSV (*.csv)|*.csv|Archivos TXT (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
+            dialog.Filter = "Archivos Excel (*.xls;*.xlsx)|*.xls;*.xlsx|Archivos CSV (*.csv)|*.csv|Archivos TXT (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
 
             if (dialog.ShowDialog() == true)
             {
@@ -292,7 +339,7 @@ namespace MigradorCUAD.ViewModels
                 var configService = new ConfiguracionService();
                 var columnasConfig = configService.ObtenerColumnas("Categorias");
 
-                var lineas = File.ReadAllLines(ArchivoCategorias!);
+                var lineas = LeerLineasArchivo(ArchivoCategorias!);
 
                 if (lineas.Length == 0)
                 {
@@ -387,7 +434,7 @@ namespace MigradorCUAD.ViewModels
                     return null;
                 }
 
-                var lineas = File.ReadAllLines(rutaArchivo);
+                var lineas = LeerLineasArchivo(rutaArchivo);
 
                 if (lineas.Length == 0)
                 {
