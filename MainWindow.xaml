@@ -179,7 +179,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <!-- Entidad (izquierda) -->
+                        <!-- Entidad -->
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
                             <TextBlock Text="Entidad"
                                        Foreground="{StaticResource TextSecondaryBrush}"
@@ -190,7 +190,7 @@
                                       DisplayMemberPath="Nombre" />
                         </StackPanel>
 
-                        <!-- Empleador (derecha) -->
+                        <!-- Empleador -->
                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
                             <TextBlock Text="Empleador"
                                        Foreground="{StaticResource TextSecondaryBrush}"
@@ -217,7 +217,7 @@
                                        Style="{StaticResource CaptionTextBlockStyle}" />
                         </StackPanel>
 
-                        <!-- Padrón -->
+                        <!-- Padrón de Socios-->
                         <StackPanel Margin="0,4,0,6">
                             <Button Content="Seleccionar Padrón de Socios"
                                     Command="{Binding SeleccionarPadronCommand}" />

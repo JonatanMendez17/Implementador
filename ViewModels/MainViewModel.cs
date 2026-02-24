@@ -5,7 +5,6 @@ using MigradorCUAD.Services;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Windows.Input;
 using TuProyecto.Data;
 using TuProyecto.Models;
@@ -13,137 +12,80 @@ namespace MigradorCUAD.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
-
-        //Temporal --------------
-        private HashSet<int> _numerosSocioPadron = new();
-        private HashSet<int> _numerosConsumo = new();
-        private HashSet<string> _categorias = new();
-
-
-        // Empleador
+        // Privados
         private string? _empleadorSeleccionado;
+        private string? _entidadSeleccionada;
+        private string? _archivoCategorias;
+        private string? _archivoPadron;
+        private string? _archivoConsumos;
+        private string? _archivoConsumosDetalle;
+        private string? _archivoServicios;
+        private int _progreso;
+        private bool _estaProcesando;
+        private bool _validacionFinalizada;
+        private List<Dictionary<string, string>> _datosValidados = new();
+
+
+        // Publicas
         public string? EmpleadorSeleccionado
         {
             get => _empleadorSeleccionado;
-            set
-            {
-                _empleadorSeleccionado = value;
-                OnPropertyChanged();
-            }
+            set => SetProperty(ref _empleadorSeleccionado, value);
         }
-
-        // Entidad
-        private string? _entidadSeleccionada;
         public string? EntidadSeleccionada
         {
             get => _entidadSeleccionada;
-            set
-            {
-                _entidadSeleccionada = value;
-                OnPropertyChanged();
-            }
+            set => SetProperty(ref _entidadSeleccionada, value);
         }
-
-        // Archivos
-        private string? _archivoCategorias;
         public string? ArchivoCategorias
         {
             get => _archivoCategorias;
-            set
-            {
-                _archivoCategorias = value;
-                OnPropertyChanged();
-            }
+            set => SetProperty(ref _archivoCategorias, value);
         }
-
-        private string? _archivoPadron;
         public string? ArchivoPadron
         {
             get => _archivoPadron;
-            set
-            {
-                _archivoPadron = value;
-                OnPropertyChanged();
-            }
+            set => SetProperty(ref _archivoPadron, value);
         }
-
-        private string? _archivoConsumos;
         public string? ArchivoConsumos
         {
             get => _archivoConsumos;
-            set
-            {
-                _archivoConsumos = value;
-                OnPropertyChanged();
-            }
-        }
+            set => SetProperty(ref _archivoConsumos, value);
 
-        private string? _archivoConsumosDetalle;
+        }
         public string? ArchivoConsumosDetalle
         {
             get => _archivoConsumosDetalle;
-            set
-            {
-                _archivoConsumosDetalle = value;
-                OnPropertyChanged();
-            }
-        }
+            set => SetProperty(ref _archivoConsumosDetalle, value);
 
-        private string? _archivoServicios;
+        }
         public string? ArchivoServicios
         {
             get => _archivoServicios;
-            set
-            {
-                _archivoServicios = value;
-                OnPropertyChanged();
-            }
+            set => SetProperty(ref _archivoServicios, value);
+
         }
-
-        // Progreso
-        private int _progreso;
-        private bool _estaProcesando;
-
         public int Progreso
         {
             get => _progreso;
-            set
-            {
-                _progreso = value;
-                OnPropertyChanged();
-            }
+            set => SetProperty(ref _progreso, value);
         }
         public bool EstaProcesando
         {
             get => _estaProcesando;
-            set
-            {
-                _estaProcesando = value;
-                OnPropertyChanged();
-            }
+            set => SetProperty(ref _estaProcesando, value);
         }
-
-
-        private List<Dictionary<string, string>> _datosValidados = new();
-
-
-        private bool _validacionFinalizada;
         public bool ValidacionFinalizada
         {
             get => _validacionFinalizada;
-            set
-            {
-                _validacionFinalizada = value;
-                OnPropertyChanged();
-            }
+            set => SetProperty(ref _validacionFinalizada, value);
         }
 
-        // Logs
-        public ObservableCollection<string> Logs { get; set; }
 
-        // Listas de selección
+        public ObservableCollection<string> Logs { get; set; }
         public ObservableCollection<Empleador> Empleador { get; set; }
         public ObservableCollection<Entidad> Entidades { get; set; }
+
 
         // Comandos
         public ICommand SeleccionarCategoriasCommand { get; }
@@ -154,8 +96,9 @@ namespace MigradorCUAD.ViewModels
         public ICommand ValidarCommand { get; }
         public ICommand CopiarABaseCommand {  get; }
         public ICommand CopiarCommand { get; }
-        public ICommand ExportarLogCommand { get; }
+        public ICommand? ExportarLogCommand { get; }
         public ICommand LimpiarPantallaCommand { get; }
+
 
         // Constructor
         public MainViewModel()
@@ -208,7 +151,8 @@ namespace MigradorCUAD.ViewModels
 
         }
 
-        // Métodos de selección de archivos
+
+        //Metodos privados
         private void SeleccionarArchivo(string tipo)
         {
             OpenFileDialog dialog = new OpenFileDialog();
@@ -519,19 +463,13 @@ namespace MigradorCUAD.ViewModels
             Progreso = 0;
             EstaProcesando = false;
             ValidacionFinalizada = false;
-
-            // Limpiar datos temporales
-            _datosValidados.Clear();
-            _numerosSocioPadron.Clear();
-            _numerosConsumo.Clear();
-            _categorias.Clear();
         }
 
         private void ExportarLog()
         {
             if (Logs == null || Logs.Count == 0)
             {
-                Logs.Add("⚠️ No hay mensajes de log para exportar.");
+                Logs?.Add("⚠️ No hay mensajes de log para exportar.");
                 return;
             }
 

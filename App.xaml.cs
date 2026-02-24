@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using System.Windows;
 using TuProyecto.Data;
 
