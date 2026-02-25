@@ -1,4 +1,4 @@
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using MigradorCUAD.Commands;
 using MigradorCUAD.Data;
 using MigradorCUAD.Models;
@@ -235,7 +235,7 @@ namespace MigradorCUAD.ViewModels
 
         private void CopiarABase(object? parameter)
         {
-            Logs.Add("💾 Iniciando proceso de copia a base de datos...");
+            Logs.Add("ðŸ’¾ Iniciando proceso de copia a base de datos...");
         }
 
         private async Task CopiarABaseAsync()
@@ -243,7 +243,7 @@ namespace MigradorCUAD.ViewModels
             if (!ValidacionFinalizada || !_validationResult.HuboCarga)
             {
                 var resultado = MessageBox.Show(
-                    "Algunas validaciones no pasaron o la carga fue descartada. ¿Desea migrar igualmente?",
+                    "Algunas validaciones no pasaron o la carga fue descartada. Â¿Desea migrar igualmente?",
                     "Confirmar migracion",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning);
@@ -295,29 +295,36 @@ namespace MigradorCUAD.ViewModels
         {
             if (Logs.Count == 0)
             {
-                Logs.Add("⚠️ No hay mensajes de log para exportar.");
+                Logs.Add("No hay mensajes de log para exportar.");
                 return;
             }
 
             var dialog = new SaveFileDialog
             {
-                Title = "Guardar log de validación",
+                Title = "Guardar log",
                 Filter = "Archivo de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*",
-                FileName = "LogMigracion.txt"
+                FileName = $"LogMigracion_{DateTime.Now:yyyyMMdd_HHmmss}.txt",
+                AddExtension = true,
+                DefaultExt = "txt"
             };
 
-            if (dialog.ShowDialog() == true)
+            if (dialog.ShowDialog() != true)
             {
-                try
-                {
-                    File.WriteAllLines(dialog.FileName, Logs);
-                    Logs.Add($"✅ Log exportado a: {dialog.FileName}");
-                }
-                catch (Exception ex)
-                {
-                    Logs.Add($"❌ Error al exportar el log: {ex.Message}");
-                }
+                return;
+            }
+
+            try
+            {
+                File.WriteAllLines(dialog.FileName, Logs);
+                Logs.Add($"Log exportado a: {dialog.FileName}");
+                MessageBox.Show($"Log generado en:\n{dialog.FileName}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Logs.Add($"Error al exportar el log: {ex.Message}");
+                MessageBox.Show($"No se pudo exportar el log.\n{ex.Message}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
 }
+
