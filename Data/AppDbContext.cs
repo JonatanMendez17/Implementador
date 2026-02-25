@@ -115,25 +115,6 @@ namespace MigradorCUAD.Data
                 });
         }
 
-        public int InsertCategoriasSocio(IEnumerable<CategoriaSocio> registros)
-        {
-            return ExecuteInsert(
-                registros,
-                @"INSERT INTO Categorias_Socio
-                  (Entidad_Cod, Cat_Codigo, Cat_Nombre, Cat_Descripcion, Es_Predeterminada, Monto_CS, Concepto_Descuento_Id)
-                  VALUES (@EntidadCod, @CatCodigo, @CatNombre, @CatDescripcion, @EsPredeterminada, @MontoCS, @ConceptoDescuentoId);",
-                (registro, command) =>
-                {
-                    command.Parameters.AddWithValue("@EntidadCod", (object?)registro.EntidadCod ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@CatCodigo", (object?)registro.CatCodigo ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@CatNombre", (object?)registro.CatNombre ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@CatDescripcion", (object?)registro.CatDescripcion ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@EsPredeterminada", registro.EsPredeterminada);
-                    command.Parameters.AddWithValue("@MontoCS", registro.MontoCS);
-                    command.Parameters.AddWithValue("@ConceptoDescuentoId", registro.ConceptoDescuentoId);
-                });
-        }
-
         public int InsertImportarConsumosDet(IEnumerable<ImportarConsumosDet> registros)
         {
             return ExecuteInsert(
@@ -148,41 +129,6 @@ namespace MigradorCUAD.Data
                     command.Parameters.AddWithValue("@NroCuota", registro.NroCuota);
                     command.Parameters.AddWithValue("@FechaVencimiento", registro.FechaVencimiento);
                     command.Parameters.AddWithValue("@Monto", registro.Monto);
-                });
-        }
-
-        public int InsertCatalogoServicios(IEnumerable<CatalogoServicio> registros)
-        {
-            return ExecuteInsert(
-                registros,
-                @"INSERT INTO Catalogo_Servicios
-                  (Entidad_Cod, Servicio_Nombre, Importe, Servicio_Descripcion)
-                  VALUES (@EntidadCod, @ServicioNombre, @Importe, @ServicioDescripcion);",
-                (registro, command) =>
-                {
-                    command.Parameters.AddWithValue("@EntidadCod", (object?)registro.EntidadCod ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@ServicioNombre", (object?)registro.ServicioNombre ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@Importe", registro.Importe);
-                    command.Parameters.AddWithValue("@ServicioDescripcion", (object?)registro.ServicioDescripcion ?? DBNull.Value);
-                });
-        }
-
-        public int InsertConsumosServicios(IEnumerable<ConsumoServicio> registros)
-        {
-            return ExecuteInsert(
-                registros,
-                @"INSERT INTO Consumos_Servicios
-                  (Entidad_Cod, Nro_Socio, Cuit, Nro_Beneficio, Codigo_Consumo, Importe_Cuota, Concepto_Descuento_Id)
-                  VALUES (@EntidadCod, @NroSocio, @Cuit, @NroBeneficio, @CodigoConsumo, @ImporteCuota, @ConceptoDescuentoId);",
-                (registro, command) =>
-                {
-                    command.Parameters.AddWithValue("@EntidadCod", (object?)registro.EntidadCod ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@NroSocio", registro.NroSocio);
-                    command.Parameters.AddWithValue("@Cuit", registro.Cuit);
-                    command.Parameters.AddWithValue("@NroBeneficio", registro.NroBeneficio);
-                    command.Parameters.AddWithValue("@CodigoConsumo", registro.CodigoConsumo);
-                    command.Parameters.AddWithValue("@ImporteCuota", registro.ImporteCuota);
-                    command.Parameters.AddWithValue("@ConceptoDescuentoId", registro.ConceptoDescuentoId);
                 });
         }
 

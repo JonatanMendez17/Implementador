@@ -442,54 +442,6 @@ namespace MigradorCUAD.ViewModels
                 return null;
             }
         }
-        private List<CategoriaSocio> MapearCategorias()
-        {
-            var resultado = new List<CategoriaSocio>();
-
-            foreach (var fila in _datosCategoriasValidadas)
-            {
-                try
-                {
-                    // Lectura segura de valores
-                    fila.TryGetValue("Entidad", out var entidad);
-                    fila.TryGetValue("Código Categoría", out var codigoCategoria);
-                    fila.TryGetValue("Categoría", out var nombreCategoria);
-                    fila.TryGetValue("Descripción Categoría", out var descripcionCategoria);
-                    fila.TryGetValue("Categoría Predeterminada", out var esPredeterminadaTexto);
-                    fila.TryGetValue("Monto CS", out var montoCsTexto);
-                    fila.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);
-
-                    if (string.IsNullOrWhiteSpace(entidad) ||
-                        string.IsNullOrWhiteSpace(codigoCategoria) ||
-                        string.IsNullOrWhiteSpace(nombreCategoria) ||
-                        string.IsNullOrWhiteSpace(montoCsTexto) ||
-                        string.IsNullOrWhiteSpace(conceptoDescuentoTexto))
-                    {
-                        Logs.Add("⚠️ Fila de categorías incompleta. Se omite el registro.");
-                        continue;
-                    }
-
-                    var categoria = new CategoriaSocio
-                    {
-                        EntidadCod = entidad,
-                        CatCodigo = codigoCategoria,
-                        CatNombre = nombreCategoria,
-                        CatDescripcion = descripcionCategoria,
-                        EsPredeterminada = string.Equals(esPredeterminadaTexto, "S", StringComparison.OrdinalIgnoreCase),
-                        MontoCS = decimal.Parse(montoCsTexto, NumberStyles.Any, CultureInfo.InvariantCulture),
-                        ConceptoDescuentoId = int.Parse(conceptoDescuentoTexto)
-                    };
-
-                    resultado.Add(categoria);
-                }
-                catch (Exception ex)
-                {
-                    Logs.Add($"⚠️ Error mapeando fila de categorías: {ex.Message}");
-                }
-            }
-
-            return resultado;
-        }
 
         private List<ImportarConsumosDet> MapearConsumosDetalleImportacion()
         {
@@ -529,46 +481,6 @@ namespace MigradorCUAD.ViewModels
                 catch (Exception ex)
                 {
                     Logs.Add($"⚠️ Error mapeando fila de consumos detalle: {ex.Message}");
-                }
-            }
-
-            return resultado;
-        }
-
-        private List<CatalogoServicio> MapearCatalogoServicios()
-        {
-            var resultado = new List<CatalogoServicio>();
-
-            foreach (var fila in _datosCatalogoServiciosValidados)
-            {
-                try
-                {
-                    fila.TryGetValue("Entidad", out var entidad);
-                    fila.TryGetValue("Servicio", out var servicioNombre);
-                    fila.TryGetValue("Importe", out var importeTexto);
-                    fila.TryGetValue("Comentarios / Info de Servicio", out var descripcion);
-
-                    if (string.IsNullOrWhiteSpace(entidad) ||
-                        string.IsNullOrWhiteSpace(servicioNombre) ||
-                        string.IsNullOrWhiteSpace(importeTexto))
-                    {
-                        Logs.Add("⚠️ Fila de catálogo de servicios incompleta. Se omite el registro.");
-                        continue;
-                    }
-
-                    var registro = new CatalogoServicio
-                    {
-                        EntidadCod = entidad,
-                        ServicioNombre = servicioNombre,
-                        Importe = decimal.Parse(importeTexto, NumberStyles.Any, CultureInfo.InvariantCulture),
-                        ServicioDescripcion = descripcion
-                    };
-
-                    resultado.Add(registro);
-                }
-                catch (Exception ex)
-                {
-                    Logs.Add($"⚠️ Error mapeando fila de catálogo de servicios: {ex.Message}");
                 }
             }
 
@@ -686,109 +598,6 @@ namespace MigradorCUAD.ViewModels
                     DateTimeStyles.None,
                     out value);
         }
-
-        private List<ConsumoServicio> MapearConsumosServicios()
-        {
-            var resultado = new List<ConsumoServicio>();
-
-            foreach (var fila in _datosServiciosValidados)
-            {
-                try
-                {
-                    fila.TryGetValue("Entidad", out var entidad);
-                    fila.TryGetValue("Nro de Socio", out var nroSocioTexto);
-                    fila.TryGetValue("CUIT", out var cuitTexto);
-                    fila.TryGetValue("Nro Beneficio", out var nroBeneficioTexto);
-                    fila.TryGetValue("Código Consumo", out var codigoConsumoTexto);
-                    fila.TryGetValue("Importe Cuota", out var importeCuotaTexto);
-                    fila.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);
-
-                    if (string.IsNullOrWhiteSpace(entidad) ||
-                        string.IsNullOrWhiteSpace(nroSocioTexto) ||
-                        string.IsNullOrWhiteSpace(cuitTexto) ||
-                        string.IsNullOrWhiteSpace(nroBeneficioTexto) ||
-                        string.IsNullOrWhiteSpace(codigoConsumoTexto) ||
-                        string.IsNullOrWhiteSpace(importeCuotaTexto) ||
-                        string.IsNullOrWhiteSpace(conceptoDescuentoTexto))
-                    {
-                        Logs.Add("⚠️ Fila de servicios incompleta. Se omite el registro.");
-                        continue;
-                    }
-
-                    var registro = new ConsumoServicio
-                    {
-                        EntidadCod = entidad,
-                        NroSocio = int.Parse(nroSocioTexto),
-                        Cuit = long.Parse(cuitTexto),
-                        NroBeneficio = int.Parse(nroBeneficioTexto),
-                        CodigoConsumo = int.Parse(codigoConsumoTexto),
-                        ImporteCuota = decimal.Parse(importeCuotaTexto, NumberStyles.Any, CultureInfo.InvariantCulture),
-                        ConceptoDescuentoId = int.Parse(conceptoDescuentoTexto)
-                    };
-
-                    resultado.Add(registro);
-                }
-                catch (Exception ex)
-                {
-                    Logs.Add($"⚠️ Error mapeando fila de servicios: {ex.Message}");
-                }
-            }
-
-            return resultado;
-        }
-
-        //private List<ImportarConsumoCab> MapearConsumosImportados()
-        //{
-        //    var resultado = new List<ImportarConsumoCab>();
-
-        //    foreach (var fila in _datosConsumosValidados)
-        //    {
-        //        try
-        //        {
-        //            fila.TryGetValue("Entidad", out var entidad);
-        //            fila.TryGetValue("Nro Socio", out var nroSocioTexto);
-        //            fila.TryGetValue("CUIT", out var cuitTexto);
-        //            fila.TryGetValue("Beneficio", out var beneficioTexto);
-        //            fila.TryGetValue("Código", out var codigoTexto);
-        //            fila.TryGetValue("Cuotas Pendientes", out var cuotasPendientesTexto);
-        //            fila.TryGetValue("Monto Deuda", out var montoDeudaTexto);
-        //            fila.TryGetValue("Concepto Descuento", out var conceptoDescuentoTexto);
-
-        //            if (string.IsNullOrWhiteSpace(entidad) ||
-        //                string.IsNullOrWhiteSpace(nroSocioTexto) ||
-        //                string.IsNullOrWhiteSpace(cuitTexto) ||
-        //                string.IsNullOrWhiteSpace(beneficioTexto) ||
-        //                string.IsNullOrWhiteSpace(codigoTexto) ||
-        //                string.IsNullOrWhiteSpace(cuotasPendientesTexto) ||
-        //                string.IsNullOrWhiteSpace(montoDeudaTexto) ||
-        //                string.IsNullOrWhiteSpace(conceptoDescuentoTexto))
-        //            {
-        //                Logs.Add("⚠️ Fila de consumos incompleta. Se omite el registro.");
-        //                continue;
-        //            }
-
-        //            var registro = new ImportarConsumoCab
-        //            {
-        //                EntidadCod = entidad,
-        //                NroSocio = int.Parse(nroSocioTexto),
-        //                Cuit = long.Parse(cuitTexto),
-        //                Beneficio = int.Parse(beneficioTexto),
-        //                CodigoConsumo = long.Parse(codigoTexto),
-        //                CuotasPendientes = int.Parse(cuotasPendientesTexto),
-        //                MontoDeuda = decimal.Parse(montoDeudaTexto, NumberStyles.Any, CultureInfo.InvariantCulture),
-        //                ConceptoDescuentoId = int.Parse(conceptoDescuentoTexto)
-        //            };
-
-        //            resultado.Add(registro);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Logs.Add($"⚠️ Error mapeando fila de consumos: {ex.Message}");
-        //        }
-        //    }
-
-        //    return resultado;
-        //}
 
         private List<ImportarConsumoCab> MapearConsumosImportados()
         {
@@ -937,21 +746,6 @@ namespace MigradorCUAD.ViewModels
                             Logs.Add("No hay registros validos de padron para insertar en Padron_socios.");
                         }
                     }
-                    if (!string.IsNullOrWhiteSpace(ArchivoCategorias))
-                    {
-                        var categorias = MapearCategorias();
-                        if (categorias.Any())
-                        {
-                            Logs.Add($"Insertando {categorias.Count} categorias en Categorias_Socio...");
-                            db.InsertCategoriasSocio(categorias);
-                            Progreso = 40;
-                            Logs.Add("Categorias insertadas correctamente en Categorias_Socio.");
-                        }
-                        else
-                        {
-                            Logs.Add("No hay categorias validas para insertar en Categorias_Socio.");
-                        }
-                    }
                     if (!string.IsNullOrWhiteSpace(ArchivoConsumosDetalle))
                     {
                         var consumosDetalleImport = MapearConsumosDetalleImportacion();
@@ -965,36 +759,6 @@ namespace MigradorCUAD.ViewModels
                         else
                         {
                             Logs.Add("No hay consumos detalle validos para insertar en Importar_Consumos_Detalle.");
-                        }
-                    }
-                    if (!string.IsNullOrWhiteSpace(ArchivoCatalogoServicios))
-                    {
-                        var catalogoServicios = MapearCatalogoServicios();
-                        if (catalogoServicios.Any())
-                        {
-                            Logs.Add($"Insertando {catalogoServicios.Count} registros en Catalogo_Servicios...");
-                            db.InsertCatalogoServicios(catalogoServicios);
-                            Progreso = 75;
-                            Logs.Add("Catalogo de servicios insertado correctamente en Catalogo_Servicios.");
-                        }
-                        else
-                        {
-                            Logs.Add("No hay registros validos para insertar en Catalogo_Servicios.");
-                        }
-                    }
-                    if (!string.IsNullOrWhiteSpace(ArchivoServicios))
-                    {
-                        var consumosServicios = MapearConsumosServicios();
-                        if (consumosServicios.Any())
-                        {
-                            Logs.Add($"Insertando {consumosServicios.Count} registros en Consumos_Servicios...");
-                            db.InsertConsumosServicios(consumosServicios);
-                            Progreso = 90;
-                            Logs.Add("Servicios insertados correctamente en Consumos_Servicios.");
-                        }
-                        else
-                        {
-                            Logs.Add("No hay registros validos para insertar en Consumos_Servicios.");
                         }
                     }
                     if (!string.IsNullOrWhiteSpace(ArchivoConsumos))

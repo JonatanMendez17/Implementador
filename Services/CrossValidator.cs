@@ -5,29 +5,29 @@ namespace MigradorCUAD.Services
     public static class CrossValidator
     {
         public static List<string> Validate(
-            List<Socio> socios,
-            List<Consumo> consumos,
-            List<ConsumoDetalle> detalles,
-            List<Servicio> servicios)
+            List<ImportarPadronSocio> socios,
+            List<ImportarConsumoCab> consumos,
+            List<ImportarConsumosDet> detalles)
+            //List<Servicio> servicios)
         {
             var errores = new List<string>();
 
             errores.AddRange(ValidarConsumos(socios, consumos));
             errores.AddRange(ValidarDetalles(consumos, detalles));
-            errores.AddRange(ValidarServicios(socios, servicios));
+            //errores.AddRange(ValidarServicios(socios, servicios));
 
             return errores;
         }
 
         private static List<string> ValidarConsumos(
-            List<Socio> socios,
-            List<Consumo> consumos)
+            List<ImportarPadronSocio> socios,
+            List<ImportarConsumoCab> consumos)
          {
             var errores = new List<string>();
 
             // Duplicados
             var duplicados = consumos
-                .GroupBy(c => c.NumeroConsumo)
+                .GroupBy(c => c.CodigoConsumo)
                 .Where(g => g.Count() > 1)
                 .Select(g => g.Key);
 
@@ -37,9 +37,9 @@ namespace MigradorCUAD.Services
             // Socio inexistente
             foreach (var consumo in consumos)
             {
-                if (!socios.Any(s => s.NumeroSocio == consumo.NumeroSocio))
+                if (!socios.Any(s => s.NroSocio == consumo.NroSocio))
                 {
-                    errores.Add($"El socio {consumo.NumeroSocio} no existe para el consumo {consumo.NumeroConsumo}");
+                    errores.Add($"El socio {consumo.NroSocio} no existe para el consumo {consumo.NroSocio}");
                 }
             }
 
@@ -47,38 +47,21 @@ namespace MigradorCUAD.Services
         }
 
         private static List<string> ValidarDetalles(
-            List<Consumo> consumos,
-            List<ConsumoDetalle> detalles)
+            List<ImportarConsumoCab> consumos,
+            List<ImportarConsumosDet> detalles)
         {
             var errores = new List<string>();
 
             foreach (var detalle in detalles)
             {
-                if (!consumos.Any(c => c.NumeroConsumo == detalle.NumeroConsumo))
+                if (!consumos.Any(c => c.CodigoConsumo == detalle.CodigoConsumo))
                 {
-                    errores.Add($"Detalle con consumo inexistente: {detalle.NumeroConsumo}");
+                    errores.Add($"Detalle con consumo inexistente: {detalle.CodigoConsumo}");
                 }
 
-                if (detalle.PrimerVencimiento < DateTime.Today)
+                if (detalle.FechaVencimiento < DateTime.Today)
                 {
-                    errores.Add($"Primer vencimiento inválido en consumo {detalle.NumeroConsumo}");
-                }
-            }
-
-            return errores;
-        }
-
-        private static List<string> ValidarServicios(
-            List<Socio> socios,
-            List<Servicio> servicios)
-        {
-            var errores = new List<string>();
-
-            foreach (var servicio in servicios)
-            {
-                if (!socios.Any(s => s.NumeroSocio == servicio.NumeroSocio))
-                {
-                    errores.Add($"Servicio con socio inexistente: {servicio.NumeroSocio}");
+                    errores.Add($"Primer vencimiento inválido en consumo {detalle.CodigoConsumo}");
                 }
             }
 
