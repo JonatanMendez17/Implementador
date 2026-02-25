@@ -3,6 +3,7 @@ using MigradorCUAD.Models;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MigradorCUAD.Services
 {
@@ -173,21 +174,33 @@ namespace MigradorCUAD.Services
                 {
                     var valores = lineas[i].Split(',');
                     var fila = new Dictionary<string, string>();
+                    var filaEsValida = true;
 
                     for (int j = 0; j < columnasConfig.Count; j++)
                     {
                         var valor = j < valores.Length ? valores[j] : string.Empty;
+                        var config = columnasConfig[j];
 
                         // Modo prueba: validación de tipo deshabilitada.
                         //var config = columnasConfig[j];
                         //if (!ValidateDataType(valor, config)) { ... }
-                        fila[columnasConfig[j].Nombre] = valor;
+
+                        if (!ValidateGeneralRules(valor, config, out var error))
+                        {
+                            log($"❌ {nombreLogico} - fila {i + 1}, columna '{config.Nombre}': {error}");
+                            filaEsValida = false;
+                        }
+
+                        fila[config.Nombre] = valor;
                     }
 
-                    registros.Add(fila);
+                    if (filaEsValida)
+                    {
+                        registros.Add(fila);
+                    }
                 }
 
-                log($"{nombreLogico} cargado en modo prueba (sin validaciones).");
+                log($"{nombreLogico} cargado con validaciones generales.");
                 return registros;
             }
             catch (Exception ex)
@@ -221,6 +234,87 @@ namespace MigradorCUAD.Services
                 default:
                     return false;
             }
+        }
+
+        private static bool ValidateGeneralRules(string valor, ColumnaConfiguracion config, out string error)
+        {
+            error = string.Empty;
+            var texto = valor?.Trim() ?? string.Empty;
+
+            if (texto.Length == 0)
+            {
+                // Campos vacíos se aceptan en validación general.
+                // La obligatoriedad se puede manejar en validaciones específicas.
+                return true;
+            }
+
+            if (texto.Length > config.LargoMaximo)
+            {
+                error = $"supera el largo máximo permitido ({config.LargoMaximo})";
+                return false;
+            }
+
+            if (HasWeirdCharacters(texto))
+            {
+                error = "contiene caracteres extraños";
+                return false;
+            }
+
+            switch (config.TipoDato.ToLowerInvariant())
+            {
+                case "int":
+                    if (!int.TryParse(texto, NumberStyles.None, CultureInfo.InvariantCulture, out var numero))
+                    {
+                        error = "debe ser un número entero sin letras";
+                        return false;
+                    }
+
+                    if (numero <= 0)
+                    {
+                        error = "debe ser un número entero positivo";
+                        return false;
+                    }
+
+                    return true;
+
+                case "decimal":
+                    if (!TryParseDecimalFlexible(texto, out _))
+                    {
+                        error = "debe ser un valor de dinero válido";
+                        return false;
+                    }
+
+                    return true;
+
+                case "fecha":
+                    if (!DateTime.TryParse(texto, CultureInfo.GetCultureInfo("es-AR"), DateTimeStyles.None, out _) &&
+                        !DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+                    {
+                        error = "debe ser una fecha válida";
+                        return false;
+                    }
+
+                    return true;
+
+                case "texto":
+                    return true;
+
+                default:
+                    error = $"tipo de dato no soportado: {config.TipoDato}";
+                    return false;
+            }
+        }
+
+        private static bool TryParseDecimalFlexible(string texto, out decimal valor)
+        {
+            return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out valor) ||
+                   decimal.TryParse(texto, NumberStyles.Number, CultureInfo.GetCultureInfo("es-AR"), out valor);
+        }
+
+        private static bool HasWeirdCharacters(string texto)
+        {
+            // Permite letras (incluyendo acentos), dígitos, espacios y puntuación de uso común.
+            return Regex.IsMatch(texto, @"[^\p{L}\p{N}\s\.\,\;\:\-\/\\(\)\'\""\#\%\&\+]");
         }
     }
 }
