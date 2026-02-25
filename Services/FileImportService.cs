@@ -1,4 +1,5 @@
 using ExcelDataReader;
+using MigradorCUAD.Data;
 using MigradorCUAD.Models;
 using System.Globalization;
 using System.IO;
@@ -73,16 +74,256 @@ namespace MigradorCUAD.Services
                 result.HuboCarga = true;
             }
 
+            ApplyPadronSpecificValidations(result, log);
+            ApplyConsumosSpecificValidations(result, log);
+
             if (result.HuboCarga)
             {
                 log("Archivos cargados con validaciones generales.");
             }
             else
             {
-                log("No se pudo cargar ningún archivo.");
+                log("No se pudo cargar ningun archivo.");
             }
 
             return result;
+        }
+
+        private static void ApplyPadronSpecificValidations(MigrationValidationResult result, Action<string> log)
+        {
+            if (result.DatosPadronValidados.Count == 0)
+            {
+                return;
+            }
+
+            var categoriasValidasCodigo = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var categoriasValidasNombre = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var filaCategoria in result.DatosCategoriasValidadas)
+            {
+                if (TryGetFirstValue(filaCategoria, out var codigo, "Codigo Categoria", "C�digo Categor�a", "Código Categoría") &&
+                    !string.IsNullOrWhiteSpace(codigo))
+                {
+                    categoriasValidasCodigo.Add(codigo.Trim());
+                }
+
+                if (TryGetFirstValue(filaCategoria, out var nombre, "Categoria", "Categor�a", "Categoría") &&
+                    !string.IsNullOrWhiteSpace(nombre))
+                {
+                    categoriasValidasNombre.Add(nombre.Trim());
+                }
+            }
+
+            var padronFiltrado = new List<Dictionary<string, string>>();
+            var sociosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var socioCategoria = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var documentosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var beneficiosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var rechazadas = 0;
+
+            for (int i = 0; i < result.DatosPadronValidados.Count; i++)
+            {
+                var fila = result.DatosPadronValidados[i];
+                var numeroFila = i + 2;
+                var filaValida = true;
+
+                var nroSocio = GetFirstValue(fila, "Nro Socio");
+                var codigoCategoria = GetFirstValue(fila, "Codigo Categoria", "C�digo Categor�a", "Código Categoría");
+                var nombreCategoriaPadron = GetFirstValue(fila, "Categoria", "Categor�a", "Categoría");
+                var documento = GetFirstValue(fila, "Documento");
+                var beneficio = GetFirstValue(fila, "Beneficio");
+
+                if (string.IsNullOrWhiteSpace(nroSocio))
+                {
+                    log($"ERROR Padron fila {numeroFila}: 'Nro Socio' vacio.");
+                    filaValida = false;
+                }
+                else
+                {
+                    var nroSocioNormalizado = nroSocio.Trim();
+                    if (!sociosVistos.Add(nroSocioNormalizado))
+                    {
+                        log($"ERROR Padron fila {numeroFila}: numero de socio '{nroSocio}' repetido.");
+                        filaValida = false;
+                    }
+
+                    var categoriaNormalizada = (codigoCategoria ?? string.Empty).Trim();
+                    if (socioCategoria.TryGetValue(nroSocioNormalizado, out var categoriaExistente) &&
+                        !string.Equals(categoriaExistente, categoriaNormalizada, StringComparison.OrdinalIgnoreCase))
+                    {
+                        log($"ERROR Padron fila {numeroFila}: socio '{nroSocio}' afiliado a mas de una categoria.");
+                        filaValida = false;
+                    }
+                    else
+                    {
+                        socioCategoria[nroSocioNormalizado] = categoriaNormalizada;
+                    }
+                }
+
+                if (!IsCategoriaValida(codigoCategoria, nombreCategoriaPadron, categoriasValidasCodigo, categoriasValidasNombre))
+                {
+                    log($"ERROR Padron fila {numeroFila}: categoria informada no valida.");
+                    filaValida = false;
+                }
+
+                if (!string.IsNullOrWhiteSpace(documento) && !documentosVistos.Add(documento.Trim()))
+                {
+                    log($"ERROR Padron fila {numeroFila}: documento '{documento}' repetido.");
+                    filaValida = false;
+                }
+
+                if (!string.IsNullOrWhiteSpace(beneficio) && !beneficiosVistos.Add(beneficio.Trim()))
+                {
+                    log($"ERROR Padron fila {numeroFila}: beneficio '{beneficio}' repetido.");
+                    filaValida = false;
+                }
+
+                if (filaValida)
+                {
+                    padronFiltrado.Add(fila);
+                }
+                else
+                {
+                    rechazadas++;
+                }
+            }
+
+            if (rechazadas > 0)
+            {
+                log($"Resumen validacion especifica Padron: aceptadas={padronFiltrado.Count}, rechazadas={rechazadas}.");
+            }
+
+            result.DatosPadronValidados = padronFiltrado;
+        }
+
+        private static void ApplyConsumosSpecificValidations(MigrationValidationResult result, Action<string> log)
+        {
+            if (result.DatosConsumosValidados.Count == 0)
+            {
+                return;
+            }
+
+            HashSet<string> entidadesCuad;
+            try
+            {
+                using var db = new AppDbContext();
+                entidadesCuad = db.GetEntidades()
+                    .SelectMany(e => new[]
+                    {
+                        e.Nombre?.Trim(),
+                        e.EntId.ToString(CultureInfo.InvariantCulture)
+                    })
+                    .Where(v => !string.IsNullOrWhiteSpace(v))
+                    .Select(v => v!)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                log($"ERROR Consumos: no se pudo validar entidades de CUAD. {ex.Message}");
+                result.DatosConsumosValidados = new List<Dictionary<string, string>>();
+                return;
+            }
+
+            var padronPorSocio = result.DatosPadronValidados
+                .Where(f => TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
+                .GroupBy(f => GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            var consumosFiltrados = new List<Dictionary<string, string>>();
+            var codigosConsumoVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var rechazadas = 0;
+
+            for (int i = 0; i < result.DatosConsumosValidados.Count; i++)
+            {
+                var fila = result.DatosConsumosValidados[i];
+                var numeroFila = i + 2;
+                var filaValida = true;
+
+                var entidad = GetFirstValue(fila, "Entidad");
+                var nroSocio = GetFirstValue(fila, "Nro Socio");
+                var cuitConsumo = GetFirstValue(fila, "CUIT");
+                var beneficioConsumo = GetFirstValue(fila, "Beneficio");
+                var codigoConsumo = GetFirstValue(fila, "Codigo", "C�digo", "Código");
+
+                if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
+                {
+                    log($"ERROR Consumos fila {numeroFila}: entidad '{entidad}' no existe en CUAD.");
+                    filaValida = false;
+                }
+
+                if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
+                {
+                    log($"ERROR Consumos fila {numeroFila}: socio '{nroSocio}' no existe o no corresponde al padron.");
+                    filaValida = false;
+                }
+                else
+                {
+                    var cuitPadron = GetFirstValue(filaPadron, "CUIT");
+                    var beneficioPadron = GetFirstValue(filaPadron, "Beneficio");
+
+                    if (!EqualsDigitsOnly(cuitConsumo, cuitPadron))
+                    {
+                        log($"ERROR Consumos fila {numeroFila}: CUIT no coincide con padron para socio '{nroSocio}'.");
+                        filaValida = false;
+                    }
+
+                    if (!EqualsTrimmed(beneficioConsumo, beneficioPadron))
+                    {
+                        log($"ERROR Consumos fila {numeroFila}: Beneficio no coincide con padron para socio '{nroSocio}'.");
+                        filaValida = false;
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(codigoConsumo))
+                {
+                    log($"ERROR Consumos fila {numeroFila}: codigo de consumo vacio.");
+                    filaValida = false;
+                }
+                else if (!codigosConsumoVistos.Add(codigoConsumo.Trim()))
+                {
+                    log($"ERROR Consumos fila {numeroFila}: codigo de consumo '{codigoConsumo}' repetido.");
+                    filaValida = false;
+                }
+
+                if (filaValida)
+                {
+                    consumosFiltrados.Add(fila);
+                }
+                else
+                {
+                    rechazadas++;
+                }
+            }
+
+            if (rechazadas > 0)
+            {
+                log($"Resumen validacion especifica Consumos: aceptadas={consumosFiltrados.Count}, rechazadas={rechazadas}.");
+            }
+
+            result.DatosConsumosValidados = consumosFiltrados;
+        }
+
+        private static bool IsCategoriaValida(
+            string? codigoCategoria,
+            string? nombreCategoriaPadron,
+            HashSet<string> categoriasValidasCodigo,
+            HashSet<string> categoriasValidasNombre)
+        {
+            if (categoriasValidasCodigo.Count == 0 && categoriasValidasNombre.Count == 0)
+            {
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(codigoCategoria) && categoriasValidasCodigo.Contains(codigoCategoria.Trim()))
+            {
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(nombreCategoriaPadron) && categoriasValidasNombre.Contains(nombreCategoriaPadron.Trim()))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private string[] ReadFileLines(string rutaArchivo)
@@ -142,7 +383,7 @@ namespace MigradorCUAD.Services
 
                 if (!File.Exists(rutaArchivo))
                 {
-                    log($"Archivo inválido: {nombreLogico}");
+                    log($"Archivo invalido: {nombreLogico}");
                     return null;
                 }
 
@@ -150,14 +391,14 @@ namespace MigradorCUAD.Services
                 var columnasConfig = configService.ObtenerColumnas(nombreLogico);
                 if (columnasConfig.Count == 0)
                 {
-                    log($"No existe configuración XML para {nombreLogico}");
+                    log($"No existe configuracion XML para {nombreLogico}");
                     return null;
                 }
 
                 var lineas = ReadFileLines(rutaArchivo);
                 if (lineas.Length == 0)
                 {
-                    log($"Archivo {nombreLogico} vacío.");
+                    log($"Archivo {nombreLogico} vacio.");
                     return null;
                 }
 
@@ -171,6 +412,10 @@ namespace MigradorCUAD.Services
 
                 var registros = new List<Dictionary<string, string>>();
                 var clavesUnicas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var totalFilasDatos = Math.Max(0, lineas.Length - 1);
+                var filasAceptadas = 0;
+                var filasRechazadas = 0;
+
                 for (int i = 1; i < lineas.Length; i++)
                 {
                     var valores = lineas[i].Split(',');
@@ -182,13 +427,13 @@ namespace MigradorCUAD.Services
                         var valor = j < valores.Length ? valores[j] : string.Empty;
                         var config = columnasConfig[j];
 
-                        // Modo prueba: validación de tipo deshabilitada.
+                        // Modo prueba: validacion de tipo deshabilitada.
                         //var config = columnasConfig[j];
                         //if (!ValidateDataType(valor, config)) { ... }
 
                         if (!ValidateGeneralRules(valor, config, out var error))
                         {
-                            log($"❌ {nombreLogico} - fila {i + 1}, columna '{config.Nombre}': {error}");
+                            log($"ERROR {nombreLogico} fila {i + 1}, columna '{config.Nombre}': {error}");
                             filaEsValida = false;
                         }
 
@@ -200,11 +445,21 @@ namespace MigradorCUAD.Services
                         if (ValidateSpecificUniqueness(nombreLogico, i + 1, fila, clavesUnicas, log))
                         {
                             registros.Add(fila);
+                            filasAceptadas++;
                         }
+                        else
+                        {
+                            filasRechazadas++;
+                        }
+                    }
+                    else
+                    {
+                        filasRechazadas++;
                     }
                 }
 
                 log($"{nombreLogico} cargado con validaciones generales.");
+                log($"Resumen {nombreLogico}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
                 return registros;
             }
             catch (Exception ex)
@@ -221,20 +476,16 @@ namespace MigradorCUAD.Services
                 return false;
             }
 
-            switch (config.TipoDato.ToLower())
+            switch (config.TipoDato.ToLowerInvariant())
             {
                 case "int":
                     return int.TryParse(valor, out _);
-
                 case "decimal":
                     return decimal.TryParse(valor, NumberStyles.Any, CultureInfo.InvariantCulture, out _);
-
                 case "fecha":
                     return DateTime.TryParse(valor, out _);
-
                 case "texto":
                     return !string.IsNullOrWhiteSpace(valor);
-
                 default:
                     return false;
             }
@@ -247,20 +498,18 @@ namespace MigradorCUAD.Services
 
             if (texto.Length == 0)
             {
-                // Campos vacíos se aceptan en validación general.
-                // La obligatoriedad se puede manejar en validaciones específicas.
                 return true;
             }
 
             if (texto.Length > config.LargoMaximo)
             {
-                error = $"supera el largo máximo permitido ({config.LargoMaximo})";
+                error = $"supera el largo maximo permitido ({config.LargoMaximo})";
                 return false;
             }
 
             if (HasWeirdCharacters(texto))
             {
-                error = "contiene caracteres extraños";
+                error = "contiene caracteres extranos";
                 return false;
             }
 
@@ -269,13 +518,13 @@ namespace MigradorCUAD.Services
                 case "int":
                     if (!int.TryParse(texto, NumberStyles.None, CultureInfo.InvariantCulture, out var numero))
                     {
-                        error = "debe ser un número entero sin letras";
+                        error = "debe ser un numero entero sin letras";
                         return false;
                     }
 
                     if (numero <= 0)
                     {
-                        error = "debe ser un número entero positivo";
+                        error = "debe ser un numero entero positivo";
                         return false;
                     }
 
@@ -284,7 +533,7 @@ namespace MigradorCUAD.Services
                 case "decimal":
                     if (!TryParseDecimalFlexible(texto, out _))
                     {
-                        error = "debe ser un valor de dinero válido";
+                        error = "debe ser un valor de dinero valido";
                         return false;
                     }
 
@@ -294,7 +543,7 @@ namespace MigradorCUAD.Services
                     if (!DateTime.TryParse(texto, CultureInfo.GetCultureInfo("es-AR"), DateTimeStyles.None, out _) &&
                         !DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
                     {
-                        error = "debe ser una fecha válida";
+                        error = "debe ser una fecha valida";
                         return false;
                     }
 
@@ -317,8 +566,7 @@ namespace MigradorCUAD.Services
 
         private static bool HasWeirdCharacters(string texto)
         {
-            // Permite letras (incluyendo acentos), dígitos, espacios y puntuación de uso común.
-            return Regex.IsMatch(texto, @"[^\p{L}\p{N}\s\.\,\;\:\-\/\\(\)\'\""\#\%\&\+]");
+            return Regex.IsMatch(texto, @"[^\p{L}\p{N}\s\.\,\;\:\-\/\\\(\)\'\""\#\%\&\+]");
         }
 
         private static bool ValidateSpecificUniqueness(
@@ -330,16 +578,17 @@ namespace MigradorCUAD.Services
         {
             if (nombreLogico.Equals("Padron", StringComparison.OrdinalIgnoreCase))
             {
-                if (!fila.TryGetValue("Nro Socio", out var nroSocio) || string.IsNullOrWhiteSpace(nroSocio))
+                var nroSocio = GetFirstValue(fila, "Nro Socio");
+                if (string.IsNullOrWhiteSpace(nroSocio))
                 {
-                    log($"❌ Padron - fila {numeroFila}: 'Nro Socio' vacío.");
+                    log($"ERROR Padron fila {numeroFila}: 'Nro Socio' vacio.");
                     return false;
                 }
 
                 var clave = $"PADRON::{nroSocio.Trim()}";
                 if (!clavesUnicas.Add(clave))
                 {
-                    log($"❌ Padron - fila {numeroFila}: el número de socio '{nroSocio}' está repetido.");
+                    log($"ERROR Padron fila {numeroFila}: numero de socio '{nroSocio}' repetido.");
                     return false;
                 }
 
@@ -348,16 +597,17 @@ namespace MigradorCUAD.Services
 
             if (nombreLogico.Equals("Consumos", StringComparison.OrdinalIgnoreCase))
             {
-                if (!fila.TryGetValue("Código", out var nroConsumo) || string.IsNullOrWhiteSpace(nroConsumo))
+                var nroConsumo = GetFirstValue(fila, "Codigo", "C�digo", "Código");
+                if (string.IsNullOrWhiteSpace(nroConsumo))
                 {
-                    log($"❌ Consumos - fila {numeroFila}: 'Código' (nro de consumo) vacío.");
+                    log($"ERROR Consumos fila {numeroFila}: codigo (nro de consumo) vacio.");
                     return false;
                 }
 
                 var clave = $"CONSUMOS::{nroConsumo.Trim()}";
                 if (!clavesUnicas.Add(clave))
                 {
-                    log($"❌ Consumos - fila {numeroFila}: el nro de consumo '{nroConsumo}' está repetido.");
+                    log($"ERROR Consumos fila {numeroFila}: nro de consumo '{nroConsumo}' repetido.");
                     return false;
                 }
 
@@ -365,6 +615,39 @@ namespace MigradorCUAD.Services
             }
 
             return true;
+        }
+
+        private static bool EqualsTrimmed(string? left, string? right)
+        {
+            var a = (left ?? string.Empty).Trim();
+            var b = (right ?? string.Empty).Trim();
+            return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool EqualsDigitsOnly(string? left, string? right)
+        {
+            static string Digits(string? text) => new string((text ?? string.Empty).Where(char.IsDigit).ToArray());
+            return string.Equals(Digits(left), Digits(right), StringComparison.Ordinal);
+        }
+
+        private static bool TryGetFirstValue(Dictionary<string, string> fila, out string value, params string[] posiblesClaves)
+        {
+            foreach (var clave in posiblesClaves)
+            {
+                if (fila.TryGetValue(clave, out var encontrado))
+                {
+                    value = encontrado;
+                    return true;
+                }
+            }
+
+            value = string.Empty;
+            return false;
+        }
+
+        private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
+        {
+            return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
         }
     }
 }

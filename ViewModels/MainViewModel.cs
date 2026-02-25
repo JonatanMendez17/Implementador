@@ -5,6 +5,7 @@ using MigradorCUAD.Models;
 using MigradorCUAD.Services;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows;
 using System.Windows.Input;
 
 namespace MigradorCUAD.ViewModels
@@ -239,6 +240,23 @@ namespace MigradorCUAD.ViewModels
 
         private async Task CopiarABaseAsync()
         {
+            if (!ValidacionFinalizada || !_validationResult.HuboCarga)
+            {
+                var resultado = MessageBox.Show(
+                    "Algunas validaciones no pasaron o la carga fue descartada. ¿Desea migrar igualmente?",
+                    "Confirmar migracion",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (resultado != MessageBoxResult.Yes)
+                {
+                    Logs.Add("Migracion cancelada por el usuario.");
+                    return;
+                }
+
+                Logs.Add("El usuario confirmo migrar con validaciones pendientes.");
+            }
+
             EstaProcesando = true;
             Progreso = 0;
 

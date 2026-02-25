@@ -23,18 +23,18 @@ namespace MigradorCUAD.Services
 
             if (entidades.Count == 0)
             {
-                log("❌ No se encontró el valor de 'Entidad' en los archivos cargados.");
+                log("ERROR: no se encontro el valor de 'Entidad' en los archivos cargados.");
                 return false;
             }
 
             if (entidades.Count > 1)
             {
-                log($"❌ La entidad no coincide entre archivos. Valores detectados: {string.Join(", ", entidades)}");
+                log($"ERROR: la entidad no coincide entre archivos. Valores detectados: {string.Join(", ", entidades)}.");
                 return false;
             }
 
             entidadComun = entidades.First();
-            log($"✅ Validación de entidad entre archivos: {entidadComun}");
+            log($"OK: validacion de entidad entre archivos: {entidadComun}");
             return true;
         }
 
@@ -45,11 +45,11 @@ namespace MigradorCUAD.Services
             if (existe)
             {
                 var nombreEmpleador = empleador?.Nombre ?? "(sin empleador seleccionado)";
-                log($"❌ Ya existe información cargada para la entidad '{entidad}' en el contexto del empleador '{nombreEmpleador}'.");
+                log($"ERROR: ya existe informacion cargada para la entidad '{entidad}' en el contexto del empleador '{nombreEmpleador}'.");
                 return false;
             }
 
-            log($"✅ No existe información previa para la entidad '{entidad}'.");
+            log($"OK: no existe informacion previa para la entidad '{entidad}'.");
             return true;
         }
 
@@ -65,12 +65,13 @@ namespace MigradorCUAD.Services
                 numeroFila++;
                 if (!fila.TryGetValue("Entidad", out var entidad) || string.IsNullOrWhiteSpace(entidad))
                 {
-                    log($"❌ {nombreArchivo} fila {numeroFila}: columna 'Entidad' vacía o inexistente.");
+                    log($"ERROR: {nombreArchivo} fila {numeroFila}: columna 'Entidad' vacia o inexistente.");
                     continue;
                 }
 
                 entidades.Add(entidad.Trim());
             }
         }
+
     }
 }
