@@ -5,95 +5,57 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="av"
         Title="Migrador CUAD"
-        Height="634"
-        Width="1000"
-        MinHeight="670"
-        MinWidth="960"
+        Height="690"
+        Width="1120"
+        MinHeight="690"
+        MinWidth="1060"
         WindowStartupLocation="CenterScreen"
-        Background="#FF101010">
+        Background="#10141D">
 
     <Window.Resources>
-        <!-- Tipografia y colores base -->
-        <SolidColorBrush x:Key="AccentBrush" Color="#FF3B82F6" />
-        <SolidColorBrush x:Key="AccentBrushLight" Color="#FF60A5FA" />
-        <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FF1F2933" />
-        <SolidColorBrush x:Key="CardBorderBrush" Color="#FF374151" />
-        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFF9FAFB" />
-        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FF9CA3AF" />
+        <SolidColorBrush x:Key="PanelBrush" Color="#1E293B" />
+        <SolidColorBrush x:Key="PanelBorderBrush" Color="#32455F" />
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F8FAFC" />
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#9AA8BC" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#3B82F6" />
+        <SolidColorBrush x:Key="AccentBrushLight" Color="#60A5FA" />
+        <SolidColorBrush x:Key="MutedControlBrush" Color="#233247" />
 
-        <!-- Estilo general para botones -->
-        <Style TargetType="Button">
-            <Setter Property="Margin" Value="0,4" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrushLight}" />
+        <Style x:Key="PanelCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#D1D9E6" />
+            <Setter Property="FontSize" Value="19" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Margin="{TemplateBinding Padding}" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="{StaticResource AccentBrushLight}" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.5" />
-                                <Setter Property="Cursor" Value="Arrow" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Margin" Value="0,0,0,12" />
         </Style>
 
-        <!-- Barra de progreso con extremos redondeados -->
-        <Style TargetType="ProgressBar">
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-            <Setter Property="Background" Value="#FF0F172A" />
-            <Setter Property="BorderBrush" Value="{StaticResource CardBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ProgressBar">
-                        <Border CornerRadius="8"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <Grid Margin="1" ClipToBounds="True">
-                                <Rectangle x:Name="PART_Track" Fill="Transparent" />
-                                <Border x:Name="PART_Indicator"
-                                        Background="{TemplateBinding Foreground}"
-                                        CornerRadius="8"
-                                        HorizontalAlignment="Left" />
-                            </Grid>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <Style x:Key="SubsectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#E2E8F0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,8,0,6" />
         </Style>
 
-        <!-- Estilo moderno para ComboBox -->
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+
         <Style TargetType="ComboBox">
-            <Setter Property="Margin" Value="0,0,0,10" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Foreground" Value="#FF111827" />
-            <Setter Property="Background" Value="#FFF8FAFC" />
-            <Setter Property="BorderBrush" Value="#FFCBD5E1" />
-            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Height" Value="36" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Foreground" Value="#E5E7EB" />
+            <Setter Property="Background" Value="#243142" />
+            <Setter Property="BorderBrush" Value="#475569" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
@@ -103,38 +65,28 @@
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}" />
-
-                            <Grid Margin="10,0,8,0">
+                            <Grid Margin="10,0,10,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-
                                 <ContentPresenter x:Name="ContentSite"
                                                   VerticalAlignment="Center"
-                                                  HorizontalAlignment="Left"
-                                                  Content="{TemplateBinding SelectionBoxItem}"
-                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
-
+                                                  Content="{TemplateBinding SelectionBoxItem}" />
                                 <TextBlock x:Name="PlaceholderText"
-                                           Grid.Column="0"
                                            VerticalAlignment="Center"
-                                           Foreground="#FF6B7280"
+                                           Foreground="#9CA3AF"
                                            Text="Seleccionar"
-                                           Visibility="Hidden"
-                                           IsHitTestVisible="False" />
-
+                                           Visibility="Hidden" />
                                 <Path Grid.Column="1"
                                       Width="10"
                                       Height="6"
-                                      Margin="8,0,0,0"
+                                      Margin="6,0,0,0"
                                       VerticalAlignment="Center"
-                                      Fill="#FF475569"
+                                      Fill="#B6C2D2"
                                       Data="M 0 0 L 5 6 L 10 0 Z" />
                             </Grid>
-
-                            <ToggleButton Grid.ColumnSpan="2"
-                                          Focusable="False"
+                            <ToggleButton Focusable="False"
                                           Background="Transparent"
                                           BorderThickness="0"
                                           OverridesDefaultStyle="True"
@@ -145,7 +97,6 @@
                                     </ControlTemplate>
                                 </ToggleButton.Template>
                             </ToggleButton>
-
                             <Popup x:Name="PART_Popup"
                                    Placement="Bottom"
                                    AllowsTransparency="True"
@@ -154,41 +105,22 @@
                                 <Border Margin="0,6,0,0"
                                         MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
                                         CornerRadius="8"
-                                        Background="#FFFFFFFF"
-                                        BorderBrush="#FFCBD5E1"
-                                        BorderThickness="1"
-                                        SnapsToDevicePixels="True">
-                                    <ScrollViewer Margin="4"
-                                                  SnapsToDevicePixels="True"
-                                                  VerticalScrollBarVisibility="Auto">
-                                        <StackPanel IsItemsHost="True"
-                                                    KeyboardNavigation.DirectionalNavigation="Contained" />
+                                        Background="#243142"
+                                        BorderBrush="#475569"
+                                        BorderThickness="1">
+                                    <ScrollViewer Margin="4" VerticalScrollBarVisibility="Auto">
+                                        <StackPanel IsItemsHost="True" />
                                     </ScrollViewer>
                                 </Border>
                             </Popup>
                         </Grid>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="HasItems" Value="False">
-                                <Setter TargetName="PART_Popup" Property="MinHeight" Value="34" />
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ComboBorder" Property="Background" Value="#FFF1F5F9" />
-                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#FF94A3B8" />
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#FF60A5FA" />
-                                <Setter TargetName="ComboBorder" Property="BorderThickness" Value="1" />
-                            </Trigger>
                             <Trigger Property="SelectedIndex" Value="-1">
                                 <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden" />
                                 <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible" />
                             </Trigger>
-                            <Trigger Property="SelectedIndex" Value="0">
-                                <Setter TargetName="ContentSite" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="PlaceholderText" Property="Visibility" Value="Hidden" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ComboBorder" Property="Opacity" Value="0.6" />
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#60A5FA" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -196,34 +128,22 @@
             </Setter>
         </Style>
 
-        <!-- Estilo para los items del ComboBox -->
         <Style TargetType="ComboBoxItem">
-            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Foreground" Value="#E5E7EB" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Padding" Value="10,8" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="ItemBorder"
-                                CornerRadius="8"
-                                Background="{TemplateBinding Background}">
-                            <ContentPresenter Margin="{TemplateBinding Padding}"
-                                              HorizontalAlignment="Stretch"
-                                              VerticalAlignment="Center" />
+                        <Border x:Name="ItemBorder" CornerRadius="8" Background="{TemplateBinding Background}">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder"
-                                        Property="Background"
-                                        Value="#FFE2E8F0" />
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#334155" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder"
-                                        Property="Background"
-                                        Value="#FFBFDBFE" />
-                                <Setter Property="Foreground"
-                                        Value="Black" />
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#1D4ED8" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -231,230 +151,349 @@
             </Setter>
         </Style>
 
-        <!-- Estilo para TextBlock de titulo de seccion -->
-        <Style x:Key="SectionTitleTextBlockStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="14" />
+        <Style x:Key="OutlineButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Foreground" Value="#E5E7EB" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="#5F738D" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                CornerRadius="8"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#1F3A5B" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="#7FB0FF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.88" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <!-- Estilo para etiquetas secundarias -->
-        <Style x:Key="CaptionTextBlockStyle" TargetType="TextBlock">
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource OutlineButtonStyle}">
+            <Setter Property="Height" Value="52" />
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrushLight}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style x:Key="FileRowButtonStyle" TargetType="Button" BasedOn="{StaticResource OutlineButtonStyle}">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Background" Value="#273549" />
+            <Setter Property="BorderBrush" Value="#3F536C" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <Style x:Key="FileStatusTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#A8B4C5" />
             <Setter Property="FontSize" Value="11" />
-            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
-            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="TextAlignment" Value="Right" />
+            <Setter Property="Margin" Value="16,0,0,0" />
+            <Style.Triggers>
+                <Trigger Property="Tag" Value="True">
+                    <Setter Property="Foreground" Value="#4ADE80" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="FileIconBadgeStyle" TargetType="Border">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="CornerRadius" Value="11" />
+            <Setter Property="Background" Value="#334155" />
+            <Style.Triggers>
+                <Trigger Property="Tag" Value="True">
+                    <Setter Property="Background" Value="#22C55E" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="LogTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#CBD5E1" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+        </Style>
+
+        <Style TargetType="ProgressBar">
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Foreground" Value="#3B82F6" />
+            <Setter Property="Background" Value="#1B2532" />
+            <Setter Property="BorderBrush" Value="#33506E" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="1">
+                            <Grid ClipToBounds="True">
+                                <Rectangle x:Name="PART_Track"
+                                           Fill="Transparent" />
+                                <Border x:Name="PART_Indicator"
+                                        HorizontalAlignment="Left"
+                                        Background="{TemplateBinding Foreground}"
+                                        CornerRadius="7" />
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
-    <Grid Margin="19,16,16,60">
+    <Grid Margin="16">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" MinHeight="576.74" />
-            <RowDefinition Height="0*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Encabezado -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,12">
-            <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
-                <TextBlock Text="Migrador CUAD"
-                           FontSize="20"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource TextPrimaryBrush}" />
-                <TextBlock Text="Cargar los archivos, valida y copia a base de datos"
-                           FontSize="12"
-                           Foreground="{StaticResource TextSecondaryBrush}" />
-            </StackPanel>
-        </DockPanel>
+        <TextBlock Grid.Row="0"
+                   Text="Panel de Migracion de Datos"
+                   Foreground="White"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Margin="0,0,0,14" />
 
-        <!-- Contenido principal -->
-        <Grid Margin="0,0,0,21">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2.1*" MinWidth="360" />
-                <ColumnDefinition Width="2.9*" MinWidth="500" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Columna izquierda: seleccion de empleador, entidad y archivos -->
-            <Border Grid.Column="0"
-                    Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource CardBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="16"
-                    Margin="0,0,10,0">
-                <StackPanel>
-                    <!-- Seleccion de Empleador y Entidad -->
-                    <TextBlock Text="Contexto de Migracion"
-                               Style="{StaticResource SectionTitleTextBlockStyle}" />
-
-                    <Grid Margin="0,4,0,12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Entidad -->
-                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Text="Entidad"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       FontSize="12"
-                                       Margin="0,0,0,4" />
-                            <ComboBox ItemsSource="{Binding Entidades}"
-                                      SelectedItem="{Binding EntidadSeleccionada}"
-                                      DisplayMemberPath="Nombre" />
-                        </StackPanel>
-
-                        <!-- Empleador -->
-                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                            <TextBlock Text="Empleador"
-                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                       FontSize="12"
-                                       Margin="0,0,0,4" />
-                            <ComboBox ItemsSource="{Binding Empleador}"
-                                      SelectedItem="{Binding EmpleadorSeleccionado}"
-                                      DisplayMemberPath="Nombre" />
-                        </StackPanel>
-                    </Grid>
-
-                    <Separator Margin="0,4,0,12" />
-
-                    <!-- Seleccion de archivos -->
-                    <TextBlock Text="Archivos de Migracion"
-                               Style="{StaticResource SectionTitleTextBlockStyle}" />
-
-                    <StackPanel Margin="0,4,0,0">
-                        <!-- Catalogo de Servicios -->
-                        <StackPanel Margin="0,4,0,0">
-                            <Button Content="Seleccionar Catalogo de Servicios"
-                                    Command="{Binding SeleccionarCatalogoServiciosCommand}" />
-                            <TextBlock Text="{Binding ArchivoCatalogoServiciosNombre}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-                        </StackPanel>
-                        
-                        <!-- Categorias Socios -->
-                        <StackPanel Margin="0,4,0,6">
-                            <Button Content="Seleccionar Categorias Socios"
-                                    Command="{Binding SeleccionarCategoriasCommand}" />
-                            <TextBlock Text="{Binding ArchivoCategoriasNombre}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-                        </StackPanel>
-
-
-                        <!-- Consumos -->
-                        <StackPanel Margin="0,4,0,6">
-                            <Button Content="Seleccionar Consumos"
-                                    Command="{Binding SeleccionarConsumosCommand}" />
-                            <TextBlock Text="{Binding ArchivoConsumosNombre}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-                        </StackPanel>
-
-                        <!-- Consumos Detalle -->
-                        <StackPanel Margin="0,4,0,6">
-                            <Button Content="Seleccionar Consumos Detalle"
-                                    Command="{Binding SeleccionarConsumosDetalleCommand}" />
-                            <TextBlock Text="{Binding ArchivoConsumosDetalleNombre}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-                        </StackPanel>
-
-                        <!-- Consumos Servicios -->
-                        <StackPanel Margin="0,4,0,6">
-                            <Button Content="Seleccionar Consumos Servicios"
-                                    Command="{Binding SeleccionarServiciosCommand}" />
-                            <TextBlock Text="{Binding ArchivoServiciosNombre}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-                        </StackPanel>
-
-                        <!-- Padron Socios-->
-                        <StackPanel Margin="0,4,0,6">
-                            <Button Content="Seleccionar Padron Socios"
-                                    Command="{Binding SeleccionarPadronCommand}" />
-                            <TextBlock Text="{Binding ArchivoPadronNombre}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-                        </StackPanel>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- Columna derecha: validacion, logs y progreso -->
-            <Border Grid.Column="1"
-                    Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource CardBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="16"
-                    Margin="10,0,0,0">
+            <Border Grid.Column="0" Style="{StaticResource PanelCardStyle}" Margin="0,0,10,0">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- Acciones -->
-                    <WrapPanel Grid.Row="0" Margin="0,0,0,8">
-                        <Button Content="Validar archivos"
-                                Command="{Binding ValidarCommand}"
-                                Width="150" Height="30" Margin="0,0,8,8" />
-                        <Button Content="Migrar datos"
-                                Command="{Binding CopiarCommand}"
-                                Width="150" Height="30" Margin="0,0,8,8" />
-                        <Button Content="Limpiar entidad"
-                                Command="{Binding LimpiarBaseEntidadCommand}"
-                                Width="150" Height="30" Margin="0,0,8,8" />
-                        <Button Content="Exportar log"
-                                Command="{Binding ExportarLogCommand}"
-                                Width="150" Height="30" Margin="0,0,0,8" />
-                    </WrapPanel>
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" ><Run Text="Configuracion "/><Run Language="es-es" Text="y carga de"/><Run Text=" "/><Run Language="es-es" Text="a"/><Run Text="rchivos"/></TextBlock>
 
-                    <!-- Logs -->
-                    <StackPanel Grid.Row="1">
-                        <TextBlock Text="Log de validacion"
-                                   Style="{StaticResource SectionTitleTextBlockStyle}" />
-                        <Border BorderBrush="{StaticResource CardBorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8"
-                                Background="#FF020617"
-                                Padding="4"
-                                Margin="0,4,0,0">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <ItemsControl ItemsSource="{Binding Logs}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding}"
-                                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                                       FontSize="12"
-                                                       TextWrapping="Wrap" />
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </Border>
+                    <Grid Grid.Row="1" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="Entidad" Style="{StaticResource LabelStyle}" />
+                            <ComboBox ItemsSource="{Binding Entidades}" SelectedItem="{Binding EntidadSeleccionada}" DisplayMemberPath="Nombre" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                            <TextBlock Text="Empleador" Style="{StaticResource LabelStyle}" />
+                            <ComboBox ItemsSource="{Binding Empleador}" SelectedItem="{Binding EmpleadorSeleccionado}" DisplayMemberPath="Nombre" />
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Grid.Row="2">
+                        <Separator Margin="0,0,0,10" Background="#3D5068" />
+
+                        <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarCatalogoServiciosCommand}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="230" />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoCatalogoServiciosCargado}">
+                                    <TextBlock Text="{Binding ArchivoCatalogoServiciosIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Catalogo de Servicios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                <TextBlock Grid.Column="2" Text="{Binding ArchivoCatalogoServiciosEstado}" Tag="{Binding ArchivoCatalogoServiciosCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
+                        <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarCategoriasCommand}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="230" />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoCategoriasCargado}">
+                                    <TextBlock Text="{Binding ArchivoCategoriasIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Categorias Socios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                <TextBlock Grid.Column="2" Text="{Binding ArchivoCategoriasEstado}" Tag="{Binding ArchivoCategoriasCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
+                        <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarConsumosCommand}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="230" />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoConsumosCargado}">
+                                    <TextBlock Text="{Binding ArchivoConsumosIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Consumos" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                <TextBlock Grid.Column="2" Text="{Binding ArchivoConsumosEstado}" Tag="{Binding ArchivoConsumosCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
+                        <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarConsumosDetalleCommand}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="230" />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoConsumosDetalleCargado}">
+                                    <TextBlock Text="{Binding ArchivoConsumosDetalleIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Consumos Detalle" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                <TextBlock Grid.Column="2" Text="{Binding ArchivoConsumosDetalleEstado}" Tag="{Binding ArchivoConsumosDetalleCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
+                        <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarServiciosCommand}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="230" />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoServiciosCargado}">
+                                    <TextBlock Text="{Binding ArchivoServiciosIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Consumos Servicios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                <TextBlock Grid.Column="2" Text="{Binding ArchivoServiciosEstado}" Tag="{Binding ArchivoServiciosCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
+                        <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarPadronCommand}" Margin="0,0,0,0" Click="Button_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="230" />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoPadronCargado}">
+                                    <TextBlock Text="{Binding ArchivoPadronIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Padron Socios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                <TextBlock Grid.Column="2" Text="{Binding ArchivoPadronEstado}" Tag="{Binding ArchivoPadronCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
                     </StackPanel>
 
-                    <!-- Progreso -->
-                    <StackPanel Grid.Row="2" Margin="0,10,0,0">
-                        <TextBlock Text="Progreso de migracion"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   FontSize="12"
-                                   Margin="0,0,0,4" />
-                        <Grid Height="18">
-                            <ProgressBar Height="18"
-                                         Minimum="0"
-                                         Maximum="100"
-                                         Value="{Binding Progreso}" />
-                            <TextBlock Text="{Binding Progreso, StringFormat={}{0}%}"
-                                       Foreground="White"
-                                       FontSize="11"
-                                       FontWeight="SemiBold"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center" />
+                    <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Style="{StaticResource OutlineButtonStyle}" Content="Validar Archivos" Command="{Binding ValidarCommand}" Margin="0,0,8,0" />
+                            <Button Grid.Column="1" Style="{StaticResource OutlineButtonStyle}" Content="Limpiar Entidad" Command="{Binding LimpiarBaseEntidadCommand}" Margin="8,0,0,0" />
                         </Grid>
                     </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Style="{StaticResource PanelCardStyle}" Margin="10,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Procesamiento" Style="{StaticResource SectionTitleStyle}" />
+
+                    <Button Grid.Row="1"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Content="MIGRAR DATOS"
+                            Command="{Binding CopiarCommand}"
+                            Margin="0,0,0,12" Height="40" />
+
+                    <TextBlock Grid.Row="2" Text="Log de validacion" Style="{StaticResource SubsectionTitleStyle}" />
+
+                    <Border Grid.Row="3"
+                            Background="#020817"
+                            BorderBrush="#334155"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="8"
+                            Margin="0,0,0,10">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Logs}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Style="{StaticResource LogTextStyle}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
+                    <Grid Grid.Row="4" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0"
+                                Style="{StaticResource OutlineButtonStyle}"
+                                Content="Exportar Log"
+                                Command="{Binding ExportarLogCommand}"
+                                Margin="0,0,8,0" />
+                        <Button Grid.Column="1"
+                                Style="{StaticResource OutlineButtonStyle}"
+                                Content="Limpiar Log"
+                                Command="{Binding LimpiarUiCommand}"
+                                Margin="8,0,0,0" Click="Button_Click_1" />
+                    </Grid>
+
+                    <Grid Grid.Row="5" Height="18" Margin="0,0,0,6">
+                        <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progreso}" />
+                    </Grid>
+
+                    <TextBlock Grid.Row="6"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontSize="12"
+                               Text="{Binding Progreso, StringFormat=Progreso de migracion: {0}%}" />
                 </Grid>
             </Border>
         </Grid>
     </Grid>
 </Window>
-
-
-
 

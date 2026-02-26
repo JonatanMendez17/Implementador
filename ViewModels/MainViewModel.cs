@@ -62,6 +62,9 @@ namespace MigradorCUAD.ViewModels
                 if (SetProperty(ref _archivoCategorias, value))
                 {
                     OnPropertyChanged(nameof(ArchivoCategoriasNombre));
+                    OnPropertyChanged(nameof(ArchivoCategoriasCargado));
+                    OnPropertyChanged(nameof(ArchivoCategoriasEstado));
+                    OnPropertyChanged(nameof(ArchivoCategoriasIcono));
                 }
             }
         }
@@ -74,6 +77,9 @@ namespace MigradorCUAD.ViewModels
                 if (SetProperty(ref _archivoPadron, value))
                 {
                     OnPropertyChanged(nameof(ArchivoPadronNombre));
+                    OnPropertyChanged(nameof(ArchivoPadronCargado));
+                    OnPropertyChanged(nameof(ArchivoPadronEstado));
+                    OnPropertyChanged(nameof(ArchivoPadronIcono));
                 }
             }
         }
@@ -86,6 +92,9 @@ namespace MigradorCUAD.ViewModels
                 if (SetProperty(ref _archivoConsumos, value))
                 {
                     OnPropertyChanged(nameof(ArchivoConsumosNombre));
+                    OnPropertyChanged(nameof(ArchivoConsumosCargado));
+                    OnPropertyChanged(nameof(ArchivoConsumosEstado));
+                    OnPropertyChanged(nameof(ArchivoConsumosIcono));
                 }
             }
         }
@@ -98,6 +107,9 @@ namespace MigradorCUAD.ViewModels
                 if (SetProperty(ref _archivoConsumosDetalle, value))
                 {
                     OnPropertyChanged(nameof(ArchivoConsumosDetalleNombre));
+                    OnPropertyChanged(nameof(ArchivoConsumosDetalleCargado));
+                    OnPropertyChanged(nameof(ArchivoConsumosDetalleEstado));
+                    OnPropertyChanged(nameof(ArchivoConsumosDetalleIcono));
                 }
             }
         }
@@ -110,6 +122,9 @@ namespace MigradorCUAD.ViewModels
                 if (SetProperty(ref _archivoServicios, value))
                 {
                     OnPropertyChanged(nameof(ArchivoServiciosNombre));
+                    OnPropertyChanged(nameof(ArchivoServiciosCargado));
+                    OnPropertyChanged(nameof(ArchivoServiciosEstado));
+                    OnPropertyChanged(nameof(ArchivoServiciosIcono));
                 }
             }
         }
@@ -122,6 +137,9 @@ namespace MigradorCUAD.ViewModels
                 if (SetProperty(ref _archivoCatalogoServicios, value))
                 {
                     OnPropertyChanged(nameof(ArchivoCatalogoServiciosNombre));
+                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosCargado));
+                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosEstado));
+                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosIcono));
                 }
             }
         }
@@ -132,6 +150,24 @@ namespace MigradorCUAD.ViewModels
         public string ArchivoConsumosDetalleNombre => GetNombreArchivo(ArchivoConsumosDetalle);
         public string ArchivoServiciosNombre => GetNombreArchivo(ArchivoServicios);
         public string ArchivoCatalogoServiciosNombre => GetNombreArchivo(ArchivoCatalogoServicios);
+        public bool ArchivoCategoriasCargado => !string.IsNullOrWhiteSpace(ArchivoCategorias);
+        public bool ArchivoPadronCargado => !string.IsNullOrWhiteSpace(ArchivoPadron);
+        public bool ArchivoConsumosCargado => !string.IsNullOrWhiteSpace(ArchivoConsumos);
+        public bool ArchivoConsumosDetalleCargado => !string.IsNullOrWhiteSpace(ArchivoConsumosDetalle);
+        public bool ArchivoServiciosCargado => !string.IsNullOrWhiteSpace(ArchivoServicios);
+        public bool ArchivoCatalogoServiciosCargado => !string.IsNullOrWhiteSpace(ArchivoCatalogoServicios);
+        public string ArchivoCategoriasEstado => BuildEstadoArchivo(ArchivoCategoriasNombre, ArchivoCategoriasCargado);
+        public string ArchivoPadronEstado => BuildEstadoArchivo(ArchivoPadronNombre, ArchivoPadronCargado);
+        public string ArchivoConsumosEstado => BuildEstadoArchivo(ArchivoConsumosNombre, ArchivoConsumosCargado);
+        public string ArchivoConsumosDetalleEstado => BuildEstadoArchivo(ArchivoConsumosDetalleNombre, ArchivoConsumosDetalleCargado);
+        public string ArchivoServiciosEstado => BuildEstadoArchivo(ArchivoServiciosNombre, ArchivoServiciosCargado);
+        public string ArchivoCatalogoServiciosEstado => BuildEstadoArchivo(ArchivoCatalogoServiciosNombre, ArchivoCatalogoServiciosCargado);
+        public string ArchivoCategoriasIcono => ArchivoCategoriasCargado ? "✓" : "↑";
+        public string ArchivoPadronIcono => ArchivoPadronCargado ? "✓" : "↑";
+        public string ArchivoConsumosIcono => ArchivoConsumosCargado ? "✓" : "↑";
+        public string ArchivoConsumosDetalleIcono => ArchivoConsumosDetalleCargado ? "✓" : "↑";
+        public string ArchivoServiciosIcono => ArchivoServiciosCargado ? "✓" : "↑";
+        public string ArchivoCatalogoServiciosIcono => ArchivoCatalogoServiciosCargado ? "✓" : "↑";
 
         public int Progreso
         {
@@ -170,6 +206,7 @@ namespace MigradorCUAD.ViewModels
         public ICommand ValidarCommand { get; }
         public ICommand CopiarCommand { get; }
         public ICommand ExportarLogCommand { get; }
+        public ICommand LimpiarUiCommand { get; }
         public ICommand LimpiarBaseEntidadCommand { get; }
 
         public MainViewModel()
@@ -179,7 +216,10 @@ namespace MigradorCUAD.ViewModels
             _migrationService = new MigrationService(new MigrationMapperService());
 
             Logs = new ObservableCollection<string>();
-            Logs.Add("Esperando carga...");
+            Logs.Add("Esperando carga de archivos para validacion...");
+            Logs.Add("Padron Socios: No cargado");
+            Logs.Add("Padron Socios: No cargado");
+            Logs.Add("Padron Socios: No cargado");
             Progreso = 0;
 
             using (var db = new AppDbContext())
@@ -187,6 +227,11 @@ namespace MigradorCUAD.ViewModels
                 Empleador = new ObservableCollection<Empleador>(db.GetEmpleadores());
                 Entidades = new ObservableCollection<Entidad>(db.GetEntidades());
             }
+
+            Entidades.Insert(0, new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" });
+            Empleador.Insert(0, new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
+            EntidadSeleccionada = Entidades.FirstOrDefault();
+            EmpleadorSeleccionado = Empleador.FirstOrDefault();
 
             SeleccionarCategoriasCommand = new RelayCommand(_ => SeleccionarArchivo("Categorias"));
             SeleccionarPadronCommand = new RelayCommand(_ => SeleccionarArchivo("Padron"));
@@ -197,6 +242,7 @@ namespace MigradorCUAD.ViewModels
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
             CopiarCommand = new SimpleAsyncCommand(CopiarABaseAsync);
             ExportarLogCommand = new RelayCommand(_ => ExportarLog());
+            LimpiarUiCommand = new RelayCommand(_ => LimpiarSoloUi(), _ => !EstaProcesando);
             LimpiarBaseEntidadCommand = new RelayCommand(LimpiarBaseEntidad, PuedeLimpiarBaseEntidad);
         }
 
@@ -252,14 +298,14 @@ namespace MigradorCUAD.ViewModels
         {
             Logs.Clear();
 
-            if (EntidadSeleccionada == null)
+            if (!HasEntidadSeleccionadaReal())
             {
                 Logs.Add("Debe seleccionar una entidad para validar.");
                 ValidacionFinalizada = false;
                 return;
             }
 
-            if (EmpleadorSeleccionado == null)
+            if (!HasEmpleadorSeleccionadoReal())
             {
                 Logs.Add("Aviso: no se selecciono empleador.");
             }
@@ -298,7 +344,8 @@ namespace MigradorCUAD.ViewModels
                 return;
             }
 
-            Logs.Add($"OK: la entidad de archivos coincide con la seleccionada ({EntidadSeleccionada.Nombre} / {EntidadSeleccionada.EntId}).");
+            var entidadSeleccionada = EntidadSeleccionada!;
+            Logs.Add($"OK: la entidad de archivos coincide con la seleccionada ({entidadSeleccionada.Nombre} / {entidadSeleccionada.EntId}).");
 
             var sinDatosPrevios = _generalValidationService.ValidateNoExistingDataForEntidad(
                 entidadComun,
@@ -310,14 +357,15 @@ namespace MigradorCUAD.ViewModels
 
         private async Task CopiarABaseAsync()
         {
-            if (EntidadSeleccionada == null)
+            if (!HasEntidadSeleccionadaReal())
             {
                 Logs.Add("Debe seleccionar una entidad antes de migrar.");
                 return;
             }
 
+            var entidadSeleccionada = EntidadSeleccionada!;
             var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
-            Logs.Add($"Contexto de migracion: Entidad='{EntidadSeleccionada.Nombre}' (ID {EntidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
+            Logs.Add($"Contexto de migracion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
 
             if (!ValidacionFinalizada || !_validationResult.HuboCarga)
             {
@@ -355,22 +403,23 @@ namespace MigradorCUAD.ViewModels
 
         private bool PuedeLimpiarBaseEntidad(object? parameter)
         {
-            return EntidadSeleccionada != null && !EstaProcesando;
+            return HasEntidadSeleccionadaReal() && !EstaProcesando;
         }
 
         private void LimpiarBaseEntidad(object? parameter)
         {
-            if (EntidadSeleccionada == null)
+            if (!HasEntidadSeleccionadaReal())
             {
                 Logs.Add("Debe seleccionar una entidad para limpiar la base.");
                 return;
             }
 
+            var entidadSeleccionada = EntidadSeleccionada!;
             var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
-            var entidadNombre = EntidadSeleccionada.Nombre ?? EntidadSeleccionada.EntId.ToString();
+            var entidadNombre = entidadSeleccionada.Nombre ?? entidadSeleccionada.EntId.ToString();
 
             var confirmacion = DialogService.Show(
-                $"Se eliminaran los datos importados de la entidad '{entidadNombre}' (ID {EntidadSeleccionada.EntId}) en el contexto del empleador '{empleadorInfo}'.\n\n¿Desea continuar?",
+                $"Se eliminaran los datos importados de la entidad '{entidadNombre}' (ID {entidadSeleccionada.EntId}) en el contexto del empleador '{empleadorInfo}'.\n\n¿Desea continuar?",
                 "Confirmar limpieza de base",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
@@ -385,8 +434,8 @@ namespace MigradorCUAD.ViewModels
             {
                 using var db = new AppDbContext();
                 var eliminados = db.DeleteImportedDataForEntidad(
-                    EntidadSeleccionada.Nombre ?? string.Empty,
-                    EntidadSeleccionada.EntId);
+                    entidadSeleccionada.Nombre ?? string.Empty,
+                    entidadSeleccionada.EntId);
 
                 var totalEliminado = eliminados.Padron + eliminados.ConsumoCab + eliminados.ConsumoDet;
                 Logs.Add($"Limpieza ejecutada para entidad '{entidadNombre}' y empleador '{empleadorInfo}'.");
@@ -425,27 +474,54 @@ namespace MigradorCUAD.ViewModels
             }
         }
 
+        private void LimpiarSoloUi()
+        {
+            if (EstaProcesando)
+            {
+                return;
+            }
+
+            EntidadSeleccionada = Entidades.FirstOrDefault();
+            EmpleadorSeleccionado = Empleador.FirstOrDefault();
+            ArchivoCategorias = null;
+            ArchivoPadron = null;
+            ArchivoConsumos = null;
+            ArchivoConsumosDetalle = null;
+            ArchivoServicios = null;
+            ArchivoCatalogoServicios = null;
+            ValidacionFinalizada = false;
+            Progreso = 0;
+            _validationResult = new MigrationValidationResult();
+
+            Logs.Clear();
+            Logs.Add("Esperando carga de archivos para validacion...");
+            Logs.Add("Padron Socios: No cargado");
+            Logs.Add("Padron Socios: No cargado");
+            Logs.Add("Padron Socios: No cargado");
+        }
+
         private bool MatchesSelectedEntidad(string entidadComun)
         {
-            if (EntidadSeleccionada == null || string.IsNullOrWhiteSpace(entidadComun))
+            var entidadSeleccionada = EntidadSeleccionada;
+            if (entidadSeleccionada == null || entidadSeleccionada.EntId <= 0 || string.IsNullOrWhiteSpace(entidadComun))
             {
                 return false;
             }
 
             var entidadNormalizada = entidadComun.Trim();
 
-            if (!string.IsNullOrWhiteSpace(EntidadSeleccionada.Nombre) &&
-                string.Equals(entidadNormalizada, EntidadSeleccionada.Nombre.Trim(), StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(entidadSeleccionada.Nombre) &&
+                string.Equals(entidadNormalizada, entidadSeleccionada.Nombre.Trim(), StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
 
             if (int.TryParse(entidadNormalizada, out var entidadId))
             {
-                return entidadId == EntidadSeleccionada.EntId;
+                return entidadId == entidadSeleccionada.EntId;
             }
 
-            return string.Equals(entidadNormalizada, EntidadSeleccionada.EntId.ToString(), StringComparison.OrdinalIgnoreCase);
+            return string.Equals(entidadNormalizada, entidadSeleccionada.EntId.ToString(), StringComparison.OrdinalIgnoreCase);
         }
 
         private void ExportarLog()
@@ -486,6 +562,21 @@ namespace MigradorCUAD.ViewModels
         private static string GetNombreArchivo(string? ruta)
         {
             return string.IsNullOrWhiteSpace(ruta) ? string.Empty : Path.GetFileName(ruta);
+        }
+
+        private static string BuildEstadoArchivo(string nombreArchivo, bool cargado)
+        {
+            return cargado ? $"{nombreArchivo} (Cargado)" : "Pendiente";
+        }
+
+        private bool HasEntidadSeleccionadaReal()
+        {
+            return EntidadSeleccionada != null && EntidadSeleccionada.EntId > 0;
+        }
+
+        private bool HasEmpleadorSeleccionadoReal()
+        {
+            return EmpleadorSeleccionado != null && EmpleadorSeleccionado.EmrId > 0;
         }
     }
 }
