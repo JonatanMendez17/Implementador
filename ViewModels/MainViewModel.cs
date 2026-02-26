@@ -320,7 +320,7 @@ namespace MigradorCUAD.ViewModels
 
             if (!ValidacionFinalizada || !_validationResult.HuboCarga)
             {
-                var resultado = MessageBox.Show(
+                var resultado = DialogService.Show(
                     "Algunas validaciones no pasaron o la carga fue descartada. Desea migrar igualmente?",
                     "Confirmar migracion",
                     MessageBoxButton.YesNo,
@@ -368,7 +368,7 @@ namespace MigradorCUAD.ViewModels
             var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
             var entidadNombre = EntidadSeleccionada.Nombre ?? EntidadSeleccionada.EntId.ToString();
 
-            var confirmacion = MessageBox.Show(
+            var confirmacion = DialogService.Show(
                 $"Se eliminaran los datos importados de la entidad '{entidadNombre}' (ID {EntidadSeleccionada.EntId}) en el contexto del empleador '{empleadorInfo}'.\n\n¿Desea continuar?",
                 "Confirmar limpieza de base",
                 MessageBoxButton.YesNo,
@@ -403,7 +403,7 @@ namespace MigradorCUAD.ViewModels
             catch (Exception ex)
             {
                 Logs.Add($"Error al limpiar la base para la entidad seleccionada: {ex.Message}");
-                MessageBox.Show(
+                DialogService.Show(
                     $"No se pudo limpiar la base.\n{ex.Message}",
                     "Limpieza de base",
                     MessageBoxButton.OK,
@@ -473,12 +473,12 @@ namespace MigradorCUAD.ViewModels
             {
                 File.WriteAllLines(dialog.FileName, Logs);
                 Logs.Add($"Log exportado a: {dialog.FileName}");
-                MessageBox.Show($"Log generado en:\n{dialog.FileName}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Information);
+                DialogService.Show($"Log generado en:\n{dialog.FileName}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 Logs.Add($"Error al exportar el log: {ex.Message}");
-                MessageBox.Show($"No se pudo exportar el log.\n{ex.Message}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Error);
+                DialogService.Show($"No se pudo exportar el log.\n{ex.Message}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
