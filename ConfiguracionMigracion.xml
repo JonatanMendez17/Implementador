@@ -4,7 +4,11 @@
        Debe coincidir exactamente con los encabezados del CSV exportado desde Excel -->
   <Archivo nombre="Categorias">
     <Columnas>
-      <Columna nombre="Entidad" tipo="texto" largoMaximo="10" />
+      <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <Alias>Entidad</Alias>
+        <Alias>Institucion</Alias>
+        <Alias>Institución</Alias>
+      </Columna>
       <Columna nombre="Código Categoría" tipo="texto" largoMaximo="10" />
       <Columna nombre="Categoría" tipo="texto" largoMaximo="50" />
       <Columna nombre="Descripción Categoría" tipo="texto" largoMaximo="100" />
@@ -19,7 +23,11 @@
        Entidad, Nro Socio, Fecha Alta Socio, Documento, CUIT, Beneficio, Código Categoría -->
   <Archivo nombre="Padron">
     <Columnas>
-      <Columna nombre="Entidad" tipo="texto" largoMaximo="10" />
+      <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <Alias>Entidad</Alias>
+        <Alias>Institucion</Alias>
+        <Alias>Institución</Alias>
+      </Columna>
       <Columna nombre="Nro Socio" tipo="int" largoMaximo="10" />
       <Columna nombre="Fecha Alta Socio" tipo="fecha" largoMaximo="20" />
       <Columna nombre="Documento" tipo="texto" largoMaximo="20" />
@@ -34,7 +42,11 @@
        Entidad, Nro Socio, CUIT, Beneficio, Código, Consumo, Cuotas Pendientes, Monto Deuda, Concepto Descuento -->
   <Archivo nombre="Consumos">
     <Columnas>
-      <Columna nombre="Entidad" tipo="texto" largoMaximo="10" />
+      <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <Alias>Entidad</Alias>
+        <Alias>Institucion</Alias>
+        <Alias>Institución</Alias>
+      </Columna>
       <Columna nombre="Nro Socio" tipo="int" largoMaximo="10" />
       <Columna nombre="CUIT" tipo="texto" largoMaximo="11" />
       <Columna nombre="Beneficio" tipo="texto" largoMaximo="20" />
@@ -51,7 +63,11 @@
        Entidad, Código Consumo, Nro Cuota, Fecha Vencimiento, Monto -->
   <Archivo nombre="ConsumosDetalle">
     <Columnas>
-      <Columna nombre="Entidad" tipo="texto" largoMaximo="10" />
+      <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <Alias>Entidad</Alias>
+        <Alias>Institucion</Alias>
+        <Alias>Institución</Alias>
+      </Columna>
       <Columna nombre="Código Consumo" tipo="int" largoMaximo="10" />
       <Columna nombre="Nro Cuota" tipo="int" largoMaximo="5" />
       <Columna nombre="Fecha Vencimiento" tipo="fecha" largoMaximo="20" />
@@ -64,7 +80,11 @@
        Entidad, Nro de Socio, CUIT, Nro Beneficio, Código Consumo, Importe Cuota, Concepto Descuento -->
   <Archivo nombre="Servicios">
     <Columnas>
-      <Columna nombre="Entidad" tipo="texto" largoMaximo="10" />
+      <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <Alias>Entidad</Alias>
+        <Alias>Institucion</Alias>
+        <Alias>Institución</Alias>
+      </Columna>
       <Columna nombre="Nro de Socio" tipo="int" largoMaximo="10" />
       <Columna nombre="CUIT" tipo="texto" largoMaximo="11" />
       <Columna nombre="Nro Beneficio" tipo="texto" largoMaximo="20" />
@@ -79,7 +99,11 @@
        Entidad, Servicio, Importe, Comentarios / Info de Servicio -->
   <Archivo nombre="CatalogoServicios">
     <Columnas>
-      <Columna nombre="Entidad" tipo="texto" largoMaximo="10" />
+      <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <Alias>Entidad</Alias>
+        <Alias>Institucion</Alias>
+        <Alias>Institución</Alias>
+      </Columna>
       <Columna nombre="Servicio" tipo="texto" largoMaximo="100" />
       <Columna nombre="Importe" tipo="decimal" largoMaximo="15" />
       <Columna nombre="Comentarios / Info de Servicio" tipo="texto" largoMaximo="255" />

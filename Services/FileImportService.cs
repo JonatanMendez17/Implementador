@@ -695,13 +695,41 @@ namespace MigradorCUAD.Services
                     return null;
                 }
 
-                // Modo prueba: validaciones estructurales deshabilitadas.
-                //var encabezado = lineas[0].Split(',');
-                //if (encabezado.Length != columnasConfig.Count) return null;
-                //for (int i = 0; i < encabezado.Length; i++)
-                //{
-                //    if (encabezado[i] != columnasConfig[i].Nombre) return null;
-                //}
+                var encabezados = lineas[0].Split(',')
+                    .Select(v => v.Trim())
+                    .ToList();
+                var indicePorEncabezadoNormalizado = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                for (int i = 0; i < encabezados.Count; i++)
+                {
+                    var normalizado = NormalizeHeader(encabezados[i]);
+                    if (!indicePorEncabezadoNormalizado.ContainsKey(normalizado))
+                    {
+                        indicePorEncabezadoNormalizado[normalizado] = i;
+                    }
+                }
+
+                var indiceColumnaPorClave = new Dictionary<string, int?>(StringComparer.OrdinalIgnoreCase);
+                foreach (var config in columnasConfig)
+                {
+                    var indice = ResolveColumnIndex(config, indicePorEncabezadoNormalizado);
+                    indiceColumnaPorClave[config.Clave] = indice;
+
+                    if (indice.HasValue)
+                    {
+                        var nombreColumnaDetectada = encabezados[indice.Value];
+                        log($"Columna detectada en {nombreLogico}: '{config.Clave}' -> '{nombreColumnaDetectada}'.");
+                        continue;
+                    }
+
+                    if (config.Requerida)
+                    {
+                        var aliasEsperados = (config.Alias?.Count > 0 ? config.Alias : new List<string> { config.Nombre });
+                        log($"ERROR {nombreLogico}: falta columna requerida para '{config.Clave}'. Alias esperados: {string.Join(", ", aliasEsperados)}.");
+                        return null;
+                    }
+
+                    log($"Aviso {nombreLogico}: no se detecto columna opcional '{config.Clave}'.");
+                }
 
                 var registros = new List<Dictionary<string, string>>();
                 var clavesUnicas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -717,8 +745,11 @@ namespace MigradorCUAD.Services
 
                     for (int j = 0; j < columnasConfig.Count; j++)
                     {
-                        var valor = j < valores.Length ? valores[j] : string.Empty;
                         var config = columnasConfig[j];
+                        var indiceColumna = indiceColumnaPorClave[config.Clave];
+                        var valor = indiceColumna.HasValue && indiceColumna.Value < valores.Length
+                            ? valores[indiceColumna.Value]
+                            : string.Empty;
 
                         // Modo prueba: validacion de tipo deshabilitada.
                         //var config = columnasConfig[j];
@@ -726,11 +757,11 @@ namespace MigradorCUAD.Services
 
                         if (!ValidateGeneralRules(valor, config, out var error))
                         {
-                            log($"ERROR {nombreLogico} fila {i + 1}, columna '{config.Nombre}': {error}");
+                            log($"ERROR {nombreLogico} fila {i + 1}, columna '{config.Clave}': {error}");
                             filaEsValida = false;
                         }
 
-                        fila[config.Nombre] = valor;
+                        fila[config.Clave] = valor;
                     }
 
                     if (filaEsValida)
@@ -760,6 +791,66 @@ namespace MigradorCUAD.Services
                 log($"Error al cargar {nombreLogico}: {ex.Message}");
                 return null;
             }
+        }
+
+        private static int? ResolveColumnIndex(
+            ColumnaConfiguracion config,
+            Dictionary<string, int> indicePorEncabezadoNormalizado)
+        {
+            var candidatos = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(config.Nombre))
+            {
+                candidatos.Add(config.Nombre);
+            }
+
+            if (config.Alias != null && config.Alias.Count > 0)
+            {
+                candidatos.AddRange(config.Alias.Where(a => !string.IsNullOrWhiteSpace(a)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(config.Clave))
+            {
+                candidatos.Add(config.Clave);
+            }
+
+            foreach (var alias in candidatos.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var normalizado = NormalizeHeader(alias);
+                if (indicePorEncabezadoNormalizado.TryGetValue(normalizado, out var indice))
+                {
+                    return indice;
+                }
+            }
+
+            return null;
+        }
+
+        private static string NormalizeHeader(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return string.Empty;
+            }
+
+            var decomposed = input.Trim().Normalize(NormalizationForm.FormD);
+            var builder = new StringBuilder(decomposed.Length);
+
+            foreach (var ch in decomposed)
+            {
+                var category = CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (category == UnicodeCategory.NonSpacingMark)
+                {
+                    continue;
+                }
+
+                if (char.IsLetterOrDigit(ch))
+                {
+                    builder.Append(char.ToUpperInvariant(ch));
+                }
+            }
+
+            return builder.ToString();
         }
 
         private static bool ValidateDataType(string valor, ColumnaConfiguracion config)
