@@ -16,6 +16,7 @@ namespace MigradorCUAD.ViewModels
         private readonly GeneralValidationService _generalValidationService;
         private readonly MigrationService _migrationService;
         private MigrationValidationResult _validationResult = new();
+        private bool _suppressContextSelectionEffects;
 
         private Empleador? _empleadorSeleccionado;
         private Entidad? _entidadSeleccionada;
@@ -32,13 +33,25 @@ namespace MigradorCUAD.ViewModels
         public Empleador? EmpleadorSeleccionado
         {
             get => _empleadorSeleccionado;
-            set => SetProperty(ref _empleadorSeleccionado, value);
+            set
+            {
+                if (SetProperty(ref _empleadorSeleccionado, value) && !_suppressContextSelectionEffects)
+                {
+                    InvalidateValidationState("Se actualizo el empleador seleccionado. Se reinicio el estado de validacion.");
+                }
+            }
         }
 
         public Entidad? EntidadSeleccionada
         {
             get => _entidadSeleccionada;
-            set => SetProperty(ref _entidadSeleccionada, value);
+            set
+            {
+                if (SetProperty(ref _entidadSeleccionada, value) && !_suppressContextSelectionEffects)
+                {
+                    InvalidateValidationState("Se actualizo la entidad seleccionada. Se reinicio el estado de validacion.");
+                }
+            }
         }
 
         public string? ArchivoCategorias
@@ -191,9 +204,19 @@ namespace MigradorCUAD.ViewModels
         {
             Logs.Clear();
 
-            // Modo prueba: validaciones deshabilitadas para permitir carga directa.
-            //if (EmpleadorSeleccionado == null) { ... }
-            //if (EntidadSeleccionada == null) { ... }
+            if (EntidadSeleccionada == null)
+            {
+                Logs.Add("Debe seleccionar una entidad para validar.");
+                ValidacionFinalizada = false;
+                return;
+            }
+
+            if (EmpleadorSeleccionado == null)
+            {
+                Logs.Add("Aviso: no se selecciono empleador.");
+            }
+
+            // Modo prueba: validaciones de archivos obligatorios deshabilitadas para permitir carga parcial.
             //if (string.IsNullOrWhiteSpace(ArchivoCategorias)) { ... }
             //if (string.IsNullOrWhiteSpace(ArchivoPadron)) { ... }
             //if (string.IsNullOrWhiteSpace(ArchivoConsumos)) { ... }
@@ -220,6 +243,15 @@ namespace MigradorCUAD.ViewModels
                 return;
             }
 
+            if (!MatchesSelectedEntidad(entidadComun))
+            {
+                Logs.Add($"ERROR: la entidad detectada en archivos ('{entidadComun}') no coincide con la entidad seleccionada.");
+                ValidacionFinalizada = false;
+                return;
+            }
+
+            Logs.Add($"OK: la entidad de archivos coincide con la seleccionada ({EntidadSeleccionada.Nombre} / {EntidadSeleccionada.EntId}).");
+
             var sinDatosPrevios = _generalValidationService.ValidateNoExistingDataForEntidad(
                 entidadComun,
                 EmpleadorSeleccionado,
@@ -240,6 +272,15 @@ namespace MigradorCUAD.ViewModels
 
         private async Task CopiarABaseAsync()
         {
+            if (EntidadSeleccionada == null)
+            {
+                Logs.Add("Debe seleccionar una entidad antes de migrar.");
+                return;
+            }
+
+            var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
+            Logs.Add($"Contexto de migracion: Entidad='{EntidadSeleccionada.Nombre}' (ID {EntidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
+
             if (!ValidacionFinalizada || !_validationResult.HuboCarga)
             {
                 var resultado = MessageBox.Show(
@@ -276,8 +317,10 @@ namespace MigradorCUAD.ViewModels
 
         private void LimpiarPantalla()
         {
+            _suppressContextSelectionEffects = true;
             EmpleadorSeleccionado = null;
             EntidadSeleccionada = null;
+            _suppressContextSelectionEffects = false;
             ArchivoCategorias = null;
             ArchivoPadron = null;
             ArchivoConsumos = null;
@@ -289,6 +332,42 @@ namespace MigradorCUAD.ViewModels
             EstaProcesando = false;
             ValidacionFinalizada = false;
             _validationResult = new MigrationValidationResult();
+        }
+
+        private void InvalidateValidationState(string mensaje)
+        {
+            var teniaEstado = _validationResult.HuboCarga || ValidacionFinalizada || Progreso > 0;
+            ValidacionFinalizada = false;
+            Progreso = 0;
+            _validationResult = new MigrationValidationResult();
+
+            if (teniaEstado)
+            {
+                Logs.Add(mensaje);
+            }
+        }
+
+        private bool MatchesSelectedEntidad(string entidadComun)
+        {
+            if (EntidadSeleccionada == null || string.IsNullOrWhiteSpace(entidadComun))
+            {
+                return false;
+            }
+
+            var entidadNormalizada = entidadComun.Trim();
+
+            if (!string.IsNullOrWhiteSpace(EntidadSeleccionada.Nombre) &&
+                string.Equals(entidadNormalizada, EntidadSeleccionada.Nombre.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (int.TryParse(entidadNormalizada, out var entidadId))
+            {
+                return entidadId == EntidadSeleccionada.EntId;
+            }
+
+            return string.Equals(entidadNormalizada, EntidadSeleccionada.EntId.ToString(), StringComparison.OrdinalIgnoreCase);
         }
 
         private void ExportarLog()
