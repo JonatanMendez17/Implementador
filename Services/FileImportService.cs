@@ -78,6 +78,7 @@ namespace ImplementadorCUAD.Services
             ApplyConsumosSpecificValidations(result, log);
             ApplyConsumosDetalleSpecificValidations(result, log);
             ApplyServiciosSpecificValidations(result, log);
+            ApplyCatalogoServiciosSpecificValidations(result, log);
 
             if (result.HuboCarga)
             {
@@ -89,6 +90,95 @@ namespace ImplementadorCUAD.Services
             }
 
             return result;
+        }
+
+        private static void ApplyCatalogoServiciosSpecificValidations(ImplementacionValidationResult result, Action<string> log)
+        {
+            if (result.DatosCatalogoServiciosValidados.Count == 0)
+            {
+                return;
+            }
+
+            List<CatalogoServicioCuadRef> catalogoCuad;
+            try
+            {
+                using var db = new AppDbContext();
+                catalogoCuad = db.GetCatalogoServiciosCuad();
+            }
+            catch (Exception ex)
+            {
+                log($"ERROR CatalogoServicios: no se pudo leer el catalogo de servicios de CUAD. {ex.Message}");
+                result.DatosCatalogoServiciosValidados = new List<Dictionary<string, string>>();
+                return;
+            }
+
+            var catalogoPorEntidadServicio = catalogoCuad
+                .ToDictionary(
+                    c => $"{c.Entidad.Trim()}|{c.Servicio.Trim()}",
+                    c => c,
+                    StringComparer.OrdinalIgnoreCase);
+
+            var filtrado = new List<Dictionary<string, string>>();
+            var rechazadas = 0;
+
+            for (int i = 0; i < result.DatosCatalogoServiciosValidados.Count; i++)
+            {
+                var fila = result.DatosCatalogoServiciosValidados[i];
+                var numeroFila = i + 2;
+                var filaValida = true;
+
+                var entidad = GetFirstValue(fila, "Entidad");
+                var servicio = GetFirstValue(fila, "Servicio");
+                var importeTexto = GetFirstValue(fila, "Importe");
+
+                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
+                {
+                    log($"ERROR CatalogoServicios fila {numeroFila}: entidad o servicio vacio.");
+                    filaValida = false;
+                }
+                else
+                {
+                    var clave = $"{entidad.Trim()}|{servicio.Trim()}";
+                    if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCuad))
+                    {
+                        log($"ERROR CatalogoServicios fila {numeroFila}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
+                        filaValida = false;
+                    }
+                    else
+                    {
+                        if (!TryParseDecimalFlexible(importeTexto, out var importeArchivo))
+                        {
+                            log($"ERROR CatalogoServicios fila {numeroFila}: importe '{importeTexto}' invalido.");
+                            filaValida = false;
+                        }
+                        else
+                        {
+                            var diferencia = Math.Abs(importeArchivo - refCuad.Importe);
+                            if (diferencia > 0.01m)
+                            {
+                                log($"ERROR CatalogoServicios fila {numeroFila}: importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
+                                filaValida = false;
+                            }
+                        }
+                    }
+                }
+
+                if (filaValida)
+                {
+                    filtrado.Add(fila);
+                }
+                else
+                {
+                    rechazadas++;
+                }
+            }
+
+            if (rechazadas > 0)
+            {
+                log($"Resumen validacion especifica CatalogoServicios: aceptadas={filtrado.Count}, rechazadas={rechazadas}.");
+            }
+
+            result.DatosCatalogoServiciosValidados = filtrado;
         }
 
         private static void ApplyPadronSpecificValidations(ImplementacionValidationResult result, Action<string> log)
@@ -115,6 +205,32 @@ namespace ImplementadorCUAD.Services
                 }
             }
 
+            // Categorias de CUAD por entidad (referencia externa)
+            Dictionary<string, List<CategoriaCuadRef>> categoriasCuadPorEntidad;
+            try
+            {
+                using var db = new AppDbContext();
+                categoriasCuadPorEntidad = db.GetCategoriasCuad()
+                    .GroupBy(c => c.Entidad.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+
+                // Validar que haya a lo sumo una categoria predeterminada por entidad
+                foreach (var kvp in categoriasCuadPorEntidad)
+                {
+                    var entidadRef = kvp.Key;
+                    var predeterminadas = kvp.Value.Count(c => c.EsPredeterminada);
+                    if (predeterminadas > 1)
+                    {
+                        log($"ERROR Categorias: la entidad '{entidadRef}' tiene mas de una categoria predeterminada en CUAD.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log($"ERROR Categorias: no se pudo leer categorias de CUAD. {ex.Message}");
+                categoriasCuadPorEntidad = new Dictionary<string, List<CategoriaCuadRef>>(StringComparer.OrdinalIgnoreCase);
+            }
+
             var padronFiltrado = new List<Dictionary<string, string>>();
             var sociosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var socioCategoria = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -128,6 +244,7 @@ namespace ImplementadorCUAD.Services
                 var numeroFila = i + 2;
                 var filaValida = true;
 
+                var entidad = GetFirstValue(fila, "Entidad");
                 var nroSocio = GetFirstValue(fila, "Nro Socio");
                 var codigoCategoria = GetFirstValue(fila, "Codigo Categoria", "Código Categoría", "CÃ³digo CategorÃ­a");
                 var nombreCategoriaPadron = GetFirstValue(fila, "Categoria", "Categoría", "CategorÃ­a");
@@ -165,6 +282,30 @@ namespace ImplementadorCUAD.Services
                 {
                     log($"ERROR Padron fila {numeroFila}: categoria informada no valida.");
                     filaValida = false;
+                }
+
+                // Validacion contra categorias de CUAD (por entidad)
+                if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(codigoCategoria))
+                {
+                    var entidadClave = entidad.Trim();
+                    if (categoriasCuadPorEntidad.TryGetValue(entidadClave, out var categoriasEntidad))
+                    {
+                        var codigoNorm = codigoCategoria.Trim();
+                        var categoriaCuad = categoriasEntidad
+                            .FirstOrDefault(c =>
+                                string.Equals(c.CodigoCategoria, codigoNorm, StringComparison.OrdinalIgnoreCase));
+
+                        if (categoriaCuad == null)
+                        {
+                            log($"ERROR Padron fila {numeroFila}: categoria '{codigoCategoria}' no existe en CUAD para la entidad '{entidadClave}'.");
+                            filaValida = false;
+                        }
+                    }
+                    else
+                    {
+                        log($"ERROR Padron fila {numeroFila}: entidad '{entidad}' no tiene categorias definidas en CUAD.");
+                        filaValida = false;
+                    }
                 }
 
                 if (!string.IsNullOrWhiteSpace(documento) && !documentosVistos.Add(documento.Trim()))
@@ -420,6 +561,7 @@ namespace ImplementadorCUAD.Services
                 var cuotasDetalle = filasDetalle.Count;
                 var sumaDetalle = 0m;
                 var parseOk = true;
+                var numerosCuota = new List<int>(cuotasDetalle);
                 foreach (var filaDetalle in filasDetalle)
                 {
                     var montoText = GetFirstValue(filaDetalle, "Monto");
@@ -429,13 +571,40 @@ namespace ImplementadorCUAD.Services
                         break;
                     }
 
+                    var nroCuotaText = GetFirstValue(filaDetalle, "Nro Cuota");
+                    if (!int.TryParse(nroCuotaText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var nroCuota))
+                    {
+                        parseOk = false;
+                        break;
+                    }
+
+                    numerosCuota.Add(nroCuota);
                     sumaDetalle += montoCuota;
                 }
 
                 if (!parseOk)
                 {
                     codigosInvalidosPorTotales.Add(codigo);
-                    log($"ERROR ConsumosDetalle: monto invalido en detalle para codigo de consumo '{codigo}'.");
+                    log($"ERROR ConsumosDetalle: monto o numero de cuota invalido en detalle para codigo de consumo '{codigo}'.");
+                    continue;
+                }
+
+                // Validar que las cuotas sean consecutivas (1..N sin saltos ni duplicados)
+                numerosCuota.Sort();
+                var consecutivas = true;
+                for (int i = 0; i < numerosCuota.Count; i++)
+                {
+                    var esperado = i + 1;
+                    if (numerosCuota[i] != esperado)
+                    {
+                        consecutivas = false;
+                        break;
+                    }
+                }
+                if (!consecutivas)
+                {
+                    codigosInvalidosPorTotales.Add(codigo);
+                    log($"ERROR ConsumosDetalle: los periodos (Nro Cuota) no son consecutivos para codigo de consumo '{codigo}'.");
                     continue;
                 }
 
