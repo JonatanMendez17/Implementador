@@ -25,7 +25,7 @@ namespace ImplementadorCUAD.Data
             command.ExecuteScalar();
         }
 
-        public List<Empleador> GetEmpleadores()
+        public List<Empleador> GetEmpleador()
         {
             var resultado = new List<Empleador>();
 
@@ -49,7 +49,7 @@ namespace ImplementadorCUAD.Data
             return resultado;
         }
 
-        public List<Entidad> GetEntidades()
+        public List<Entidad> GetEntidad()
         {
             var resultado = new List<Entidad>();
 

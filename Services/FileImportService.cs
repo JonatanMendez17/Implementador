@@ -208,7 +208,7 @@ namespace ImplementadorCUAD.Services
             try
             {
                 using var db = new AppDbContext();
-                entidadesCuad = db.GetEntidades()
+                entidadesCuad = db.GetEntidad()
                     .SelectMany(e => new[]
                     {
                         e.Nombre?.Trim(),
@@ -315,7 +315,7 @@ namespace ImplementadorCUAD.Services
             try
             {
                 using var db = new AppDbContext();
-                entidadesCuad = db.GetEntidades()
+                entidadesCuad = db.GetEntidad()
                     .SelectMany(e => new[]
                     {
                         e.Nombre?.Trim(),
@@ -484,7 +484,7 @@ namespace ImplementadorCUAD.Services
             try
             {
                 using var db = new AppDbContext();
-                entidadesCuad = db.GetEntidades()
+                entidadesCuad = db.GetEntidad()
                     .SelectMany(e => new[]
                     {
                         e.Nombre?.Trim(),

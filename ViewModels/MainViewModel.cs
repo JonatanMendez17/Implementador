@@ -195,7 +195,7 @@ namespace ImplementadorCUAD.ViewModels
 
         public ObservableCollection<string> Logs { get; }
         public ObservableCollection<Empleador> Empleador { get; }
-        public ObservableCollection<Entidad> Entidades { get; }
+        public ObservableCollection<Entidad> Entidad { get; }
 
         public ICommand SeleccionarCategoriasCommand { get; }
         public ICommand SeleccionarPadronCommand { get; }
@@ -224,13 +224,13 @@ namespace ImplementadorCUAD.ViewModels
 
             using (var db = new AppDbContext())
             {
-                Empleador = new ObservableCollection<Empleador>(db.GetEmpleadores());
-                Entidades = new ObservableCollection<Entidad>(db.GetEntidades());
+                Empleador = new ObservableCollection<Empleador>(db.GetEmpleador());
+                Entidad = new ObservableCollection<Entidad>(db.GetEntidad());
             }
 
-            Entidades.Insert(0, new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" });
+            Entidad.Insert(0, new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" });
             Empleador.Insert(0, new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
-            EntidadSeleccionada = Entidades.FirstOrDefault();
+            EntidadSeleccionada = Entidad.FirstOrDefault();
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
 
             SeleccionarCategoriasCommand = new RelayCommand(_ => SeleccionarArchivo("Categorias"));
@@ -481,7 +481,7 @@ namespace ImplementadorCUAD.ViewModels
                 return;
             }
 
-            EntidadSeleccionada = Entidades.FirstOrDefault();
+            EntidadSeleccionada = Entidad.FirstOrDefault();
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
             ArchivoCategorias = null;
             ArchivoPadron = null;

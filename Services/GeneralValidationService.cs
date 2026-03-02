@@ -14,12 +14,12 @@ namespace ImplementadorCUAD.Services
 
             var entidades = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            AddEntidades("Categorias", validationResult.DatosCategoriasValidadas, entidades, log);
-            AddEntidades("Padron", validationResult.DatosPadronValidados, entidades, log);
-            AddEntidades("Consumos", validationResult.DatosConsumosValidados, entidades, log);
-            AddEntidades("ConsumosDetalle", validationResult.DatosConsumosDetalleValidados, entidades, log);
-            AddEntidades("Servicios", validationResult.DatosServiciosValidados, entidades, log);
-            AddEntidades("CatalogoServicios", validationResult.DatosCatalogoServiciosValidados, entidades, log);
+            AddEntidad("Categorias", validationResult.DatosCategoriasValidadas, entidades, log);
+            AddEntidad("Padron", validationResult.DatosPadronValidados, entidades, log);
+            AddEntidad("Consumos", validationResult.DatosConsumosValidados, entidades, log);
+            AddEntidad("ConsumosDetalle", validationResult.DatosConsumosDetalleValidados, entidades, log);
+            AddEntidad("Servicios", validationResult.DatosServiciosValidados, entidades, log);
+            AddEntidad("CatalogoServicios", validationResult.DatosCatalogoServiciosValidados, entidades, log);
 
             if (entidades.Count == 0)
             {
@@ -53,7 +53,7 @@ namespace ImplementadorCUAD.Services
             return true;
         }
 
-        private static void AddEntidades(
+        private static void AddEntidad(
             string nombreArchivo,
             IEnumerable<Dictionary<string, string>> filas,
             HashSet<string> entidades,
