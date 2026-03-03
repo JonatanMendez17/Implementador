@@ -57,7 +57,6 @@ namespace ImplementadorCUAD.Services
                 if (padronSocios.Any())
                 {
                     db.InsertPadronSocio(padronSocios);
-                    log($"Padron de socios insertado correctamente en Padron_socios ({padronSocios.Count} registros).");
                 }
                 else
                 {
@@ -72,9 +71,7 @@ namespace ImplementadorCUAD.Services
                 var consumosDetalle = _mapperService.MapConsumosDetalle(validationResult.DatosConsumosDetalleValidados, log);
                 if (consumosDetalle.Any())
                 {
-                    log($"Insertando {consumosDetalle.Count} registros en Importar_Consumos_Detalle...");
                     db.InsertImportarConsumosDet(consumosDetalle);
-                    log("Consumos detalle insertados correctamente en Importar_Consumos_Detalle.");
                 }
                 else
                 {

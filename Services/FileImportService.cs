@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace ImplementadorCUAD.Services
 {
@@ -539,6 +540,36 @@ namespace ImplementadorCUAD.Services
                     continue;
                 }
 
+                AgentDebugLog(
+                    "G1",
+                    "FileImportService.ApplyConsumosDetalleSpecificValidations:codigo_iteracion",
+                    "Inicio de validacion por codigo de consumo",
+                    new
+                    {
+                        codigo,
+                        filasDetalleCount = filasDetalle.Count,
+                        cuotasPendientesText,
+                        montoDeudaText,
+                        cuotasEsperadas,
+                        montoEsperado
+                    });
+
+                if (string.Equals(codigo?.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
+                {
+                    AgentDebugLog(
+                        "H1",
+                        "FileImportService.ApplyConsumosDetalleSpecificValidations:expected_totals",
+                        "Totales esperados para consumo detalle",
+                        new
+                        {
+                            codigo,
+                            cuotasPendientesText,
+                            montoDeudaText,
+                            cuotasEsperadas,
+                            montoEsperado
+                        });
+                }
+
                 var cuotasDetalle = filasDetalle.Count;
                 var sumaDetalle = 0m;
                 var parseOk = true;
@@ -561,6 +592,21 @@ namespace ImplementadorCUAD.Services
 
                     numerosCuota.Add(nroCuota);
                     sumaDetalle += montoCuota;
+
+                    if (string.Equals(codigo?.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
+                    {
+                        AgentDebugLog(
+                            "H2",
+                            "FileImportService.ApplyConsumosDetalleSpecificValidations:detalle_cuota",
+                            "Detalle de cuota individual para consumo",
+                            new
+                            {
+                                codigo,
+                                nroCuota,
+                                montoText,
+                                montoCuota
+                            });
+                    }
                 }
 
                 if (!parseOk)
@@ -587,6 +633,21 @@ namespace ImplementadorCUAD.Services
                     codigosInvalidosPorTotales.Add(codigo);
                     log($"ERROR ConsumosDetalle: los periodos (Nro Cuota) no son consecutivos para codigo de consumo '{codigo}'.");
                     continue;
+                }
+
+                if (string.Equals(codigo?.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
+                {
+                    AgentDebugLog(
+                        "H3",
+                        "FileImportService.ApplyConsumosDetalleSpecificValidations:resumen_detalle",
+                        "Resumen de detalle calculado para consumo",
+                        new
+                        {
+                            codigo,
+                            cuotasDetalle,
+                            sumaDetalle,
+                            montoEsperado
+                        });
                 }
 
                 var sumaCoincide = Math.Abs(sumaDetalle - montoEsperado) <= 0.01m;
@@ -782,11 +843,17 @@ namespace ImplementadorCUAD.Services
                 using var stream = File.Open(rutaArchivo, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using var reader = ExcelReaderFactory.CreateReader(stream);
 
+                var rowIndex = 0;
+
                 do
                 {
                     while (reader.Read())
                     {
+                        rowIndex++;
                         builder.Clear();
+
+                        var debugCells = new List<object>();
+                        var rowMatchesConsumo = false;
 
                         for (int i = 0; i < reader.FieldCount; i++)
                         {
@@ -795,11 +862,52 @@ namespace ImplementadorCUAD.Services
                                 builder.Append(',');
                             }
 
-                            var valor = reader.GetValue(i)?.ToString() ?? string.Empty;
+                            var raw = reader.GetValue(i);
+
+                            string valor;
+                            if (raw is IFormattable formattable && raw is not DateTime)
+                            {
+                                // Numericos: forzar cultura invariante para evitar comas decimales dentro del CSV
+                                valor = formattable.ToString(null, CultureInfo.InvariantCulture);
+                            }
+                            else
+                            {
+                                valor = raw?.ToString() ?? string.Empty;
+                            }
+
                             builder.Append(valor);
+
+                            var rawText = raw?.ToString() ?? string.Empty;
+                            if (string.Equals(rawText.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
+                            {
+                                rowMatchesConsumo = true;
+                            }
+
+                            debugCells.Add(new
+                            {
+                                columnIndex = i,
+                                rawType = raw?.GetType().FullName,
+                                rawValue = raw,
+                                textValue = valor
+                            });
                         }
 
                         filas.Add(builder.ToString());
+
+                        if (rowMatchesConsumo)
+                        {
+                            AgentDebugLog(
+                                "R1",
+                                "FileImportService.ReadFileLines:xlsx_row",
+                                "Fila leida desde Excel para codigo de consumo 4458026",
+                                new
+                                {
+                                    rutaArchivo,
+                                    rowIndex,
+                                    rowText = builder.ToString(),
+                                    cells = debugCells
+                                });
+                        }
                     }
                 } while (reader.NextResult());
 
@@ -1148,6 +1256,32 @@ namespace ImplementadorCUAD.Services
         private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
         {
             return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
+        }
+
+        private static void AgentDebugLog(string hypothesisId, string location, string message, object data)
+        {
+            // #region agent log
+            try
+            {
+                var payload = new
+                {
+                    id = $"log_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{Guid.NewGuid():N}",
+                    timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    location,
+                    message,
+                    data,
+                    runId = "pre-fix",
+                    hypothesisId
+                };
+
+                var line = JsonSerializer.Serialize(payload) + Environment.NewLine;
+                File.AppendAllText(@"c:\Users\Administrador\Desktop\MigradorCUAD\.cursor\debug.log", line);
+            }
+            catch
+            {
+                // Ignorar errores de log para no afectar el flujo principal
+            }
+            // #endregion
         }
     }
 }
