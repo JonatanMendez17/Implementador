@@ -203,6 +203,12 @@ namespace ImplementadorCUAD.ViewModels
         public ICommand SeleccionarConsumosDetalleCommand { get; }
         public ICommand SeleccionarServiciosCommand { get; }
         public ICommand SeleccionarCatalogoServiciosCommand { get; }
+        public ICommand LimpiarCategoriasArchivoCommand { get; }
+        public ICommand LimpiarPadronArchivoCommand { get; }
+        public ICommand LimpiarConsumosArchivoCommand { get; }
+        public ICommand LimpiarConsumosDetalleArchivoCommand { get; }
+        public ICommand LimpiarServiciosArchivoCommand { get; }
+        public ICommand LimpiarCatalogoServiciosArchivoCommand { get; }
         public ICommand ValidarCommand { get; }
         public ICommand CopiarCommand { get; }
         public ICommand ExportarLogCommand { get; }
@@ -237,6 +243,12 @@ namespace ImplementadorCUAD.ViewModels
             SeleccionarConsumosDetalleCommand = new RelayCommand(_ => SeleccionarArchivo("ConsumosDetalle"));
             SeleccionarServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("Servicios"));
             SeleccionarCatalogoServiciosCommand = new RelayCommand(_ => SeleccionarArchivo("CatalogoServicios"));
+            LimpiarCategoriasArchivoCommand = new RelayCommand(_ => LimpiarArchivo("Categorias"));
+            LimpiarPadronArchivoCommand = new RelayCommand(_ => LimpiarArchivo("Padron"));
+            LimpiarConsumosArchivoCommand = new RelayCommand(_ => LimpiarArchivo("Consumos"));
+            LimpiarConsumosDetalleArchivoCommand = new RelayCommand(_ => LimpiarArchivo("ConsumosDetalle"));
+            LimpiarServiciosArchivoCommand = new RelayCommand(_ => LimpiarArchivo("Servicios"));
+            LimpiarCatalogoServiciosArchivoCommand = new RelayCommand(_ => LimpiarArchivo("CatalogoServicios"));
             ValidarCommand = new RelayCommand(_ => ValidarArchivos());
             CopiarCommand = new SimpleAsyncCommand(CopiarABaseAsync);
             ExportarLogCommand = new RelayCommand(_ => ExportarLog());
@@ -292,20 +304,53 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
+        private void LimpiarArchivo(string tipo)
+        {
+            switch (tipo)
+            {
+                case "Categorias":
+                    ArchivoCategorias = null;
+                    break;
+                case "Padron":
+                    ArchivoPadron = null;
+                    break;
+                case "Consumos":
+                    ArchivoConsumos = null;
+                    break;
+                case "ConsumosDetalle":
+                    ArchivoConsumosDetalle = null;
+                    break;
+                case "Servicios":
+                    ArchivoServicios = null;
+                    break;
+                case "CatalogoServicios":
+                    ArchivoCatalogoServicios = null;
+                    break;
+            }
+        }
+
         private void ValidarArchivos()
         {
             Logs.Clear();
 
             if (!HasEntidadSeleccionadaReal())
             {
-                Log("Debe seleccionar una entidad para validar.");
+                DialogService.Show(
+                    "Debe seleccionar una entidad para validar.",
+                    "Validación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
                 ValidacionFinalizada = false;
                 return;
             }
 
             if (!HasEmpleadorSeleccionadoReal())
             {
-                Log("Aviso: no se selecciono empleador.");
+                DialogService.Show(
+                    "Aviso: no se seleccionó empleador.",
+                    "Validación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
 
             // Modo prueba: validaciones de archivos obligatorios deshabilitadas para permitir carga parcial.
@@ -354,7 +399,11 @@ namespace ImplementadorCUAD.ViewModels
         {
             if (!HasEntidadSeleccionadaReal())
             {
-                Log("Debe seleccionar una entidad antes de implementar.");
+                DialogService.Show(
+                    "Debe seleccionar una entidad antes de implementar.",
+                    "Implementación",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
                 return;
             }
 
@@ -405,7 +454,11 @@ namespace ImplementadorCUAD.ViewModels
         {
             if (!HasEntidadSeleccionadaReal())
             {
-                Log("Debe seleccionar una entidad para limpiar la base.");
+                DialogService.Show(
+                    "Debe seleccionar una entidad para limpiar la base.",
+                    "Limpieza de base",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
                 return;
             }
 
