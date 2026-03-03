@@ -7,11 +7,7 @@ namespace ImplementadorCUAD.Services
 {
     public static class DialogService
     {
-        public static MessageBoxResult Show(
-            string message,
-            string title,
-            MessageBoxButton buttons = MessageBoxButton.OK,
-            MessageBoxImage image = MessageBoxImage.None)
+        public static MessageBoxResult Show(string message, string title, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxImage image = MessageBoxImage.None)
         {
             var dialog = new StyledDialogWindow(message, title, buttons, image);
             var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
@@ -42,8 +38,8 @@ namespace ImplementadorCUAD.Services
         {
             _buttons = buttons;
             Title = title;
-            Width = 460;
-            MinHeight = 180;
+            Width = 520;
+            SizeToContent = SizeToContent.Height;
             ResizeMode = ResizeMode.NoResize;
             WindowStyle = WindowStyle.None;
             AllowsTransparency = true;
@@ -56,7 +52,7 @@ namespace ImplementadorCUAD.Services
                 BorderBrush = new SolidColorBrush(Color.FromRgb(55, 65, 81)),
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(UiCornerRadius),
-                Padding = new Thickness(20, 16, 20, 16)
+                Padding = new Thickness(20, 12, 20, 12)
             };
 
             var panel = new Grid();
@@ -77,7 +73,8 @@ namespace ImplementadorCUAD.Services
             var content = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 12, 0, 12)
+                Margin = new Thickness(0, 10, 0, 10),
+                VerticalAlignment = VerticalAlignment.Center
             };
 
             var icon = BuildIcon(image);
@@ -93,7 +90,7 @@ namespace ImplementadorCUAD.Services
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(12, 0, 0, 0),
-                MaxWidth = 360
+                MaxWidth = 460
             });
             Grid.SetRow(content, 1);
             panel.Children.Add(content);
@@ -188,8 +185,8 @@ namespace ImplementadorCUAD.Services
 
             return new Border
             {
-                Width = 30,
-                Height = 30,
+                Width = 26,
+                Height = 26,
                 Background = new SolidColorBrush(Color.FromRgb(59, 130, 246)),
                 CornerRadius = new CornerRadius(UiCornerRadius),
                 Child = new TextBlock

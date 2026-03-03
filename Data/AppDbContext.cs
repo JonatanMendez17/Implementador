@@ -144,25 +144,25 @@ namespace ImplementadorCUAD.Data
             return ExecuteInsert(
                 registros,
                 @"INSERT INTO Importar_Padron_Socio
-          (
-              Ips_Entidad,
-              Ips_Nro_Socio,
-              Ips_Documento,
-              Ips_Cuit,
-              Ips_Nro_Puesto,
-              Ips_Codigo_Categoria,
-              Ips_Fecha_Alta_Socio
-          )
-          VALUES
-          (
-              @Entidad,
-              @NroSocio,
-              @Documento,
-              @Cuit,
-              @NroPuesto,
-              @CodigoCategoria,
-              @FechaAltaSocio
-          );",
+                (
+                    Ips_Entidad,
+                    Ips_Nro_Socio,
+                    Ips_Documento,
+                    Ips_Cuit,
+                    Ips_Nro_Puesto,
+                    Ips_Codigo_Categoria,
+                    Ips_Fecha_Alta_Socio
+                )
+                VALUES
+                (
+                    @Entidad,
+                    @NroSocio,
+                    @Documento,
+                    @Cuit,
+                    @NroPuesto,
+                    @CodigoCategoria,
+                    @FechaAltaSocio
+                );",
                 (registro, command) =>
                 {
                     command.Parameters.AddWithValue("@Entidad", registro.Entidad);
@@ -187,8 +187,21 @@ namespace ImplementadorCUAD.Data
             return ExecuteInsert(
                 registros,
                 @"INSERT INTO Importar_Consumo_Det
-                  (Icd_Entidad, Icd_Codigo_Consumo, Icd_Nro_Cuota, Icd_Fecha_Vencimiento, Icd_Monto)
-                  VALUES (@Entidad, @CodigoConsumo, @NroCuota, @FechaVencimiento, @Monto);",
+                (
+                    Icd_Entidad, 
+                    Icd_Codigo_Consumo, 
+                    Icd_Nro_Cuota, 
+                    Icd_Fecha_Vencimiento, 
+                    Icd_Monto
+                )
+                VALUES 
+                (
+                    @Entidad, 
+                    @CodigoConsumo, 
+                    @NroCuota, 
+                    @FechaVencimiento, 
+                    @Monto
+                );",
                 (registro, command) =>
                 {
                     command.Parameters.AddWithValue("@Entidad", (object?)registro.Entidad ?? DBNull.Value);
@@ -204,21 +217,25 @@ namespace ImplementadorCUAD.Data
             return ExecuteInsert(
                 registros,
                 @"INSERT INTO Importar_Consumo_Cab
-          (lcc_Entidad,
-           lcc_Nro_Socio,
-           lcc_Cuit,
-           lcc_Codigo_Consumo,
-           lcc_Cuotas_Pendientes,
-           lcc_Monto_Deuda,
-           lcc_Concepto_Descuento)
-          VALUES
-          (@Entidad,
-           @NroSocio,
-           @Cuit,
-           @CodigoConsumo,
-           @CuotasPendientes,
-           @MontoDeuda,
-           @ConceptoDescuento);",
+                (
+                    lcc_Entidad,
+                    lcc_Nro_Socio,
+                    lcc_Cuit,
+                    lcc_Codigo_Consumo,
+                    lcc_Cuotas_Pendientes,
+                    lcc_Monto_Deuda,
+                    lcc_Concepto_Descuento
+                )
+                VALUES
+                (
+                    @Entidad,
+                    @NroSocio,
+                    @Cuit,
+                    @CodigoConsumo,
+                    @CuotasPendientes,
+                    @MontoDeuda,
+                    @ConceptoDescuento
+                );",
             (registro, command) =>
             {
                 command.Parameters.AddWithValue("@Entidad", registro.Entidad);
@@ -272,15 +289,18 @@ namespace ImplementadorCUAD.Data
 
                 var eliminadosConsumoDet = ExecuteDelete(
                     @"DELETE FROM Importar_Consumo_Det
-                      WHERE Icd_Entidad = @EntidadNombre OR Icd_Entidad = @EntidadId;");
+                            WHERE Icd_Entidad = @EntidadNombre 
+                               OR Icd_Entidad = @EntidadId;");
 
                 var eliminadosConsumoCab = ExecuteDelete(
                     @"DELETE FROM Importar_Consumo_Cab
-                      WHERE lcc_Entidad = @EntidadNombre OR lcc_Entidad = @EntidadId;");
+                            WHERE lcc_Entidad = @EntidadNombre 
+                               OR lcc_Entidad = @EntidadId;");
 
                 var eliminadosPadron = ExecuteDelete(
                     @"DELETE FROM Importar_Padron_Socio
-                      WHERE Ips_Entidad = @EntidadNombre OR Ips_Entidad = @EntidadId;");
+                            WHERE Ips_Entidad = @EntidadNombre 
+                               OR Ips_Entidad = @EntidadId;");
 
                 transaction.Commit();
                 return (eliminadosPadron, eliminadosConsumoCab, eliminadosConsumoDet);
@@ -324,7 +344,7 @@ namespace ImplementadorCUAD.Data
         {
             if (string.IsNullOrWhiteSpace(_connectionString))
             {
-                throw new InvalidOperationException("No se encontro la cadena de conexion en Infrastructure/ConnectionSettings.cs.");
+                throw new InvalidOperationException("No se encontro la cadena de conexion en base de datos");
             }
 
             var connection = new SqlConnection(_connectionString);

@@ -5,9 +5,7 @@ namespace ImplementadorCUAD.Services
 {
     public class ImplementacionMapperService
     {
-        public List<ImportarPadronSocio> MapPadronSocios(
-            IEnumerable<Dictionary<string, string>> datos,
-            Action<string> log)
+        public List<ImportarPadronSocio> MapPadronSocios(IEnumerable<Dictionary<string, string>> datos, Action<string> log)
         {
             var resultado = new List<ImportarPadronSocio>();
 
@@ -28,7 +26,7 @@ namespace ImplementadorCUAD.Services
                         string.IsNullOrWhiteSpace(documentoTexto) ||
                         string.IsNullOrWhiteSpace(codigoCategoria))
                     {
-                        log("⚠️ Fila de padrón incompleta. Se omite el registro.");
+                        log("Fila de padrón incompleta. Se omite el registro.");
                         continue;
                     }
 
@@ -36,7 +34,7 @@ namespace ImplementadorCUAD.Services
                         !TryParseDateFlexible(fechaAltaTexto, out var fechaAltaSocio) ||
                         !TryParseIntFlexible(documentoTexto, out var documento))
                     {
-                        log("⚠️ Fila de padrón con formato inválido. Se omite el registro.");
+                        log("Fila de padrón con formato inválido. Se omite el registro.");
                         continue;
                     }
 
@@ -45,7 +43,7 @@ namespace ImplementadorCUAD.Services
                     {
                         if (!TryParseLongDigitsOnly(cuitTexto, out var cuitParseado))
                         {
-                            log("⚠️ CUIT inválido. Se omite el registro.");
+                            log("CUIT inválido. Se omite el registro.");
                             continue;
                         }
 
@@ -67,7 +65,7 @@ namespace ImplementadorCUAD.Services
                 }
                 catch (Exception ex)
                 {
-                    log($"⚠️ Error mapeando fila de padrón: {ex.Message}");
+                    log($"Error mapeando fila de padrón: {ex.Message}");
                 }
             }
 
@@ -87,8 +85,6 @@ namespace ImplementadorCUAD.Services
                     fila.TryGetValue("Entidad", out var entidad);
                     fila.TryGetValue("Nro Socio", out var nroSocioTexto);
                     fila.TryGetValue("CUIT", out var cuitTexto);
-                    // En los datos validados la clave real es 'Codigo Consumo' (segun Configuracion.xml),
-                    // aunque en el archivo original el encabezado pueda ser 'Código' u otro alias.
                     if (!fila.TryGetValue("Codigo Consumo", out var codigoTexto) &&
                         !fila.TryGetValue("Código Consumo", out codigoTexto) &&
                         !fila.TryGetValue("Código", out codigoTexto))
@@ -106,7 +102,7 @@ namespace ImplementadorCUAD.Services
                         string.IsNullOrWhiteSpace(montoDeudaTexto) ||
                         string.IsNullOrWhiteSpace(conceptoDescuentoTexto))
                     {
-                        log("⚠️ Fila de consumos incompleta. Se omite el registro.");
+                        log("Fila de consumos incompleta. Se omite el registro.");
                         continue;
                     }
 
@@ -126,7 +122,7 @@ namespace ImplementadorCUAD.Services
                 }
                 catch (Exception ex)
                 {
-                    log($"⚠️ Error mapeando fila de consumos: {ex.Message}");
+                    log($"Error mapeando fila de consumos: {ex.Message}");
                 }
             }
 
@@ -155,7 +151,7 @@ namespace ImplementadorCUAD.Services
                         string.IsNullOrWhiteSpace(fechaVencimientoTexto) ||
                         string.IsNullOrWhiteSpace(montoTexto))
                     {
-                        log("⚠️ Fila de consumos detalle incompleta. Se omite el registro.");
+                        log("Fila de consumos detalle incompleta. Se omite el registro.");
                         continue;
                     }
 
@@ -172,7 +168,7 @@ namespace ImplementadorCUAD.Services
                 }
                 catch (Exception ex)
                 {
-                    log($"⚠️ Error mapeando fila de consumos detalle: {ex.Message}");
+                    log($"Error mapeando fila de consumos detalle: {ex.Message}");
                 }
             }
 

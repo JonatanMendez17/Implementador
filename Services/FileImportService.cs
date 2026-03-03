@@ -104,8 +104,8 @@ namespace ImplementadorCUAD.Services
             }
             catch (Exception ex)
             {
-                log($"ERROR CatalogoServicios: no se pudo leer el catalogo de servicios de CUAD. {ex.Message}");
-                result.DatosCatalogoServiciosValidados = new List<Dictionary<string, string>>();
+                log($"CatalogoServicios: no se pudo leer el catalogo de servicios de CUAD. {ex.Message}");
+                result.DatosCatalogoServiciosValidados = [];
                 return;
             }
 
@@ -130,7 +130,7 @@ namespace ImplementadorCUAD.Services
 
                 if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
                 {
-                    log($"ERROR CatalogoServicios fila {numeroFila}: entidad vacia.");
+                    log($"CatalogoServicios fila {numeroFila}: entidad vacia.");
                     filaValida = false;
                 }
                 else
@@ -138,14 +138,14 @@ namespace ImplementadorCUAD.Services
                     var clave = $"{entidad.Trim()}|{servicio.Trim()}";
                     if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCuad))
                     {
-                        log($"ERROR CatalogoServicios fila {numeroFila}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
+                        log($" CatalogoServicios fila {numeroFila}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
                         filaValida = false;
                     }
                     else
                     {
                         if (!TryParseDecimalFlexible(importeTexto, out var importeArchivo))
                         {
-                            log($"ERROR CatalogoServicios fila {numeroFila}: importe '{importeTexto}' invalido.");
+                            log($"CatalogoServicios fila {numeroFila}: importe '{importeTexto}' invalido.");
                             filaValida = false;
                         }
                         else
@@ -153,7 +153,7 @@ namespace ImplementadorCUAD.Services
                             var diferencia = Math.Abs(importeArchivo - refCuad.Importe);
                             if (diferencia > 0.01m)
                             {
-                                log($"ERROR CatalogoServicios fila {numeroFila}: importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
+                                log($"CatalogoServicios fila {numeroFila}: importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
                                 filaValida = false;
                             }
                         }
@@ -187,6 +187,7 @@ namespace ImplementadorCUAD.Services
 
             var categoriasValidasCodigo = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var categoriasValidasNombre = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var filaCategoria in result.DatosCategoriasValidadas)
             {
                 if (TryGetFirstValue(filaCategoria, out var codigo, "Codigo Categoria", "Código Categoría") &&
@@ -202,7 +203,7 @@ namespace ImplementadorCUAD.Services
                 }
             }
 
-            // Categorias de CUAD por entidad (referencia externa)
+            // Categorias de CUAD por entidad 
             Dictionary<string, List<CategoriaCuadRef>> categoriasCuadPorEntidad;
             try
             {
@@ -218,13 +219,13 @@ namespace ImplementadorCUAD.Services
                     var predeterminadas = kvp.Value.Count(c => c.EsPredeterminada);
                     if (predeterminadas > 1)
                     {
-                        log($"ERROR Categorias: la entidad '{entidadRef}' tiene mas de una categoria predeterminada en CUAD.");
+                        log($"Categorias: la entidad '{entidadRef}' tiene mas de una categoria predeterminada en CUAD.");
                     }
                 }
             }
             catch (Exception ex)
             {
-                log($"ERROR Categorias: no se pudo leer categorias de CUAD. {ex.Message}");
+                log($"Categorias: no se pudo leer categorias de CUAD. {ex.Message}");
                 categoriasCuadPorEntidad = new Dictionary<string, List<CategoriaCuadRef>>(StringComparer.OrdinalIgnoreCase);
             }
 
@@ -316,7 +317,7 @@ namespace ImplementadorCUAD.Services
                 else
                 {
                     rechazadas++;
-                    log($"ERROR Padron fila {numeroFila}: {string.Join(" | ", erroresFila)}");
+                    log($"Padron fila {numeroFila}: {string.Join(" | ", erroresFila)}");
                 }
             }
 
@@ -453,7 +454,7 @@ namespace ImplementadorCUAD.Services
             }
             catch (Exception ex)
             {
-                log($"ERROR ConsumosDetalle: no se pudo validar entidades de CUAD. {ex.Message}");
+                log($"ConsumosDetalle: no se pudo validar entidades de CUAD. {ex.Message}");
                 result.DatosConsumosDetalleValidados = new List<Dictionary<string, string>>();
                 return;
             }
@@ -502,7 +503,7 @@ namespace ImplementadorCUAD.Services
                 else
                 {
                     rechazadas++;
-                    log($"ERROR ConsumosDetalle fila {numeroFila}: {string.Join(" | ", erroresFila)}");
+                    log($"ConsumosDetalle fila {numeroFila}: {string.Join(" | ", erroresFila)}");
                 }
             }
 
@@ -529,14 +530,14 @@ namespace ImplementadorCUAD.Services
                 if (!int.TryParse(cuotasPendientesText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cuotasEsperadas))
                 {
                     codigosInvalidosPorTotales.Add(codigo);
-                    log($"ERROR ConsumosDetalle: no se pudo leer 'Cuotas Pendientes' para codigo de consumo '{codigo}'.");
+                    log($"ConsumosDetalle: no se pudo leer 'Cuotas Pendientes' para codigo de consumo '{codigo}'.");
                     continue;
                 }
 
                 if (!TryParseDecimalFlexible(montoDeudaText, out var montoEsperado))
                 {
                     codigosInvalidosPorTotales.Add(codigo);
-                    log($"ERROR ConsumosDetalle: no se pudo leer 'Monto Deuda' para codigo de consumo '{codigo}'.");
+                    log($"ConsumosDetalle: no se pudo leer 'Monto Deuda' para codigo de consumo '{codigo}'.");
                     continue;
                 }
 
@@ -631,7 +632,7 @@ namespace ImplementadorCUAD.Services
                 if (!consecutivas)
                 {
                     codigosInvalidosPorTotales.Add(codigo);
-                    log($"ERROR ConsumosDetalle: los periodos (Nro Cuota) no son consecutivos para codigo de consumo '{codigo}'.");
+                    log($"ConsumosDetalle: los periodos (Nro Cuota) no son consecutivos para codigo de consumo '{codigo}'.");
                     continue;
                 }
 
@@ -654,7 +655,7 @@ namespace ImplementadorCUAD.Services
                 if (cuotasDetalle != cuotasEsperadas || !sumaCoincide)
                 {
                     codigosInvalidosPorTotales.Add(codigo);
-                    log($"ERROR ConsumosDetalle: cuotas/importe no coinciden para codigo '{codigo}'. Esperado cuotas={cuotasEsperadas}, monto={montoEsperado}. Detalle cuotas={cuotasDetalle}, monto={sumaDetalle}.");
+                    log($"ConsumosDetalle: cuotas/importe no coinciden para codigo '{codigo}'. Esperado cuotas={cuotasEsperadas}, monto={montoEsperado}. Detalle cuotas={cuotasDetalle}, monto={sumaDetalle}.");
                 }
             }
 
@@ -707,7 +708,7 @@ namespace ImplementadorCUAD.Services
             }
             catch (Exception ex)
             {
-                log($"ERROR Servicios: no se pudo validar entidades de CUAD. {ex.Message}");
+                log($"Servicios: no se pudo validar entidades de CUAD. {ex.Message}");
                 result.DatosServiciosValidados = new List<Dictionary<string, string>>();
                 return;
             }
@@ -969,7 +970,7 @@ namespace ImplementadorCUAD.Services
                     if (!indice.HasValue && config.Requerida)
                     {
                         var aliasEsperados = (config.Alias?.Count > 0 ? config.Alias : new List<string> { config.Nombre });
-                        log($"ERROR {nombreLogico}: falta columna requerida para '{config.Clave}'. Alias esperados: {string.Join(", ", aliasEsperados)}.");
+                        log($"{nombreLogico}: falta columna requerida para '{config.Clave}'. Alias esperados: {string.Join(", ", aliasEsperados)}.");
                         return null;
                     }
                 }
@@ -1018,7 +1019,7 @@ namespace ImplementadorCUAD.Services
                     }
                     else
                     {
-                        log($"ERROR {nombreLogico} fila {i + 1}: {string.Join(" | ", erroresFila)}");
+                        log($"{nombreLogico} fila {i + 1}: {string.Join(" | ", erroresFila)}");
                         filasRechazadas++;
                     }
                 }
@@ -1189,14 +1190,14 @@ namespace ImplementadorCUAD.Services
                 var nroSocio = GetFirstValue(fila, "Nro Socio");
                 if (string.IsNullOrWhiteSpace(nroSocio))
                 {
-                    log($"ERROR Padron fila {numeroFila}: 'Nro Socio' vacio.");
+                    log($"Padron fila {numeroFila}: 'Nro Socio' vacio.");
                     return false;
                 }
 
                 var clave = $"PADRON::{nroSocio.Trim()}";
                 if (!clavesUnicas.Add(clave))
                 {
-                    log($"ERROR Padron fila {numeroFila}: numero de socio '{nroSocio}' repetido.");
+                    log($"Padron fila {numeroFila}: numero de socio '{nroSocio}' repetido.");
                     return false;
                 }
 
@@ -1208,14 +1209,14 @@ namespace ImplementadorCUAD.Services
                 var nroConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo", "Codigo", "Código", "CÃ³digo");
                 if (string.IsNullOrWhiteSpace(nroConsumo))
                 {
-                    log($"ERROR Consumos fila {numeroFila}: codigo (nro de consumo) vacio.");
+                    log($"Consumos fila {numeroFila}: codigo (nro de consumo) vacio.");
                     return false;
                 }
 
                 var clave = $"CONSUMOS::{nroConsumo.Trim()}";
                 if (!clavesUnicas.Add(clave))
                 {
-                    log($"ERROR Consumos fila {numeroFila}: nro de consumo '{nroConsumo}' repetido.");
+                    log($"Consumos fila {numeroFila}: nro de consumo '{nroConsumo}' repetido.");
                     return false;
                 }
 
@@ -1279,7 +1280,7 @@ namespace ImplementadorCUAD.Services
             }
             catch
             {
-                // Ignorar errores de log para no afectar el flujo principal
+         
             }
             // #endregion
         }

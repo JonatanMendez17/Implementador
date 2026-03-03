@@ -5,10 +5,7 @@ namespace ImplementadorCUAD.Services
 {
     public class GeneralValidationService
     {
-        public bool ValidateEntidadConsistency(
-            ImplementacionValidationResult validationResult,
-            Action<string> log,
-            out string entidadComun)
+        public bool ValidateEntidadConsistency(ImplementacionValidationResult validationResult, Action<string> log, out string entidadComun)
         {
             entidadComun = string.Empty;
 
@@ -51,11 +48,7 @@ namespace ImplementadorCUAD.Services
             return true;
         }
 
-        private static void AddEntidad(
-            string nombreArchivo,
-            IEnumerable<Dictionary<string, string>> filas,
-            HashSet<string> entidades,
-            Action<string> log)
+        private static void AddEntidad(string nombreArchivo, IEnumerable<Dictionary<string, string>> filas, HashSet<string> entidades, Action<string> log)
         {
             var numeroFila = 1;
             foreach (var fila in filas)

@@ -53,7 +53,6 @@ namespace ImplementadorCUAD.Services
             }
             catch (Exception)
             {
-                // Se delega el detalle del error al llamador para que pueda registrarlo en la interfaz de usuario.
                 throw;
             }
         }
