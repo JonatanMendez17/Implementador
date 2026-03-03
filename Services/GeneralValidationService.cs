@@ -34,7 +34,6 @@ namespace ImplementadorCUAD.Services
             }
 
             entidadComun = entidades.First();
-            log($"OK: validacion de entidad entre archivos: {entidadComun}");
             return true;
         }
 
@@ -49,7 +48,6 @@ namespace ImplementadorCUAD.Services
                 return false;
             }
 
-            log($"OK: no existe informacion previa para la entidad '{entidad}'.");
             return true;
         }
 

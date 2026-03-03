@@ -80,11 +80,7 @@ namespace ImplementadorCUAD.Services
             ApplyServiciosSpecificValidations(result, log);
             ApplyCatalogoServiciosSpecificValidations(result, log);
 
-            if (result.HuboCarga)
-            {
-                log("Archivos cargados con validaciones generales.");
-            }
-            else
+            if (!result.HuboCarga)
             {
                 log("No se pudo cargar ningun archivo.");
             }
@@ -133,7 +129,7 @@ namespace ImplementadorCUAD.Services
 
                 if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
                 {
-                    log($"ERROR CatalogoServicios fila {numeroFila}: entidad o servicio vacio.");
+                    log($"ERROR CatalogoServicios fila {numeroFila}: entidad vacia.");
                     filaValida = false;
                 }
                 else
@@ -192,13 +188,13 @@ namespace ImplementadorCUAD.Services
             var categoriasValidasNombre = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var filaCategoria in result.DatosCategoriasValidadas)
             {
-                if (TryGetFirstValue(filaCategoria, out var codigo, "Codigo Categoria", "Código Categoría", "CÃ³digo CategorÃ­a") &&
+                if (TryGetFirstValue(filaCategoria, out var codigo, "Codigo Categoria", "Código Categoría") &&
                     !string.IsNullOrWhiteSpace(codigo))
                 {
                     categoriasValidasCodigo.Add(codigo.Trim());
                 }
 
-                if (TryGetFirstValue(filaCategoria, out var nombre, "Categoria", "Categoría", "CategorÃ­a") &&
+                if (TryGetFirstValue(filaCategoria, out var nombre, "Categoria", "Categoría") &&
                     !string.IsNullOrWhiteSpace(nombre))
                 {
                     categoriasValidasNombre.Add(nombre.Trim());
@@ -242,35 +238,32 @@ namespace ImplementadorCUAD.Services
             {
                 var fila = result.DatosPadronValidados[i];
                 var numeroFila = i + 2;
-                var filaValida = true;
+                var erroresFila = new List<string>();
 
                 var entidad = GetFirstValue(fila, "Entidad");
                 var nroSocio = GetFirstValue(fila, "Nro Socio");
-                var codigoCategoria = GetFirstValue(fila, "Codigo Categoria", "Código Categoría", "CÃ³digo CategorÃ­a");
-                var nombreCategoriaPadron = GetFirstValue(fila, "Categoria", "Categoría", "CategorÃ­a");
+                var codigoCategoria = GetFirstValue(fila, "Codigo Categoria", "Código Categoría");
+                var nombreCategoriaPadron = GetFirstValue(fila, "Categoria", "Categoría");
                 var documento = GetFirstValue(fila, "Documento");
                 var beneficio = GetFirstValue(fila, "Beneficio");
 
                 if (string.IsNullOrWhiteSpace(nroSocio))
                 {
-                    log($"ERROR Padron fila {numeroFila}: 'Nro Socio' vacio.");
-                    filaValida = false;
+                    erroresFila.Add("'Nro Socio' vacio.");
                 }
                 else
                 {
                     var nroSocioNormalizado = nroSocio.Trim();
                     if (!sociosVistos.Add(nroSocioNormalizado))
                     {
-                        log($"ERROR Padron fila {numeroFila}: numero de socio '{nroSocio}' repetido.");
-                        filaValida = false;
+                        erroresFila.Add($"numero de socio '{nroSocio}' repetido.");
                     }
 
                     var categoriaNormalizada = (codigoCategoria ?? string.Empty).Trim();
                     if (socioCategoria.TryGetValue(nroSocioNormalizado, out var categoriaExistente) &&
                         !string.Equals(categoriaExistente, categoriaNormalizada, StringComparison.OrdinalIgnoreCase))
                     {
-                        log($"ERROR Padron fila {numeroFila}: socio '{nroSocio}' afiliado a mas de una categoria.");
-                        filaValida = false;
+                        erroresFila.Add($"socio '{nroSocio}' afiliado a mas de una categoria.");
                     }
                     else
                     {
@@ -280,8 +273,7 @@ namespace ImplementadorCUAD.Services
 
                 if (!IsCategoriaValida(codigoCategoria, nombreCategoriaPadron, categoriasValidasCodigo, categoriasValidasNombre))
                 {
-                    log($"ERROR Padron fila {numeroFila}: categoria informada no valida.");
-                    filaValida = false;
+                    erroresFila.Add("categoria informada no valida.");
                 }
 
                 // Validacion contra categorias de CUAD (por entidad)
@@ -297,36 +289,33 @@ namespace ImplementadorCUAD.Services
 
                         if (categoriaCuad == null)
                         {
-                            log($"ERROR Padron fila {numeroFila}: categoria '{codigoCategoria}' no existe en CUAD para la entidad '{entidadClave}'.");
-                            filaValida = false;
+                            erroresFila.Add($"categoria '{codigoCategoria}' no existe en CUAD para la entidad '{entidadClave}'.");
                         }
                     }
                     else
                     {
-                        log($"ERROR Padron fila {numeroFila}: entidad '{entidad}' no tiene categorias definidas en CUAD.");
-                        filaValida = false;
+                        erroresFila.Add($"entidad '{entidad}' no tiene categorias definidas en CUAD.");
                     }
                 }
 
                 if (!string.IsNullOrWhiteSpace(documento) && !documentosVistos.Add(documento.Trim()))
                 {
-                    log($"ERROR Padron fila {numeroFila}: documento '{documento}' repetido.");
-                    filaValida = false;
+                    erroresFila.Add($"documento '{documento}' repetido.");
                 }
 
                 if (!string.IsNullOrWhiteSpace(beneficio) && !beneficiosVistos.Add(beneficio.Trim()))
                 {
-                    log($"ERROR Padron fila {numeroFila}: beneficio '{beneficio}' repetido.");
-                    filaValida = false;
+                    erroresFila.Add($"beneficio '{beneficio}' repetido.");
                 }
 
-                if (filaValida)
+                if (erroresFila.Count == 0)
                 {
                     padronFiltrado.Add(fila);
                 }
                 else
                 {
                     rechazadas++;
+                    log($"ERROR Padron fila {numeroFila}: {string.Join(" | ", erroresFila)}");
                 }
             }
 
@@ -379,24 +368,22 @@ namespace ImplementadorCUAD.Services
             {
                 var fila = result.DatosConsumosValidados[i];
                 var numeroFila = i + 2;
-                var filaValida = true;
+                var erroresFila = new List<string>();
 
                 var entidad = GetFirstValue(fila, "Entidad");
                 var nroSocio = GetFirstValue(fila, "Nro Socio");
                 var cuitConsumo = GetFirstValue(fila, "CUIT");
                 var beneficioConsumo = GetFirstValue(fila, "Beneficio");
-                var codigoConsumo = GetFirstValue(fila, "Codigo", "Código", "CÃ³digo");
+                var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo");
 
                 if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
                 {
-                    log($"ERROR Consumos fila {numeroFila}: entidad '{entidad}' no existe en CUAD.");
-                    filaValida = false;
+                    erroresFila.Add($"entidad '{entidad}' no existe en CUAD.");
                 }
 
                 if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
                 {
-                    log($"ERROR Consumos fila {numeroFila}: socio '{nroSocio}' no existe o no corresponde al padron.");
-                    filaValida = false;
+                    erroresFila.Add($"socio '{nroSocio}' no existe o no corresponde al padron.");
                 }
                 else
                 {
@@ -405,35 +392,32 @@ namespace ImplementadorCUAD.Services
 
                     if (!EqualsDigitsOnly(cuitConsumo, cuitPadron))
                     {
-                        log($"ERROR Consumos fila {numeroFila}: CUIT no coincide con padron para socio '{nroSocio}'.");
-                        filaValida = false;
+                        erroresFila.Add($"CUIT no coincide con padron para socio '{nroSocio}'.");
                     }
 
                     if (!EqualsTrimmed(beneficioConsumo, beneficioPadron))
                     {
-                        log($"ERROR Consumos fila {numeroFila}: Beneficio no coincide con padron para socio '{nroSocio}'.");
-                        filaValida = false;
+                        erroresFila.Add($"Beneficio no coincide con padron para socio '{nroSocio}'.");
                     }
                 }
 
                 if (string.IsNullOrWhiteSpace(codigoConsumo))
                 {
-                    log($"ERROR Consumos fila {numeroFila}: codigo de consumo vacio.");
-                    filaValida = false;
+                    erroresFila.Add("codigo de consumo vacio.");
                 }
                 else if (!codigosConsumoVistos.Add(codigoConsumo.Trim()))
                 {
-                    log($"ERROR Consumos fila {numeroFila}: codigo de consumo '{codigoConsumo}' repetido.");
-                    filaValida = false;
+                    erroresFila.Add($"codigo de consumo '{codigoConsumo}' repetido.");
                 }
 
-                if (filaValida)
+                if (erroresFila.Count == 0)
                 {
                     consumosFiltrados.Add(fila);
                 }
                 else
                 {
                     rechazadas++;
+                    log($"ERROR Consumos fila {numeroFila}: {string.Join(" | ", erroresFila)}");
                 }
             }
 
@@ -474,8 +458,8 @@ namespace ImplementadorCUAD.Services
             }
 
             var consumosPorCodigo = result.DatosConsumosValidados
-                .Where(f => !string.IsNullOrWhiteSpace(GetFirstValue(f, "Codigo", "Código", "CÃ³digo")))
-                .GroupBy(f => GetFirstValue(f, "Codigo", "Código", "CÃ³digo").Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(f => !string.IsNullOrWhiteSpace(GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
+                .GroupBy(f => GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
             var detalleFiltrado = new List<Dictionary<string, string>>();
@@ -485,48 +469,45 @@ namespace ImplementadorCUAD.Services
             {
                 var fila = result.DatosConsumosDetalleValidados[i];
                 var numeroFila = i + 2;
-                var filaValida = true;
+                var erroresFila = new List<string>();
 
                 var entidad = GetFirstValue(fila, "Entidad");
-                var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo", "CÃ³digo Consumo");
+                var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo");
                 var fechaVencimientoText = GetFirstValue(fila, "Fecha Vencimiento");
 
                 if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
                 {
-                    log($"ERROR ConsumosDetalle fila {numeroFila}: entidad '{entidad}' no existe en CUAD.");
-                    filaValida = false;
+                    erroresFila.Add($"entidad '{entidad}' no existe en CUAD.");
                 }
 
                 if (string.IsNullOrWhiteSpace(codigoConsumo) || !consumosPorCodigo.ContainsKey(codigoConsumo.Trim()))
                 {
-                    log($"ERROR ConsumosDetalle fila {numeroFila}: codigo de consumo '{codigoConsumo}' no existe en archivo de Consumos.");
-                    filaValida = false;
+                    erroresFila.Add($"codigo de consumo '{codigoConsumo}' no existe en archivo de Consumos.");
                 }
 
                 if (!TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
                 {
-                    log($"ERROR ConsumosDetalle fila {numeroFila}: fecha de vencimiento invalida.");
-                    filaValida = false;
+                    erroresFila.Add("fecha de vencimiento invalida.");
                 }
                 else if (fechaVencimiento.Date <= DateTime.Today)
                 {
-                    log($"ERROR ConsumosDetalle fila {numeroFila}: fecha de vencimiento no puede ser hoy o anterior.");
-                    filaValida = false;
+                    erroresFila.Add("fecha de vencimiento no puede ser hoy o anterior.");
                 }
 
-                if (filaValida)
+                if (erroresFila.Count == 0)
                 {
                     detalleFiltrado.Add(fila);
                 }
                 else
                 {
                     rechazadas++;
+                    log($"ERROR ConsumosDetalle fila {numeroFila}: {string.Join(" | ", erroresFila)}");
                 }
             }
 
             var detallePorCodigo = detalleFiltrado
-                .Where(f => !string.IsNullOrWhiteSpace(GetFirstValue(f, "Codigo Consumo", "Código Consumo", "CÃ³digo Consumo")))
-                .GroupBy(f => GetFirstValue(f, "Codigo Consumo", "Código Consumo", "CÃ³digo Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(f => !string.IsNullOrWhiteSpace(GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
+                .GroupBy(f => GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
 
             var codigosInvalidosPorTotales = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -621,7 +602,7 @@ namespace ImplementadorCUAD.Services
                 var depurado = new List<Dictionary<string, string>>();
                 foreach (var fila in detalleFiltrado)
                 {
-                    var codigo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo", "CÃ³digo Consumo").Trim();
+                    var codigo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo").Trim();
                     if (codigosInvalidosPorTotales.Contains(codigo))
                     {
                         rechazadas++;
@@ -676,7 +657,7 @@ namespace ImplementadorCUAD.Services
                 .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
             var codigosConsumos = result.DatosConsumosValidados
-                .Select(f => GetFirstValue(f, "Codigo", "Código", "CÃ³digo").Trim())
+                .Select(f => GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim())
                 .Where(c => !string.IsNullOrWhiteSpace(c))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -688,24 +669,22 @@ namespace ImplementadorCUAD.Services
             {
                 var fila = result.DatosServiciosValidados[i];
                 var numeroFila = i + 2;
-                var filaValida = true;
+                var erroresFila = new List<string>();
 
                 var entidad = GetFirstValue(fila, "Entidad");
                 var nroSocio = GetFirstValue(fila, "Nro de Socio", "Nro Socio");
                 var cuitServicio = GetFirstValue(fila, "CUIT");
                 var beneficioServicio = GetFirstValue(fila, "Nro Beneficio", "Beneficio");
-                var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo", "CÃ³digo Consumo");
+                var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo");
 
                 if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
                 {
-                    log($"ERROR Servicios fila {numeroFila}: entidad '{entidad}' no existe en CUAD.");
-                    filaValida = false;
+                    erroresFila.Add($"entidad '{entidad}' no existe en CUAD.");
                 }
 
                 if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
                 {
-                    log($"ERROR Servicios fila {numeroFila}: socio '{nroSocio}' no existe o no corresponde al padron.");
-                    filaValida = false;
+                    erroresFila.Add($"socio '{nroSocio}' no existe o no corresponde al padron.");
                 }
                 else
                 {
@@ -714,45 +693,41 @@ namespace ImplementadorCUAD.Services
 
                     if (!EqualsDigitsOnly(cuitServicio, cuitPadron))
                     {
-                        log($"ERROR Servicios fila {numeroFila}: CUIT no coincide con padron para socio '{nroSocio}'.");
-                        filaValida = false;
+                        erroresFila.Add($"CUIT no coincide con padron para socio '{nroSocio}'.");
                     }
 
                     if (!EqualsTrimmed(beneficioServicio, beneficioPadron))
                     {
-                        log($"ERROR Servicios fila {numeroFila}: Beneficio no coincide con padron para socio '{nroSocio}'.");
-                        filaValida = false;
+                        erroresFila.Add($"Beneficio no coincide con padron para socio '{nroSocio}'.");
                     }
                 }
 
                 if (string.IsNullOrWhiteSpace(codigoConsumo))
                 {
-                    log($"ERROR Servicios fila {numeroFila}: codigo de consumo vacio.");
-                    filaValida = false;
+                    erroresFila.Add("codigo de consumo vacio.");
                 }
                 else
                 {
                     var codigoNormalizado = codigoConsumo.Trim();
                     if (!codigosServiciosVistos.Add(codigoNormalizado))
                     {
-                        log($"ERROR Servicios fila {numeroFila}: codigo de consumo '{codigoConsumo}' repetido en Servicios.");
-                        filaValida = false;
+                        erroresFila.Add($"codigo de consumo '{codigoConsumo}' repetido en Servicios.");
                     }
 
                     if (codigosConsumos.Contains(codigoNormalizado))
                     {
-                        log($"ERROR Servicios fila {numeroFila}: codigo de consumo '{codigoConsumo}' ya existe en archivo Consumos.");
-                        filaValida = false;
+                        erroresFila.Add($"codigo de consumo '{codigoConsumo}' ya existe en archivo Consumos.");
                     }
                 }
 
-                if (filaValida)
+                if (erroresFila.Count == 0)
                 {
                     serviciosFiltrados.Add(fila);
                 }
                 else
                 {
                     rechazadas++;
+                    log($"ERROR Servicios fila {numeroFila}: {string.Join(" | ", erroresFila)}");
                 }
             }
 
@@ -883,21 +858,12 @@ namespace ImplementadorCUAD.Services
                     var indice = ResolveColumnIndex(config, indicePorEncabezadoNormalizado);
                     indiceColumnaPorClave[config.Clave] = indice;
 
-                    if (indice.HasValue)
-                    {
-                        var nombreColumnaDetectada = encabezados[indice.Value];
-                        log($"Columna detectada en {nombreLogico}: '{config.Clave}' -> '{nombreColumnaDetectada}'.");
-                        continue;
-                    }
-
-                    if (config.Requerida)
+                    if (!indice.HasValue && config.Requerida)
                     {
                         var aliasEsperados = (config.Alias?.Count > 0 ? config.Alias : new List<string> { config.Nombre });
                         log($"ERROR {nombreLogico}: falta columna requerida para '{config.Clave}'. Alias esperados: {string.Join(", ", aliasEsperados)}.");
                         return null;
                     }
-
-                    log($"Aviso {nombreLogico}: no se detecto columna opcional '{config.Clave}'.");
                 }
 
                 var registros = new List<Dictionary<string, string>>();
@@ -910,7 +876,7 @@ namespace ImplementadorCUAD.Services
                 {
                     var valores = lineas[i].Split(',');
                     var fila = new Dictionary<string, string>();
-                    var filaEsValida = true;
+                    var erroresFila = new List<string>();
 
                     for (int j = 0; j < columnasConfig.Count; j++)
                     {
@@ -922,12 +888,13 @@ namespace ImplementadorCUAD.Services
 
                         if (!ValidateGeneralRules(valor, config, out var error))
                         {
-                            log($"ERROR {nombreLogico} fila {i + 1}, columna '{config.Clave}': {error}");
-                            filaEsValida = false;
+                            erroresFila.Add($"columna '{config.Clave}': {error}");
                         }
 
                         fila[config.Clave] = valor;
                     }
+
+                    var filaEsValida = erroresFila.Count == 0;
 
                     if (filaEsValida)
                     {
@@ -943,11 +910,12 @@ namespace ImplementadorCUAD.Services
                     }
                     else
                     {
+                        log($"ERROR {nombreLogico} fila {i + 1}: {string.Join(" | ", erroresFila)}");
                         filasRechazadas++;
                     }
                 }
 
-                log($"{nombreLogico} cargado con validaciones generales.");
+                log($"{nombreLogico}: validaciones realizadas correctamente.");
                 log($"Resumen {nombreLogico}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
                 return registros;
             }
@@ -1036,7 +1004,7 @@ namespace ImplementadorCUAD.Services
 
             if (HasWeirdCharacters(texto))
             {
-                error = "contiene caracteres extranos";
+                error = "contiene caracteres extraños";
                 return false;
             }
 
@@ -1129,7 +1097,7 @@ namespace ImplementadorCUAD.Services
 
             if (nombreLogico.Equals("Consumos", StringComparison.OrdinalIgnoreCase))
             {
-                var nroConsumo = GetFirstValue(fila, "Codigo", "Código", "CÃ³digo");
+                var nroConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo", "Codigo", "Código", "CÃ³digo");
                 if (string.IsNullOrWhiteSpace(nroConsumo))
                 {
                     log($"ERROR Consumos fila {numeroFila}: codigo (nro de consumo) vacio.");

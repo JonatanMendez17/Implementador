@@ -193,7 +193,7 @@ namespace ImplementadorCUAD.ViewModels
             set => SetProperty(ref _validacionFinalizada, value);
         }
 
-        public ObservableCollection<string> Logs { get; }
+        public ObservableCollection<LogEntry> Logs { get; }
         public ObservableCollection<Empleador> Empleador { get; }
         public ObservableCollection<Entidad> Entidad { get; }
 
@@ -215,11 +215,9 @@ namespace ImplementadorCUAD.ViewModels
             _generalValidationService = new GeneralValidationService();
             _ImplementacionService = new ImplementacionService(new ImplementacionMapperService());
 
-            Logs = new ObservableCollection<string>();
-            Logs.Add("Esperando carga de archivos para validacion...");
-            Logs.Add("Padron Socios: No cargado");
-            Logs.Add("Padron Socios: No cargado");
-            Logs.Add("Padron Socios: No cargado");
+            Logs = new ObservableCollection<LogEntry>();
+            LogRaw("Esperando carga de archivos para validacion...");
+
             Progreso = 0;
 
             using (var db = new AppDbContext())
@@ -300,14 +298,14 @@ namespace ImplementadorCUAD.ViewModels
 
             if (!HasEntidadSeleccionadaReal())
             {
-                Logs.Add("Debe seleccionar una entidad para validar.");
+                Log("Debe seleccionar una entidad para validar.");
                 ValidacionFinalizada = false;
                 return;
             }
 
             if (!HasEmpleadorSeleccionadoReal())
             {
-                Logs.Add("Aviso: no se selecciono empleador.");
+                Log("Aviso: no se selecciono empleador.");
             }
 
             // Modo prueba: validaciones de archivos obligatorios deshabilitadas para permitir carga parcial.
@@ -318,7 +316,7 @@ namespace ImplementadorCUAD.ViewModels
             //if (string.IsNullOrWhiteSpace(ArchivoServicios)) { ... }
             //if (string.IsNullOrWhiteSpace(ArchivoCatalogoServicios)) { ... }
 
-            _validationResult = _fileImportService.ValidateAndLoadFiles(BuildSelection(), Logs.Add);
+            _validationResult = _fileImportService.ValidateAndLoadFiles(BuildSelection(), Log);
 
             if (!_validationResult.HuboCarga)
             {
@@ -328,7 +326,7 @@ namespace ImplementadorCUAD.ViewModels
 
             var entidadConsistente = _generalValidationService.ValidateEntidadConsistency(
                 _validationResult,
-                Logs.Add,
+                Log,
                 out var entidadComun);
 
             if (!entidadConsistente)
@@ -339,18 +337,15 @@ namespace ImplementadorCUAD.ViewModels
 
             if (!MatchesSelectedEntidad(entidadComun))
             {
-                Logs.Add($"ERROR: la entidad detectada en archivos ('{entidadComun}') no coincide con la entidad seleccionada.");
+                Log($"ERROR: la entidad detectada en archivos ('{entidadComun}') no coincide con la entidad seleccionada.");
                 ValidacionFinalizada = false;
                 return;
             }
 
-            var entidadSeleccionada = EntidadSeleccionada!;
-            Logs.Add($"OK: la entidad de archivos coincide con la seleccionada ({entidadSeleccionada.Nombre} / {entidadSeleccionada.EntId}).");
-
             var sinDatosPrevios = _generalValidationService.ValidateNoExistingDataForEntidad(
                 entidadComun,
                 EmpleadorSeleccionado,
-                Logs.Add);
+                Log);
 
             ValidacionFinalizada = sinDatosPrevios;
         }
@@ -359,13 +354,13 @@ namespace ImplementadorCUAD.ViewModels
         {
             if (!HasEntidadSeleccionadaReal())
             {
-                Logs.Add("Debe seleccionar una entidad antes de implementar.");
+                Log("Debe seleccionar una entidad antes de implementar.");
                 return;
             }
 
             var entidadSeleccionada = EntidadSeleccionada!;
             var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
-            Logs.Add($"Contexto de implementacion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
+            Log($"Contexto de implementacion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
 
             if (!ValidacionFinalizada || !_validationResult.HuboCarga)
             {
@@ -377,11 +372,11 @@ namespace ImplementadorCUAD.ViewModels
 
                 if (resultado != MessageBoxResult.Yes)
                 {
-                    Logs.Add("Implementación cancelada por el usuario.");
+                    Log("Implementación cancelada por el usuario.");
                     return;
                 }
 
-                Logs.Add("El usuario confirmo implementar con validaciones pendientes.");
+                Log("El usuario confirmo implementar con validaciones pendientes.");
             }
 
             EstaProcesando = true;
@@ -392,7 +387,7 @@ namespace ImplementadorCUAD.ViewModels
                 await _ImplementacionService.CopyToDatabaseAsync(
                     _validationResult,
                     BuildSelection(),
-                    Logs.Add,
+                    Log,
                     progress => Progreso = progress);
             }
             finally
@@ -410,7 +405,7 @@ namespace ImplementadorCUAD.ViewModels
         {
             if (!HasEntidadSeleccionadaReal())
             {
-                Logs.Add("Debe seleccionar una entidad para limpiar la base.");
+                Log("Debe seleccionar una entidad para limpiar la base.");
                 return;
             }
 
@@ -426,7 +421,7 @@ namespace ImplementadorCUAD.ViewModels
 
             if (confirmacion != MessageBoxResult.Yes)
             {
-                Logs.Add("Limpieza de base cancelada por el usuario.");
+                Log("Limpieza de base cancelada por el usuario.");
                 return;
             }
 
@@ -438,12 +433,12 @@ namespace ImplementadorCUAD.ViewModels
                     entidadSeleccionada.EntId);
 
                 var totalEliminado = eliminados.Padron + eliminados.ConsumoCab + eliminados.ConsumoDet;
-                Logs.Add($"Limpieza ejecutada para entidad '{entidadNombre}' y empleador '{empleadorInfo}'.");
-                Logs.Add($"Registros eliminados: Padron={eliminados.Padron}, ConsumoCab={eliminados.ConsumoCab}, ConsumoDet={eliminados.ConsumoDet}, Total={totalEliminado}.");
+                Log($"Limpieza ejecutada para entidad '{entidadNombre}' y empleador '{empleadorInfo}'.");
+                Log($"Registros eliminados: Padron={eliminados.Padron}, ConsumoCab={eliminados.ConsumoCab}, ConsumoDet={eliminados.ConsumoDet}, Total={totalEliminado}.");
 
                 if (totalEliminado == 0)
                 {
-                    Logs.Add("No se encontraron registros para eliminar con la entidad seleccionada.");
+                    Log("No se encontraron registros para eliminar con la entidad seleccionada.");
                 }
 
                 ValidacionFinalizada = false;
@@ -452,7 +447,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (Exception ex)
             {
-                Logs.Add($"Error al limpiar la base para la entidad seleccionada: {ex.Message}");
+                Log($"Error al limpiar la base para la entidad seleccionada: {ex.Message}");
                 DialogService.Show(
                     $"No se pudo limpiar la base.\n{ex.Message}",
                     "Limpieza de base",
@@ -470,7 +465,7 @@ namespace ImplementadorCUAD.ViewModels
 
             if (teniaEstado)
             {
-                Logs.Add(mensaje);
+                Log(mensaje);
             }
         }
 
@@ -494,10 +489,7 @@ namespace ImplementadorCUAD.ViewModels
             _validationResult = new ImplementacionValidationResult();
 
             Logs.Clear();
-            Logs.Add("Esperando carga de archivos para validacion...");
-            Logs.Add("Padron Socios: No cargado");
-            Logs.Add("Padron Socios: No cargado");
-            Logs.Add("Padron Socios: No cargado");
+            LogRaw("Esperando carga de archivos para validacion...");
         }
 
         private bool MatchesSelectedEntidad(string entidadComun)
@@ -528,7 +520,7 @@ namespace ImplementadorCUAD.ViewModels
         {
             if (Logs.Count == 0)
             {
-                Logs.Add("No hay mensajes de log para exportar.");
+                Log("No hay mensajes de log para exportar.");
                 return;
             }
 
@@ -548,14 +540,44 @@ namespace ImplementadorCUAD.ViewModels
 
             try
             {
-                File.WriteAllLines(dialog.FileName, Logs);
-                Logs.Add($"Log exportado a: {dialog.FileName}");
+                File.WriteAllLines(dialog.FileName, Logs.Select(l => l.ToExportString()));
+                Log($"Log exportado a: {dialog.FileName}");
                 DialogService.Show($"Log generado en:\n{dialog.FileName}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                Logs.Add($"Error al exportar el log: {ex.Message}");
+                Log($"Error al exportar el log: {ex.Message}");
                 DialogService.Show($"No se pudo exportar el log.\n{ex.Message}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void Log(string message)
+        {
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            Logs.Add(new LogEntry(timestamp, message));
+        }
+
+        private void LogRaw(string message)
+        {
+            Logs.Add(new LogEntry(null, message));
+        }
+
+        public sealed class LogEntry
+        {
+            public LogEntry(string? timestamp, string message)
+            {
+                Timestamp = timestamp;
+                Message = message;
+            }
+
+            public string? Timestamp { get; }
+            public string Message { get; }
+
+            public string ToExportString()
+            {
+                return string.IsNullOrEmpty(Timestamp)
+                    ? Message
+                    : $"{Timestamp} - {Message}";
             }
         }
 

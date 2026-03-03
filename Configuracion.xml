@@ -5,16 +5,35 @@
   <Archivo nombre="Categorias">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
-      <Columna nombre="Código Categoría" tipo="texto" largoMaximo="10" />
-      <Columna nombre="Categoría" tipo="texto" largoMaximo="50" />
-      <Columna nombre="Descripción Categoría" tipo="texto" largoMaximo="100" />
-      <Columna nombre="Categoría Predeterminada" tipo="texto" largoMaximo="1" />
-      <Columna nombre="Monto CS" tipo="decimal" largoMaximo="15" />
-      <Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10" />
+      <Columna nombre="Código Categoría" tipo="texto" largoMaximo="10">
+        <!-- para configuracion de columna -->
+        <Alias>Código Categoría</Alias>
+      </Columna>
+      <Columna nombre="Categoría" tipo="texto" largoMaximo="50">
+        <!-- para configuracion de columna -->
+        <Alias>Categoría</Alias>
+      </Columna>
+      <Columna nombre="Descripción Categoría" tipo="texto" largoMaximo="100">
+        <!-- para configuracion de columna -->
+        <Alias>Descripción Categoría</Alias>
+      </Columna>
+      <Columna nombre="Categoría Predeterminada" tipo="texto" largoMaximo="1">
+        <!-- para configuracion de columna -->
+        <Alias>Categoría Predeterminada</Alias>
+      </Columna>
+      <Columna nombre="Monto CS" tipo="decimal" largoMaximo="15">
+        <!-- para configuracion de columna -->
+        <Alias>Monto CS</Alias>
+      </Columna>
+      <Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10">
+        <!-- para configuracion de columna -->
+        <Alias>Concepto Descuento</Alias>
+      </Columna>
     </Columnas>
   </Archivo>
 
@@ -24,37 +43,80 @@
   <Archivo nombre="Padron">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
-      <Columna nombre="Nro Socio" tipo="int" largoMaximo="10" />
-      <Columna nombre="Fecha Alta Socio" tipo="fecha" largoMaximo="20" />
-      <Columna nombre="Documento" tipo="texto" largoMaximo="20" />
-      <Columna nombre="CUIT" tipo="texto" largoMaximo="11" />
-      <Columna nombre="Beneficio" tipo="texto" largoMaximo="20" />
-      <Columna nombre="Código Categoría" tipo="texto" largoMaximo="10" />
+      <Columna nombre="Nro Socio" tipo="int" largoMaximo="10">
+        <!-- para configuracion de columna -->
+        <Alias>Nro Socio</Alias>
+      </Columna>
+      <Columna nombre="Fecha Alta Socio" tipo="fecha" largoMaximo="20">
+        <!-- para configuracion de columna -->
+        <Alias>Fecha Alta Socio</Alias>
+      </Columna>
+      <Columna nombre="Documento" tipo="texto" largoMaximo="20">
+        <!-- para configuracion de columna -->
+        <Alias>Documento</Alias>
+      </Columna>
+      <Columna nombre="CUIT" tipo="texto" largoMaximo="11">
+        <!-- para configuracion de columna -->
+        <Alias>CUIT</Alias>
+      </Columna>
+      <Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
+        <!-- para configuracion de columna -->
+        <Alias>Beneficio</Alias>
+      </Columna>
+      <Columna nombre="Código Categoría" tipo="texto" largoMaximo="10">
+        <!-- para configuracion de columna -->
+        <Alias>Código Categoría</Alias>
+      </Columna>
     </Columnas>
   </Archivo>
 
   <!-- Archivo de consumo -->
   <!-- Encabezado esperado:
-       Entidad, Nro Socio, CUIT, Beneficio, Código, Consumo, Cuotas Pendientes, Monto Deuda, Concepto Descuento -->
+       Entidad, Nro Socio, CUIT, Beneficio, Código Consumo, Cuotas Pendientes, Monto Deuda, Concepto Descuento -->
   <Archivo nombre="Consumos">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
-      <Columna nombre="Nro Socio" tipo="int" largoMaximo="10" />
-      <Columna nombre="CUIT" tipo="texto" largoMaximo="11" />
-      <Columna nombre="Beneficio" tipo="texto" largoMaximo="20" />
-      <Columna nombre="Código" tipo="texto" largoMaximo="10" />
-      <Columna nombre="Consumo" tipo="texto" largoMaximo="20" />
-      <Columna nombre="Cuotas Pendientes" tipo="int" largoMaximo="5" />
-      <Columna nombre="Monto Deuda" tipo="decimal" largoMaximo="15" />
-      <Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10" />
+      <Columna nombre="Nro Socio" tipo="int" largoMaximo="10">
+        <!-- para configuracion de columna -->
+        <Alias>Nro Socio</Alias>
+      </Columna>
+      <Columna nombre="CUIT" tipo="texto" largoMaximo="11">
+        <!-- para configuracion de columna -->
+        <Alias>CUIT</Alias>
+      </Columna>
+      <Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
+        <!-- para configuracion de columna -->
+        <Alias>Beneficio</Alias>
+      </Columna>
+      <Columna nombre="Código Consumo" clave="Codigo Consumo" tipo="texto" largoMaximo="20">
+        <!-- para configuracion de columna -->
+        <Alias>Código Consumo</Alias>
+        <Alias>Código</Alias>
+        <Alias>Codigo</Alias>
+        <Alias>Consumo</Alias>
+      </Columna>
+      <Columna nombre="Cuotas Pendientes" tipo="int" largoMaximo="5">
+        <!-- para configuracion de columna -->
+        <Alias>Cuotas Pendientes</Alias>
+      </Columna>
+      <Columna nombre="Monto Deuda" tipo="decimal" largoMaximo="15">
+        <!-- para configuracion de columna -->
+        <Alias>Monto Deuda</Alias>
+      </Columna>
+      <Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10">
+        <!-- para configuracion de columna -->
+        <Alias>Concepto Descuento</Alias>
+      </Columna>
     </Columnas>
   </Archivo>
 
@@ -64,14 +126,27 @@
   <Archivo nombre="ConsumosDetalle">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
-      <Columna nombre="Código Consumo" tipo="int" largoMaximo="10" />
-      <Columna nombre="Nro Cuota" tipo="int" largoMaximo="5" />
-      <Columna nombre="Fecha Vencimiento" tipo="fecha" largoMaximo="20" />
-      <Columna nombre="Monto" tipo="decimal" largoMaximo="15" />
+      <Columna nombre="Código Consumo" tipo="int" largoMaximo="10">
+        <!-- para configuracion de columna -->
+        <Alias>Código Consumo</Alias>
+      </Columna>
+      <Columna nombre="Nro Cuota" tipo="int" largoMaximo="5">
+        <!-- para configuracion de columna -->
+        <Alias>Nro Cuota</Alias>
+      </Columna>
+      <Columna nombre="Fecha Vencimiento" tipo="fecha" largoMaximo="20">
+        <!-- para configuracion de columna -->
+        <Alias>Fecha Vencimiento</Alias>
+      </Columna>
+      <Columna nombre="Monto" tipo="decimal" largoMaximo="15">
+        <!-- para configuracion de columna -->
+        <Alias>Monto</Alias>
+      </Columna>
     </Columnas>
   </Archivo>
 
@@ -81,16 +156,35 @@
   <Archivo nombre="Servicios">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
-      <Columna nombre="Nro de Socio" tipo="int" largoMaximo="10" />
-      <Columna nombre="CUIT" tipo="texto" largoMaximo="11" />
-      <Columna nombre="Nro Beneficio" tipo="texto" largoMaximo="20" />
-      <Columna nombre="Código Consumo" tipo="int" largoMaximo="10" />
-      <Columna nombre="Importe Cuota" tipo="decimal" largoMaximo="15" />
-      <Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10" />
+      <Columna nombre="Nro de Socio" tipo="int" largoMaximo="10">
+        <!-- para configuracion de columna -->
+        <Alias>Nro de Socio</Alias>
+      </Columna>
+      <Columna nombre="CUIT" tipo="texto" largoMaximo="11">
+        <!-- para configuracion de columna -->
+        <Alias>CUIT</Alias>
+      </Columna>
+      <Columna nombre="Nro Beneficio" tipo="texto" largoMaximo="20">
+        <!-- para configuracion de columna -->
+        <Alias>Nro Beneficio</Alias>
+      </Columna>
+      <Columna nombre="Código Consumo" tipo="int" largoMaximo="10">
+        <!-- para configuracion de columna -->
+        <Alias>Código Consumo</Alias>
+      </Columna>
+      <Columna nombre="Importe Cuota" tipo="decimal" largoMaximo="15">
+        <!-- para configuracion de columna -->
+        <Alias>Importe Cuota</Alias>
+      </Columna>
+      <Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10">
+        <!-- para configuracion de columna -->
+        <Alias>Concepto Descuento</Alias>
+      </Columna>
     </Columnas>
   </Archivo>
 
@@ -100,13 +194,23 @@
   <Archivo nombre="CatalogoServicios">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
+        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
-      <Columna nombre="Servicio" tipo="texto" largoMaximo="100" />
-      <Columna nombre="Importe" tipo="decimal" largoMaximo="15" />
-      <Columna nombre="Comentarios / Info de Servicio" tipo="texto" largoMaximo="255" />
+      <Columna nombre="Servicio" tipo="texto" largoMaximo="100">
+        <!-- para configuracion de columna -->
+        <Alias>Servicio</Alias>
+      </Columna>
+      <Columna nombre="Importe" tipo="decimal" largoMaximo="15">
+        <!-- para configuracion de columna -->
+        <Alias>Importe</Alias>
+      </Columna>
+      <Columna nombre="Comentarios / Info de Servicio" tipo="texto" largoMaximo="255">
+        <!-- para configuracion de columna -->
+        <Alias>Comentarios / Info de Servicio</Alias>
+      </Columna>
     </Columnas>
   </Archivo>
 

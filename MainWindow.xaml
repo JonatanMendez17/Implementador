@@ -321,22 +321,6 @@
 
                     <StackPanel Grid.Row="2">
                         <Separator Margin="0,0,0,10" Background="#3D5068" />
-
-                        <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarCatalogoServiciosCommand}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="28" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="230" />
-                                </Grid.ColumnDefinitions>
-                                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoCatalogoServiciosCargado}">
-                                    <TextBlock Text="{Binding ArchivoCatalogoServiciosIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                                <TextBlock Grid.Column="1" Text="Catalogo de Servicios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
-                                <TextBlock Grid.Column="2" Text="{Binding ArchivoCatalogoServiciosEstado}" Tag="{Binding ArchivoCatalogoServiciosCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-
                         <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarCategoriasCommand}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -351,7 +335,20 @@
                                 <TextBlock Grid.Column="2" Text="{Binding ArchivoCategoriasEstado}" Tag="{Binding ArchivoCategoriasCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
                             </Grid>
                         </Button>
-
+                        <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarPadronCommand}" Click="Button_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="230" />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoPadronCargado}">
+                                    <TextBlock Text="{Binding ArchivoPadronIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Padron Socios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                <TextBlock Grid.Column="2" Text="{Binding ArchivoPadronEstado}" Tag="{Binding ArchivoPadronCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
                         <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarConsumosCommand}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -366,7 +363,6 @@
                                 <TextBlock Grid.Column="2" Text="{Binding ArchivoConsumosEstado}" Tag="{Binding ArchivoConsumosCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
                             </Grid>
                         </Button>
-
                         <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarConsumosDetalleCommand}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -382,6 +378,21 @@
                             </Grid>
                         </Button>
 
+                        <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarCatalogoServiciosCommand}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="28" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="230" />
+                                </Grid.ColumnDefinitions>
+                                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoCatalogoServiciosCargado}">
+                                    <TextBlock Text="{Binding ArchivoCatalogoServiciosIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Grid.Column="1" Text="Catalogo Servicios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                <TextBlock Grid.Column="2" Text="{Binding ArchivoCatalogoServiciosEstado}" Tag="{Binding ArchivoCatalogoServiciosCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+
                         <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarServiciosCommand}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -394,21 +405,6 @@
                                 </Border>
                                 <TextBlock Grid.Column="1" Text="Consumos Servicios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
                                 <TextBlock Grid.Column="2" Text="{Binding ArchivoServiciosEstado}" Tag="{Binding ArchivoServiciosCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-
-                        <Button Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarPadronCommand}" Margin="0,0,0,0" Click="Button_Click">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="28" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="230" />
-                                </Grid.ColumnDefinitions>
-                                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoPadronCargado}">
-                                    <TextBlock Text="{Binding ArchivoPadronIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                                <TextBlock Grid.Column="1" Text="Padron Socios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
-                                <TextBlock Grid.Column="2" Text="{Binding ArchivoPadronEstado}" Tag="{Binding ArchivoPadronCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
                             </Grid>
                         </Button>
                     </StackPanel>
@@ -455,21 +451,22 @@
                             CornerRadius="8"
                             Padding="8"
                             Margin="0,0,0,10">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Auto">
                             <ItemsControl ItemsSource="{Binding Logs}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBox Text="{Binding .}"
+                                        <TextBox Text="{Binding Message, Mode=OneWay}"
                                                  Foreground="#CBD5E1"
                                                  FontSize="14"
                                                  FontFamily="Consolas"
-                                                 TextWrapping="Wrap"
+                                                 TextWrapping="NoWrap"
                                                  Margin="0,0,0,2"
                                                  Background="Transparent"
                                                  BorderThickness="0"
                                                  IsReadOnly="True"
                                                  IsReadOnlyCaretVisible="False"
-                                                 HorizontalScrollBarVisibility="Hidden"
+                                                 HorizontalScrollBarVisibility="Auto"
                                                  VerticalScrollBarVisibility="Hidden" />
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
