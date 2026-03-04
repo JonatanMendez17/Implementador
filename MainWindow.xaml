@@ -411,13 +411,14 @@
                                     Margin="0,5,0,3" />
                         </Grid>
 
-                        <!-- Consumos Detalle -->
+                        <!-- Consumos Detalle (permite varios archivos) -->
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="28" />
                             </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarConsumosDetalleCommand}" Margin="0,0,4,0">
+                            <Button Grid.Column="0" Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarConsumosDetalleCommand}" Margin="0,0,4,0"
+                                    ToolTip="{Binding ArchivoConsumosDetalleToolTip}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="28" />
