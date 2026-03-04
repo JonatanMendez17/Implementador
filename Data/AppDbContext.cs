@@ -2,10 +2,11 @@ using Microsoft.Data.SqlClient;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace ImplementadorCUAD.Data
 {
-    public class AppDbContext : IDisposable
+    public class AppDbContext : IAppDbContext
     {
         private readonly string _connectionString;
 
@@ -139,9 +140,11 @@ namespace ImplementadorCUAD.Data
             return resultado;
         }
 
-        public int InsertPadronSocio(IEnumerable<ImportarPadronSocio> registros)
+        public Task<int> InsertPadronSocioAsync(
+            IReadOnlyList<ImportarPadronSocio> registros,
+            IProgress<int>? progress = null)
         {
-            return ExecuteInsert(
+            return ExecuteInsertAsync(
                 registros,
                 @"INSERT INTO Importar_Padron_Socio
                 (
@@ -182,9 +185,11 @@ namespace ImplementadorCUAD.Data
                 });
         }
 
-        public int InsertImportarConsumosDet(IEnumerable<ImportarConsumosDet> registros)
+        public Task<int> InsertImportarConsumosDetAsync(
+            IReadOnlyList<ImportarConsumosDet> registros,
+            IProgress<int>? progress = null)
         {
-            return ExecuteInsert(
+            return ExecuteInsertAsync(
                 registros,
                 @"INSERT INTO Importar_Consumo_Det
                 (
@@ -212,9 +217,11 @@ namespace ImplementadorCUAD.Data
                 });
         }
 
-        public int InsertImportarConsumoCab(IEnumerable<ImportarConsumoCab> registros)
+        public Task<int> InsertImportarConsumoCabAsync(
+            IReadOnlyList<ImportarConsumoCab> registros,
+            IProgress<int>? progress = null)
         {
-            return ExecuteInsert(
+            return ExecuteInsertAsync(
                 registros,
                 @"INSERT INTO Importar_Consumo_Cab
                 (
@@ -312,25 +319,38 @@ namespace ImplementadorCUAD.Data
             }
         }
 
-        private int ExecuteInsert<T>(
-            IEnumerable<T> registros,
+        private async Task<int> ExecuteInsertAsync<T>(
+            IReadOnlyList<T> registros,
             string sql,
-            Action<T, SqlCommand> bindParameters)
+            Action<T, SqlCommand> bindParameters,
+            IProgress<int>? progress = null)
         {
+            if (registros.Count == 0)
+            {
+                return 0;
+            }
+
             int filasAfectadas = 0;
             using var connection = CreateOpenConnection();
             using var transaction = connection.BeginTransaction();
 
             try
             {
-                foreach (var registro in registros)
+                using (var command = new SqlCommand(sql, connection, transaction))
                 {
-                    using var command = new SqlCommand(sql, connection, transaction);
-                    bindParameters(registro, command);
-                    filasAfectadas += command.ExecuteNonQuery();
+                    foreach (var registro in registros)
+                    {
+                        command.Parameters.Clear();
+                        bindParameters(registro, command);
+                        filasAfectadas += await command.ExecuteNonQueryAsync().ConfigureAwait(false);
+                        if (progress is not null)
+                        {
+                            progress.Report(1);
+                        }
+                    }
                 }
 
-                transaction.Commit();
+                await Task.Run(() => transaction.Commit()).ConfigureAwait(false);
                 return filasAfectadas;
             }
             catch

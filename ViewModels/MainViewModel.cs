@@ -1,17 +1,21 @@
 using Microsoft.Win32;
 using ImplementadorCUAD.Commands;
 using ImplementadorCUAD.Data;
+using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Services;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace ImplementadorCUAD.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
+        private readonly IAppDbContextFactory _dbContextFactory;
         private readonly FileImportService _fileImportService;
         private readonly GeneralValidationService _generalValidationService;
         private readonly ImplementacionService _ImplementacionService;
@@ -217,16 +221,17 @@ namespace ImplementadorCUAD.ViewModels
 
         public MainViewModel()
         {
-            _fileImportService = new FileImportService();
-            _generalValidationService = new GeneralValidationService();
-            _ImplementacionService = new ImplementacionService(new ImplementacionMapperService());
+            _dbContextFactory = new AppDbContextFactory();
+            _fileImportService = new FileImportService(_dbContextFactory);
+            _generalValidationService = new GeneralValidationService(_dbContextFactory);
+            _ImplementacionService = new ImplementacionService(new ImplementacionMapperService(), _dbContextFactory);
 
             Logs = new ObservableCollection<LogEntry>();
             LogRaw("Esperando carga de archivos para validacion...");
 
             Progreso = 0;
 
-            using (var db = new AppDbContext())
+            using (var db = _dbContextFactory.Create())
             {
                 Empleador = new ObservableCollection<Empleador>(db.GetEmpleador());
                 Entidad = new ObservableCollection<Entidad>(db.GetEntidad());
@@ -249,7 +254,7 @@ namespace ImplementadorCUAD.ViewModels
             LimpiarConsumosDetalleArchivoCommand = new RelayCommand(_ => LimpiarArchivo("ConsumosDetalle"));
             LimpiarServiciosArchivoCommand = new RelayCommand(_ => LimpiarArchivo("Servicios"));
             LimpiarCatalogoServiciosArchivoCommand = new RelayCommand(_ => LimpiarArchivo("CatalogoServicios"));
-            ValidarCommand = new RelayCommand(_ => ValidarArchivos());
+            ValidarCommand = new SimpleAsyncCommand(ValidarArchivosAsync);
             CopiarCommand = new SimpleAsyncCommand(CopiarABaseAsync);
             ExportarLogCommand = new RelayCommand(_ => ExportarLog());
             LimpiarUiCommand = new RelayCommand(_ => LimpiarSoloUi(), _ => !EstaProcesando);
@@ -329,8 +334,13 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
-        private void ValidarArchivos()
+        private async Task ValidarArchivosAsync()
         {
+            if (EstaProcesando)
+            {
+                return;
+            }
+
             Logs.Clear();
 
             if (!HasEntidadSeleccionadaReal())
@@ -361,7 +371,21 @@ namespace ImplementadorCUAD.ViewModels
             //if (string.IsNullOrWhiteSpace(ArchivoServicios)) { ... }
             //if (string.IsNullOrWhiteSpace(ArchivoCatalogoServicios)) { ... }
 
-            _validationResult = _fileImportService.ValidateAndLoadFiles(BuildSelection(), Log);
+            EstaProcesando = true;
+            Progreso = 0;
+
+            try
+            {
+                var selection = BuildSelection();
+                var progress = new Progress<int>(p => Progreso = p);
+
+                _validationResult = await Task.Run(
+                    () => _fileImportService.ValidateAndLoadFiles(selection, Log, progress));
+            }
+            finally
+            {
+                EstaProcesando = false;
+            }
 
             if (!_validationResult.HuboCarga)
             {
@@ -480,7 +504,7 @@ namespace ImplementadorCUAD.ViewModels
 
             try
             {
-                using var db = new AppDbContext();
+                using var db = _dbContextFactory.Create();
                 var eliminados = db.DeleteImportedDataForEntidad(
                     entidadSeleccionada.Nombre ?? string.Empty,
                     entidadSeleccionada.EntId);
@@ -608,13 +632,28 @@ namespace ImplementadorCUAD.ViewModels
         {
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var prefix = GetLogPrefix(message);
-            Logs.Add(new LogEntry(timestamp, $"{prefix} {message}"));
+            var entry = new LogEntry(timestamp, $"{prefix} {message}");
+            AddLogEntry(entry);
         }
 
         private void LogRaw(string message)
         {
             var prefix = GetLogPrefix(message);
-            Logs.Add(new LogEntry(null, $"{prefix} {message}"));
+            var entry = new LogEntry(null, $"{prefix} {message}");
+            AddLogEntry(entry);
+        }
+
+        private void AddLogEntry(LogEntry entry)
+        {
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher != null && !dispatcher.CheckAccess())
+            {
+                dispatcher.InvokeAsync(() => Logs.Add(entry), DispatcherPriority.Normal);
+            }
+            else
+            {
+                Logs.Add(entry);
+            }
         }
 
         public sealed class LogEntry

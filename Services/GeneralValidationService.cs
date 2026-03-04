@@ -1,10 +1,17 @@
 using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Models;
+using ImplementadorCUAD.Infrastructure;
 
 namespace ImplementadorCUAD.Services
 {
     public class GeneralValidationService
     {
+        private readonly IAppDbContextFactory _dbContextFactory;
+
+        public GeneralValidationService(IAppDbContextFactory dbContextFactory)
+        {
+            _dbContextFactory = dbContextFactory;
+        }
         public bool ValidateEntidadConsistency(ImplementacionValidationResult validationResult, Action<string> log, out string entidadComun)
         {
             entidadComun = string.Empty;
@@ -36,7 +43,7 @@ namespace ImplementadorCUAD.Services
 
         public bool ValidateNoExistingDataForEntidad(string entidad, Empleador? empleador, Action<string> log)
         {
-            using var db = new AppDbContext();
+            using var db = _dbContextFactory.Create();
             var existe = db.ExistsImportedDataForEntidad(entidad);
             if (existe)
             {

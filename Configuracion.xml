@@ -60,14 +60,14 @@
         <!-- para configuracion de columna -->
         <Alias>Documento</Alias>
       </Columna>
-      <Columna nombre="CUIT" tipo="texto" largoMaximo="11">
-        <!-- para configuracion de columna -->
+      <!--<Columna nombre="CUIT" tipo="texto" largoMaximo="11">
+        --><!-- para configuracion de columna --><!--
         <Alias>CUIT</Alias>
-      </Columna>
-      <Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
-        <!-- para configuracion de columna -->
+      </Columna>-->
+      <!--<Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
+        --><!-- para configuracion de columna --><!--
         <Alias>Beneficio</Alias>
-      </Columna>
+      </Columna>-->
       <Columna nombre="Código Categoría" tipo="texto" largoMaximo="10">
         <!-- para configuracion de columna -->
         <Alias>Código Categoría</Alias>
@@ -90,14 +90,14 @@
         <!-- para configuracion de columna -->
         <Alias>Nro Socio</Alias>
       </Columna>
-      <Columna nombre="CUIT" tipo="texto" largoMaximo="11">
-        <!-- para configuracion de columna -->
+      <!--<Columna nombre="CUIT" tipo="texto" largoMaximo="11">
+        --><!-- para configuracion de columna --><!--
         <Alias>CUIT</Alias>
-      </Columna>
-      <Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
-        <!-- para configuracion de columna -->
+      </Columna>-->
+      <!--<Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
+        --><!-- para configuracion de columna --><!--
         <Alias>Beneficio</Alias>
-      </Columna>
+      </Columna>-->
       <Columna nombre="Código Consumo" clave="Codigo Consumo" tipo="texto" largoMaximo="20">
         <!-- para configuracion de columna -->
         <Alias>Código Consumo</Alias>
@@ -163,16 +163,16 @@
       </Columna>
       <Columna nombre="Nro de Socio" tipo="int" largoMaximo="10">
         <!-- para configuracion de columna -->
-        <Alias>Nro de Socio</Alias>
+        <Alias>Nro Socio</Alias>
       </Columna>
       <Columna nombre="CUIT" tipo="texto" largoMaximo="11">
         <!-- para configuracion de columna -->
         <Alias>CUIT</Alias>
       </Columna>
-      <Columna nombre="Nro Beneficio" tipo="texto" largoMaximo="20">
-        <!-- para configuracion de columna -->
+      <!--<Columna nombre="Nro Beneficio" tipo="texto" largoMaximo="20">
+        --><!-- para configuracion de columna --><!--
         <Alias>Nro Beneficio</Alias>
-      </Columna>
+      </Columna>-->
       <Columna nombre="Código Consumo" tipo="int" largoMaximo="10">
         <!-- para configuracion de columna -->
         <Alias>Código Consumo</Alias>

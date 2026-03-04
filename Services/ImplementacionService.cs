@@ -1,106 +1,93 @@
 using ImplementadorCUAD.Data;
+using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ImplementadorCUAD.Services
 {
     public class ImplementacionService
     {
         private readonly ImplementacionMapperService _mapperService;
+        private readonly IAppDbContextFactory _dbContextFactory;
 
-        public ImplementacionService(ImplementacionMapperService mapperService)
+        public ImplementacionService(ImplementacionMapperService mapperService, IAppDbContextFactory dbContextFactory)
         {
             _mapperService = mapperService;
+            _dbContextFactory = dbContextFactory;
         }
 
-        public Task CopyToDatabaseAsync(
+        public async Task CopyToDatabaseAsync(
             ImplementacionValidationResult validationResult,
             ImplementacionFileSelection selection,
             Action<string> log,
             Action<int> reportProgress)
         {
-            using var db = new AppDbContext();
+            using var db = _dbContextFactory.Create();
 
             var insertadosPadron = 0;
             var insertadosConsumosDetalle = 0;
             var insertadosConsumos = 0;
 
-            var totalPasos = 0;
-            if (!string.IsNullOrWhiteSpace(selection.ArchivoPadron))
-            {
-                totalPasos++;
-            }
+            var padronSocios = !string.IsNullOrWhiteSpace(selection.ArchivoPadron)
+                ? _mapperService.MapPadronSocios(validationResult.DatosPadronValidados, log)
+                : new List<ImportarPadronSocio>();
 
-            if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumosDetalle))
-            {
-                totalPasos++;
-            }
+            var consumosDetalle = !string.IsNullOrWhiteSpace(selection.ArchivoConsumosDetalle)
+                ? _mapperService.MapConsumosDetalle(validationResult.DatosConsumosDetalleValidados, log)
+                : new List<ImportarConsumosDet>();
 
-            if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumos))
-            {
-                totalPasos++;
-            }
+            var consumosImportados = !string.IsNullOrWhiteSpace(selection.ArchivoConsumos)
+                ? _mapperService.MapConsumos(validationResult.DatosConsumosValidados, log)
+                : new List<ImportarConsumoCab>();
 
-            if (totalPasos == 0)
+            var totalRegistros =
+                padronSocios.Count +
+                consumosDetalle.Count +
+                consumosImportados.Count;
+
+            if (totalRegistros == 0)
             {
                 reportProgress(100);
-                log("No hay archivos de implementación compatibles para procesar en esta ejecucion.");
-                return Task.CompletedTask;
+                log("No hay registros validos para implementar en esta ejecucion.");
+                return;
             }
 
-            var pasosCompletados = 0;
-            void AvanzarProgreso()
+            var insertadosGlobal = 0;
+            var progress = new Progress<int>(delta =>
             {
-                pasosCompletados++;
-                var porcentaje = (int)Math.Round((double)pasosCompletados * 100 / totalPasos, MidpointRounding.AwayFromZero);
+                insertadosGlobal += delta;
+                var porcentaje = (int)Math.Round(
+                    (double)insertadosGlobal * 100 / totalRegistros,
+                    MidpointRounding.AwayFromZero);
                 reportProgress(Math.Min(100, porcentaje));
+            });
+
+            if (padronSocios.Any())
+            {
+                insertadosPadron = await db.InsertPadronSocioAsync(padronSocios, progress).ConfigureAwait(false);
+            }
+            else if (!string.IsNullOrWhiteSpace(selection.ArchivoPadron))
+            {
+                log("No hay registros validos de padron para insertar en Padron_socios.");
             }
 
-            if (!string.IsNullOrWhiteSpace(selection.ArchivoPadron))
+            if (consumosDetalle.Any())
             {
-                var padronSocios = _mapperService.MapPadronSocios(validationResult.DatosPadronValidados, log);
-                if (padronSocios.Any())
-                {
-                    db.InsertPadronSocio(padronSocios);
-                    insertadosPadron = padronSocios.Count;
-                }
-                else
-                {
-                    log("No hay registros validos de padron para insertar en Padron_socios.");
-                }
-
-                AvanzarProgreso();
+                insertadosConsumosDetalle = await db.InsertImportarConsumosDetAsync(consumosDetalle, progress).ConfigureAwait(false);
+            }
+            else if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumosDetalle))
+            {
+                log("No hay consumos detalle validos para insertar en Importar_Consumos_Detalle.");
             }
 
-            if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumosDetalle))
+            if (consumosImportados.Any())
             {
-                var consumosDetalle = _mapperService.MapConsumosDetalle(validationResult.DatosConsumosDetalleValidados, log);
-                if (consumosDetalle.Any())
-                {
-                    db.InsertImportarConsumosDet(consumosDetalle);
-                    insertadosConsumosDetalle = consumosDetalle.Count;
-                }
-                else
-                {
-                    log("No hay consumos detalle validos para insertar en Importar_Consumos_Detalle.");
-                }
-
-                AvanzarProgreso();
+                insertadosConsumos = await db.InsertImportarConsumoCabAsync(consumosImportados, progress).ConfigureAwait(false);
             }
-
-            if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumos))
+            else if (!string.IsNullOrWhiteSpace(selection.ArchivoConsumos))
             {
-                var consumosImportados = _mapperService.MapConsumos(validationResult.DatosConsumosValidados, log);
-                if (consumosImportados.Any())
-                {
-                    db.InsertImportarConsumoCab(consumosImportados);
-                    insertadosConsumos = consumosImportados.Count;
-                }
-                else
-                {
-                    log("No hay registros validos para insertar en tabla Consumo.");
-                }
-
-                AvanzarProgreso();
+                log("No hay registros validos para insertar en tabla Consumo.");
             }
 
             if (insertadosPadron > 0 || insertadosConsumosDetalle > 0 || insertadosConsumos > 0)
@@ -111,8 +98,6 @@ namespace ImplementadorCUAD.Services
             {
                 log("Resumen implementación: no se insertaron registros en la base.");
             }
-
-            return Task.CompletedTask;
         }
     }
 }

@@ -1,5 +1,6 @@
 using ExcelDataReader;
 using ImplementadorCUAD.Data;
+using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
 using System.Globalization;
 using System.IO;
@@ -11,33 +12,42 @@ namespace ImplementadorCUAD.Services
 {
     public class FileImportService
     {
-        public ImplementacionValidationResult ValidateAndLoadFiles(ImplementacionFileSelection selection, Action<string> log)
+        private readonly IAppDbContextFactory _dbContextFactory;
+
+        public FileImportService(IAppDbContextFactory dbContextFactory)
+        {
+            _dbContextFactory = dbContextFactory;
+        }
+        public ImplementacionValidationResult ValidateAndLoadFiles(
+            ImplementacionFileSelection selection,
+            Action<string> log,
+            IProgress<int>? progress = null)
         {
             var result = new ImplementacionValidationResult();
 
             var datosCategorias = string.IsNullOrWhiteSpace(selection.ArchivoCategorias)
                 ? null
-                : LoadFile("Categorias", selection.ArchivoCategorias, log);
+                : LoadFile("Categorias", selection.ArchivoCategorias, log, progress);
 
             var datosPadron = string.IsNullOrWhiteSpace(selection.ArchivoPadron)
                 ? null
-                : LoadFile("Padron", selection.ArchivoPadron, log);
+                : LoadFile("Padron", selection.ArchivoPadron, log, progress);
 
             var datosConsumos = string.IsNullOrWhiteSpace(selection.ArchivoConsumos)
                 ? null
-                : LoadFile("Consumos", selection.ArchivoConsumos, log);
+                : LoadFile("Consumos", selection.ArchivoConsumos, log, progress);
 
             var datosConsumosDetalle = string.IsNullOrWhiteSpace(selection.ArchivoConsumosDetalle)
                 ? null
-                : LoadFile("ConsumosDetalle", selection.ArchivoConsumosDetalle, log);
+                : LoadFile("ConsumosDetalle", selection.ArchivoConsumosDetalle, log, progress);
 
             var datosServicios = string.IsNullOrWhiteSpace(selection.ArchivoServicios)
                 ? null
-                : LoadFile("Servicios", selection.ArchivoServicios, log);
+                : LoadFile("Servicios", selection.ArchivoServicios, log, progress);
 
             var datosCatalogoServicios = string.IsNullOrWhiteSpace(selection.ArchivoCatalogoServicios)
                 ? null
-                : LoadFile("CatalogoServicios", selection.ArchivoCatalogoServicios, log);
+                : LoadFile("CatalogoServicios", selection.ArchivoCatalogoServicios, log, progress);
 
             if (datosPadron != null)
             {
@@ -75,11 +85,17 @@ namespace ImplementadorCUAD.Services
                 result.HuboCarga = true;
             }
 
-            ApplyPadronSpecificValidations(result, log);
-            ApplyConsumosSpecificValidations(result, log);
-            ApplyConsumosDetalleSpecificValidations(result, log);
-            ApplyServiciosSpecificValidations(result, log);
-            ApplyCatalogoServiciosSpecificValidations(result, log);
+            var padronValidator = new PadronValidator(_dbContextFactory);
+            var consumosValidator = new ConsumosValidator(_dbContextFactory);
+            var consumosDetalleValidator = new ConsumosDetalleValidator(_dbContextFactory);
+            var serviciosValidator = new ServiciosValidator(_dbContextFactory);
+            var catalogoServiciosValidator = new CatalogoServiciosValidator(_dbContextFactory);
+
+            padronValidator.Apply(result, log);
+            consumosValidator.Apply(result, log);
+            consumosDetalleValidator.Apply(result, log);
+            serviciosValidator.Apply(result, log);
+            catalogoServiciosValidator.Apply(result, log);
 
             if (!result.HuboCarga)
             {
@@ -89,749 +105,19 @@ namespace ImplementadorCUAD.Services
             return result;
         }
 
-        private static void ApplyCatalogoServiciosSpecificValidations(ImplementacionValidationResult result, Action<string> log)
-        {
-            if (result.DatosCatalogoServiciosValidados.Count == 0)
-            {
-                return;
-            }
-
-            List<CatalogoServicioCuadRef> catalogoCuad;
-            try
-            {
-                using var db = new AppDbContext();
-                catalogoCuad = db.GetCatalogoServiciosCuad();
-            }
-            catch (Exception ex)
-            {
-                log($"CatalogoServicios: no se pudo leer el catalogo de servicios de CUAD. {ex.Message}");
-                result.DatosCatalogoServiciosValidados = [];
-                return;
-            }
-
-            var catalogoPorEntidadServicio = catalogoCuad
-                .ToDictionary(
-                    c => $"{c.Entidad.Trim()}|{c.Servicio.Trim()}",
-                    c => c,
-                    StringComparer.OrdinalIgnoreCase);
-
-            var filtrado = new List<Dictionary<string, string>>();
-            var rechazadas = 0;
-
-            for (int i = 0; i < result.DatosCatalogoServiciosValidados.Count; i++)
-            {
-                var fila = result.DatosCatalogoServiciosValidados[i];
-                var numeroFila = i + 2;
-                var filaValida = true;
-
-                var entidad = GetFirstValue(fila, "Entidad");
-                var servicio = GetFirstValue(fila, "Servicio");
-                var importeTexto = GetFirstValue(fila, "Importe");
-
-                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
-                {
-                    log($"CatalogoServicios fila {numeroFila}: entidad vacia.");
-                    filaValida = false;
-                }
-                else
-                {
-                    var clave = $"{entidad.Trim()}|{servicio.Trim()}";
-                    if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCuad))
-                    {
-                        log($" CatalogoServicios fila {numeroFila}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
-                        filaValida = false;
-                    }
-                    else
-                    {
-                        if (!TryParseDecimalFlexible(importeTexto, out var importeArchivo))
-                        {
-                            log($"CatalogoServicios fila {numeroFila}: importe '{importeTexto}' invalido.");
-                            filaValida = false;
-                        }
-                        else
-                        {
-                            var diferencia = Math.Abs(importeArchivo - refCuad.Importe);
-                            if (diferencia > 0.01m)
-                            {
-                                log($"CatalogoServicios fila {numeroFila}: importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
-                                filaValida = false;
-                            }
-                        }
-                    }
-                }
-
-                if (filaValida)
-                {
-                    filtrado.Add(fila);
-                }
-                else
-                {
-                    rechazadas++;
-                }
-            }
-
-            if (rechazadas > 0)
-            {
-                log($"Resumen validacion especifica CatalogoServicios: aceptadas={filtrado.Count}, rechazadas={rechazadas}.");
-            }
-
-            result.DatosCatalogoServiciosValidados = filtrado;
-        }
-
-        private static void ApplyPadronSpecificValidations(ImplementacionValidationResult result, Action<string> log)
-        {
-            if (result.DatosPadronValidados.Count == 0)
-            {
-                return;
-            }
-
-            var categoriasValidasCodigo = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var categoriasValidasNombre = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var filaCategoria in result.DatosCategoriasValidadas)
-            {
-                if (TryGetFirstValue(filaCategoria, out var codigo, "Codigo Categoria", "Código Categoría") &&
-                    !string.IsNullOrWhiteSpace(codigo))
-                {
-                    categoriasValidasCodigo.Add(codigo.Trim());
-                }
-
-                if (TryGetFirstValue(filaCategoria, out var nombre, "Categoria", "Categoría") &&
-                    !string.IsNullOrWhiteSpace(nombre))
-                {
-                    categoriasValidasNombre.Add(nombre.Trim());
-                }
-            }
-
-            // Categorias de CUAD por entidad 
-            Dictionary<string, List<CategoriaCuadRef>> categoriasCuadPorEntidad;
-            try
-            {
-                using var db = new AppDbContext();
-                categoriasCuadPorEntidad = db.GetCategoriasCuad()
-                    .GroupBy(c => c.Entidad.Trim(), StringComparer.OrdinalIgnoreCase)
-                    .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
-
-                // Validar que haya a lo sumo una categoria predeterminada por entidad
-                foreach (var kvp in categoriasCuadPorEntidad)
-                {
-                    var entidadRef = kvp.Key;
-                    var predeterminadas = kvp.Value.Count(c => c.EsPredeterminada);
-                    if (predeterminadas > 1)
-                    {
-                        log($"Categorias: la entidad '{entidadRef}' tiene mas de una categoria predeterminada en CUAD.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                log($"Categorias: no se pudo leer categorias de CUAD. {ex.Message}");
-                categoriasCuadPorEntidad = new Dictionary<string, List<CategoriaCuadRef>>(StringComparer.OrdinalIgnoreCase);
-            }
-
-            var padronFiltrado = new List<Dictionary<string, string>>();
-            var sociosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var socioCategoria = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            var documentosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var beneficiosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var rechazadas = 0;
-
-            for (int i = 0; i < result.DatosPadronValidados.Count; i++)
-            {
-                var fila = result.DatosPadronValidados[i];
-                var numeroFila = i + 2;
-                var erroresFila = new List<string>();
-
-                var entidad = GetFirstValue(fila, "Entidad");
-                var nroSocio = GetFirstValue(fila, "Nro Socio");
-                var codigoCategoria = GetFirstValue(fila, "Codigo Categoria", "Código Categoría");
-                var nombreCategoriaPadron = GetFirstValue(fila, "Categoria", "Categoría");
-                var documento = GetFirstValue(fila, "Documento");
-                var beneficio = GetFirstValue(fila, "Beneficio");
-
-                if (string.IsNullOrWhiteSpace(nroSocio))
-                {
-                    erroresFila.Add("'Nro Socio' vacio.");
-                }
-                else
-                {
-                    var nroSocioNormalizado = nroSocio.Trim();
-                    if (!sociosVistos.Add(nroSocioNormalizado))
-                    {
-                        erroresFila.Add($"numero de socio '{nroSocio}' repetido.");
-                    }
-
-                    var categoriaNormalizada = (codigoCategoria ?? string.Empty).Trim();
-                    if (socioCategoria.TryGetValue(nroSocioNormalizado, out var categoriaExistente) &&
-                        !string.Equals(categoriaExistente, categoriaNormalizada, StringComparison.OrdinalIgnoreCase))
-                    {
-                        erroresFila.Add($"socio '{nroSocio}' afiliado a mas de una categoria.");
-                    }
-                    else
-                    {
-                        socioCategoria[nroSocioNormalizado] = categoriaNormalizada;
-                    }
-                }
-
-                if (!IsCategoriaValida(codigoCategoria, nombreCategoriaPadron, categoriasValidasCodigo, categoriasValidasNombre))
-                {
-                    erroresFila.Add("categoria informada no valida.");
-                }
-
-                // Validacion contra categorias de CUAD (por entidad)
-                if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(codigoCategoria))
-                {
-                    var entidadClave = entidad.Trim();
-                    if (categoriasCuadPorEntidad.TryGetValue(entidadClave, out var categoriasEntidad))
-                    {
-                        var codigoNorm = codigoCategoria.Trim();
-                        var categoriaCuad = categoriasEntidad
-                            .FirstOrDefault(c =>
-                                string.Equals(c.CodigoCategoria, codigoNorm, StringComparison.OrdinalIgnoreCase));
-
-                        if (categoriaCuad == null)
-                        {
-                            erroresFila.Add($"categoria '{codigoCategoria}' no existe en CUAD para la entidad '{entidadClave}'.");
-                        }
-                    }
-                    else
-                    {
-                        erroresFila.Add($"entidad '{entidad}' no tiene categorias definidas en CUAD.");
-                    }
-                }
-
-                if (!string.IsNullOrWhiteSpace(documento) && !documentosVistos.Add(documento.Trim()))
-                {
-                    erroresFila.Add($"documento '{documento}' repetido.");
-                }
-
-                if (!string.IsNullOrWhiteSpace(beneficio) && !beneficiosVistos.Add(beneficio.Trim()))
-                {
-                    erroresFila.Add($"beneficio '{beneficio}' repetido.");
-                }
-
-                if (erroresFila.Count == 0)
-                {
-                    padronFiltrado.Add(fila);
-                }
-                else
-                {
-                    rechazadas++;
-                    log($"Padron fila {numeroFila}: {string.Join(" | ", erroresFila)}");
-                }
-            }
-
-            if (rechazadas > 0)
-            {
-                log($"Resumen validacion especifica Padron: aceptadas={padronFiltrado.Count}, rechazadas={rechazadas}.");
-            }
-
-            result.DatosPadronValidados = padronFiltrado;
-        }
-
-        private static void ApplyConsumosSpecificValidations(ImplementacionValidationResult result, Action<string> log)
-        {
-            if (result.DatosConsumosValidados.Count == 0)
-            {
-                return;
-            }
-
-            HashSet<string> entidadesCuad;
-            try
-            {
-                using var db = new AppDbContext();
-                entidadesCuad = db.GetEntidad()
-                    .SelectMany(e => new[]
-                    {
-                        e.Nombre?.Trim(),
-                        e.EntId.ToString(CultureInfo.InvariantCulture)
-                    })
-                    .Where(v => !string.IsNullOrWhiteSpace(v))
-                    .Select(v => v!)
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            }
-            catch (Exception ex)
-            {
-                log($"ERROR Consumos: no se pudo validar entidades de CUAD. {ex.Message}");
-                result.DatosConsumosValidados = new List<Dictionary<string, string>>();
-                return;
-            }
-
-            var padronPorSocio = result.DatosPadronValidados
-                .Where(f => TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
-                .GroupBy(f => GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
-
-            var consumosFiltrados = new List<Dictionary<string, string>>();
-            var codigosConsumoVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var rechazadas = 0;
-
-            for (int i = 0; i < result.DatosConsumosValidados.Count; i++)
-            {
-                var fila = result.DatosConsumosValidados[i];
-                var numeroFila = i + 2;
-                var erroresFila = new List<string>();
-
-                var entidad = GetFirstValue(fila, "Entidad");
-                var nroSocio = GetFirstValue(fila, "Nro Socio");
-                var cuitConsumo = GetFirstValue(fila, "CUIT");
-                var beneficioConsumo = GetFirstValue(fila, "Beneficio");
-                var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo");
-
-                if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
-                {
-                    erroresFila.Add($"entidad '{entidad}' no existe en CUAD.");
-                }
-
-                if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
-                {
-                    erroresFila.Add($"socio '{nroSocio}' no existe o no corresponde al padron.");
-                }
-                else
-                {
-                    var cuitPadron = GetFirstValue(filaPadron, "CUIT");
-                    var beneficioPadron = GetFirstValue(filaPadron, "Beneficio");
-
-                    if (!EqualsDigitsOnly(cuitConsumo, cuitPadron))
-                    {
-                        erroresFila.Add($"CUIT no coincide con padron para socio '{nroSocio}'.");
-                    }
-
-                    if (!EqualsTrimmed(beneficioConsumo, beneficioPadron))
-                    {
-                        erroresFila.Add($"Beneficio no coincide con padron para socio '{nroSocio}'.");
-                    }
-                }
-
-                if (string.IsNullOrWhiteSpace(codigoConsumo))
-                {
-                    erroresFila.Add("codigo de consumo vacio.");
-                }
-                else if (!codigosConsumoVistos.Add(codigoConsumo.Trim()))
-                {
-                    erroresFila.Add($"codigo de consumo '{codigoConsumo}' repetido.");
-                }
-
-                if (erroresFila.Count == 0)
-                {
-                    consumosFiltrados.Add(fila);
-                }
-                else
-                {
-                    rechazadas++;
-                    log($"ERROR Consumos fila {numeroFila}: {string.Join(" | ", erroresFila)}");
-                }
-            }
-
-            if (rechazadas > 0)
-            {
-                log($"Resumen validacion especifica Consumos: aceptadas={consumosFiltrados.Count}, rechazadas={rechazadas}.");
-            }
-
-            result.DatosConsumosValidados = consumosFiltrados;
-        }
-
-        private static void ApplyConsumosDetalleSpecificValidations(ImplementacionValidationResult result, Action<string> log)
-        {
-            if (result.DatosConsumosDetalleValidados.Count == 0)
-            {
-                return;
-            }
-
-            HashSet<string> entidadesCuad;
-            try
-            {
-                using var db = new AppDbContext();
-                entidadesCuad = db.GetEntidad()
-                    .SelectMany(e => new[]
-                    {
-                        e.Nombre?.Trim(),
-                        e.EntId.ToString(CultureInfo.InvariantCulture)
-                    })
-                    .Where(v => !string.IsNullOrWhiteSpace(v))
-                    .Select(v => v!)
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            }
-            catch (Exception ex)
-            {
-                log($"ConsumosDetalle: no se pudo validar entidades de CUAD. {ex.Message}");
-                result.DatosConsumosDetalleValidados = new List<Dictionary<string, string>>();
-                return;
-            }
-
-            var consumosPorCodigo = result.DatosConsumosValidados
-                .Where(f => !string.IsNullOrWhiteSpace(GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
-                .GroupBy(f => GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
-
-            var detalleFiltrado = new List<Dictionary<string, string>>();
-            var rechazadas = 0;
-
-            for (int i = 0; i < result.DatosConsumosDetalleValidados.Count; i++)
-            {
-                var fila = result.DatosConsumosDetalleValidados[i];
-                var numeroFila = i + 2;
-                var erroresFila = new List<string>();
-
-                var entidad = GetFirstValue(fila, "Entidad");
-                var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo");
-                var fechaVencimientoText = GetFirstValue(fila, "Fecha Vencimiento");
-
-                if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
-                {
-                    erroresFila.Add($"entidad '{entidad}' no existe en CUAD.");
-                }
-
-                if (string.IsNullOrWhiteSpace(codigoConsumo) || !consumosPorCodigo.ContainsKey(codigoConsumo.Trim()))
-                {
-                    erroresFila.Add($"codigo de consumo '{codigoConsumo}' no existe en archivo de Consumos.");
-                }
-
-                if (!TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
-                {
-                    erroresFila.Add("fecha de vencimiento invalida.");
-                }
-                else if (fechaVencimiento.Date <= DateTime.Today)
-                {
-                    erroresFila.Add("fecha de vencimiento no puede ser hoy o anterior.");
-                }
-
-                if (erroresFila.Count == 0)
-                {
-                    detalleFiltrado.Add(fila);
-                }
-                else
-                {
-                    rechazadas++;
-                    log($"ConsumosDetalle fila {numeroFila}: {string.Join(" | ", erroresFila)}");
-                }
-            }
-
-            var detallePorCodigo = detalleFiltrado
-                .Where(f => !string.IsNullOrWhiteSpace(GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
-                .GroupBy(f => GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
-
-            var codigosInvalidosPorTotales = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var kvp in detallePorCodigo)
-            {
-                var codigo = kvp.Key;
-                var filasDetalle = kvp.Value;
-
-                if (!consumosPorCodigo.TryGetValue(codigo, out var consumoFila))
-                {
-                    codigosInvalidosPorTotales.Add(codigo);
-                    continue;
-                }
-
-                var cuotasPendientesText = GetFirstValue(consumoFila, "Cuotas Pendientes");
-                var montoDeudaText = GetFirstValue(consumoFila, "Monto Deuda");
-
-                if (!int.TryParse(cuotasPendientesText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cuotasEsperadas))
-                {
-                    codigosInvalidosPorTotales.Add(codigo);
-                    log($"ConsumosDetalle: no se pudo leer 'Cuotas Pendientes' para codigo de consumo '{codigo}'.");
-                    continue;
-                }
-
-                if (!TryParseDecimalFlexible(montoDeudaText, out var montoEsperado))
-                {
-                    codigosInvalidosPorTotales.Add(codigo);
-                    log($"ConsumosDetalle: no se pudo leer 'Monto Deuda' para codigo de consumo '{codigo}'.");
-                    continue;
-                }
-
-                AgentDebugLog(
-                    "G1",
-                    "FileImportService.ApplyConsumosDetalleSpecificValidations:codigo_iteracion",
-                    "Inicio de validacion por codigo de consumo",
-                    new
-                    {
-                        codigo,
-                        filasDetalleCount = filasDetalle.Count,
-                        cuotasPendientesText,
-                        montoDeudaText,
-                        cuotasEsperadas,
-                        montoEsperado
-                    });
-
-                if (string.Equals(codigo?.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
-                {
-                    AgentDebugLog(
-                        "H1",
-                        "FileImportService.ApplyConsumosDetalleSpecificValidations:expected_totals",
-                        "Totales esperados para consumo detalle",
-                        new
-                        {
-                            codigo,
-                            cuotasPendientesText,
-                            montoDeudaText,
-                            cuotasEsperadas,
-                            montoEsperado
-                        });
-                }
-
-                var cuotasDetalle = filasDetalle.Count;
-                var sumaDetalle = 0m;
-                var parseOk = true;
-                var numerosCuota = new List<int>(cuotasDetalle);
-                foreach (var filaDetalle in filasDetalle)
-                {
-                    var montoText = GetFirstValue(filaDetalle, "Monto");
-                    if (!TryParseDecimalFlexible(montoText, out var montoCuota))
-                    {
-                        parseOk = false;
-                        break;
-                    }
-
-                    var nroCuotaText = GetFirstValue(filaDetalle, "Nro Cuota");
-                    if (!int.TryParse(nroCuotaText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var nroCuota))
-                    {
-                        parseOk = false;
-                        break;
-                    }
-
-                    numerosCuota.Add(nroCuota);
-                    sumaDetalle += montoCuota;
-
-                    if (string.Equals(codigo?.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
-                    {
-                        AgentDebugLog(
-                            "H2",
-                            "FileImportService.ApplyConsumosDetalleSpecificValidations:detalle_cuota",
-                            "Detalle de cuota individual para consumo",
-                            new
-                            {
-                                codigo,
-                                nroCuota,
-                                montoText,
-                                montoCuota
-                            });
-                    }
-                }
-
-                if (!parseOk)
-                {
-                    codigosInvalidosPorTotales.Add(codigo);
-                    log($"ERROR ConsumosDetalle: monto o numero de cuota invalido en detalle para codigo de consumo '{codigo}'.");
-                    continue;
-                }
-
-                // Validar que las cuotas sean consecutivas (1..N sin saltos ni duplicados)
-                numerosCuota.Sort();
-                var consecutivas = true;
-                for (int i = 0; i < numerosCuota.Count; i++)
-                {
-                    var esperado = i + 1;
-                    if (numerosCuota[i] != esperado)
-                    {
-                        consecutivas = false;
-                        break;
-                    }
-                }
-                if (!consecutivas)
-                {
-                    codigosInvalidosPorTotales.Add(codigo);
-                    log($"ConsumosDetalle: los periodos (Nro Cuota) no son consecutivos para codigo de consumo '{codigo}'.");
-                    continue;
-                }
-
-                if (string.Equals(codigo?.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
-                {
-                    AgentDebugLog(
-                        "H3",
-                        "FileImportService.ApplyConsumosDetalleSpecificValidations:resumen_detalle",
-                        "Resumen de detalle calculado para consumo",
-                        new
-                        {
-                            codigo,
-                            cuotasDetalle,
-                            sumaDetalle,
-                            montoEsperado
-                        });
-                }
-
-                var sumaCoincide = Math.Abs(sumaDetalle - montoEsperado) <= 0.01m;
-                if (cuotasDetalle != cuotasEsperadas || !sumaCoincide)
-                {
-                    codigosInvalidosPorTotales.Add(codigo);
-                    log($"ConsumosDetalle: cuotas/importe no coinciden para codigo '{codigo}'. Esperado cuotas={cuotasEsperadas}, monto={montoEsperado}. Detalle cuotas={cuotasDetalle}, monto={sumaDetalle}.");
-                }
-            }
-
-            if (codigosInvalidosPorTotales.Count > 0)
-            {
-                var depurado = new List<Dictionary<string, string>>();
-                foreach (var fila in detalleFiltrado)
-                {
-                    var codigo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo").Trim();
-                    if (codigosInvalidosPorTotales.Contains(codigo))
-                    {
-                        rechazadas++;
-                        continue;
-                    }
-
-                    depurado.Add(fila);
-                }
-
-                detalleFiltrado = depurado;
-            }
-
-            if (rechazadas > 0)
-            {
-                log($"Resumen validacion especifica ConsumosDetalle: aceptadas={detalleFiltrado.Count}, rechazadas={rechazadas}.");
-            }
-
-            result.DatosConsumosDetalleValidados = detalleFiltrado;
-        }
-
-        private static void ApplyServiciosSpecificValidations(ImplementacionValidationResult result, Action<string> log)
-        {
-            if (result.DatosServiciosValidados.Count == 0)
-            {
-                return;
-            }
-
-            HashSet<string> entidadesCuad;
-            try
-            {
-                using var db = new AppDbContext();
-                entidadesCuad = db.GetEntidad()
-                    .SelectMany(e => new[]
-                    {
-                        e.Nombre?.Trim(),
-                        e.EntId.ToString(CultureInfo.InvariantCulture)
-                    })
-                    .Where(v => !string.IsNullOrWhiteSpace(v))
-                    .Select(v => v!)
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            }
-            catch (Exception ex)
-            {
-                log($"Servicios: no se pudo validar entidades de CUAD. {ex.Message}");
-                result.DatosServiciosValidados = new List<Dictionary<string, string>>();
-                return;
-            }
-
-            var padronPorSocio = result.DatosPadronValidados
-                .Where(f => TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
-                .GroupBy(f => GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
-
-            var codigosConsumos = result.DatosConsumosValidados
-                .Select(f => GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim())
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            var serviciosFiltrados = new List<Dictionary<string, string>>();
-            var codigosServiciosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var rechazadas = 0;
-
-            for (int i = 0; i < result.DatosServiciosValidados.Count; i++)
-            {
-                var fila = result.DatosServiciosValidados[i];
-                var numeroFila = i + 2;
-                var erroresFila = new List<string>();
-
-                var entidad = GetFirstValue(fila, "Entidad");
-                var nroSocio = GetFirstValue(fila, "Nro de Socio", "Nro Socio");
-                var cuitServicio = GetFirstValue(fila, "CUIT");
-                var beneficioServicio = GetFirstValue(fila, "Nro Beneficio", "Beneficio");
-                var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo");
-
-                if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
-                {
-                    erroresFila.Add($"entidad '{entidad}' no existe en CUAD.");
-                }
-
-                if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
-                {
-                    erroresFila.Add($"socio '{nroSocio}' no existe o no corresponde al padron.");
-                }
-                else
-                {
-                    var cuitPadron = GetFirstValue(filaPadron, "CUIT");
-                    var beneficioPadron = GetFirstValue(filaPadron, "Beneficio");
-
-                    if (!EqualsDigitsOnly(cuitServicio, cuitPadron))
-                    {
-                        erroresFila.Add($"CUIT no coincide con padron para socio '{nroSocio}'.");
-                    }
-
-                    if (!EqualsTrimmed(beneficioServicio, beneficioPadron))
-                    {
-                        erroresFila.Add($"Beneficio no coincide con padron para socio '{nroSocio}'.");
-                    }
-                }
-
-                if (string.IsNullOrWhiteSpace(codigoConsumo))
-                {
-                    erroresFila.Add("codigo de consumo vacio.");
-                }
-                else
-                {
-                    var codigoNormalizado = codigoConsumo.Trim();
-                    if (!codigosServiciosVistos.Add(codigoNormalizado))
-                    {
-                        erroresFila.Add($"codigo de consumo '{codigoConsumo}' repetido en Servicios.");
-                    }
-
-                    if (codigosConsumos.Contains(codigoNormalizado))
-                    {
-                        erroresFila.Add($"codigo de consumo '{codigoConsumo}' ya existe en archivo Consumos.");
-                    }
-                }
-
-                if (erroresFila.Count == 0)
-                {
-                    serviciosFiltrados.Add(fila);
-                }
-                else
-                {
-                    rechazadas++;
-                    log($"ERROR Servicios fila {numeroFila}: {string.Join(" | ", erroresFila)}");
-                }
-            }
-
-            if (rechazadas > 0)
-            {
-                log($"Resumen validacion especifica Servicios: aceptadas={serviciosFiltrados.Count}, rechazadas={rechazadas}.");
-            }
-
-            result.DatosServiciosValidados = serviciosFiltrados;
-        }
-
-        private static bool IsCategoriaValida(
-            string? codigoCategoria,
-            string? nombreCategoriaPadron,
-            HashSet<string> categoriasValidasCodigo,
-            HashSet<string> categoriasValidasNombre)
-        {
-            if (categoriasValidasCodigo.Count == 0 && categoriasValidasNombre.Count == 0)
-            {
-                return true;
-            }
-
-            if (!string.IsNullOrWhiteSpace(codigoCategoria) && categoriasValidasCodigo.Contains(codigoCategoria.Trim()))
-            {
-                return true;
-            }
-
-            if (!string.IsNullOrWhiteSpace(nombreCategoriaPadron) && categoriasValidasNombre.Contains(nombreCategoriaPadron.Trim()))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private string[] ReadFileLines(string rutaArchivo)
+        private IEnumerable<string> EnumerateFileLines(string rutaArchivo)
         {
             var extension = Path.GetExtension(rutaArchivo).ToLowerInvariant();
 
             if (extension == ".csv" || extension == ".txt")
             {
-                return File.ReadAllLines(rutaArchivo);
+                using var reader = new StreamReader(rutaArchivo);
+                string? line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    yield return line;
+                }
+                yield break;
             }
 
             if (extension == ".xls" || extension == ".xlsx")
@@ -912,13 +198,24 @@ namespace ImplementadorCUAD.Services
                     }
                 } while (reader.NextResult());
 
-                return filas.ToArray();
+                foreach (var l in filas)
+                {
+                    yield return l;
+                }
+                yield break;
             }
 
-            return File.ReadAllLines(rutaArchivo);
+            foreach (var line in File.ReadLines(rutaArchivo))
+            {
+                yield return line;
+            }
         }
 
-        private List<Dictionary<string, string>>? LoadFile(string nombreLogico, string? rutaArchivo, Action<string> log)
+        private List<Dictionary<string, string>>? LoadFile(
+            string nombreLogico,
+            string? rutaArchivo,
+            Action<string> log,
+            IProgress<int>? progress)
         {
             try
             {
@@ -941,14 +238,15 @@ namespace ImplementadorCUAD.Services
                     return null;
                 }
 
-                var lineas = ReadFileLines(rutaArchivo);
-                if (lineas.Length == 0)
+                using var enumerator = EnumerateFileLines(rutaArchivo).GetEnumerator();
+
+                if (!enumerator.MoveNext())
                 {
                     log($"Archivo {nombreLogico} vacio.");
                     return null;
                 }
 
-                var encabezados = lineas[0].Split(',')
+                var encabezados = enumerator.Current.Split(',')
                     .Select(v => v.Trim())
                     .ToList();
                 var indicePorEncabezadoNormalizado = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -977,13 +275,15 @@ namespace ImplementadorCUAD.Services
 
                 var registros = new List<Dictionary<string, string>>();
                 var clavesUnicas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                var totalFilasDatos = Math.Max(0, lineas.Length - 1);
                 var filasAceptadas = 0;
                 var filasRechazadas = 0;
+                var totalFilasDatos = 0;
+                var filaNumero = 1;
 
-                for (int i = 1; i < lineas.Length; i++)
+                while (enumerator.MoveNext())
                 {
-                    var valores = lineas[i].Split(',');
+                    filaNumero++;
+                    var valores = enumerator.Current.Split(',');
                     var fila = new Dictionary<string, string>();
                     var erroresFila = new List<string>();
 
@@ -1007,7 +307,7 @@ namespace ImplementadorCUAD.Services
 
                     if (filaEsValida)
                     {
-                        if (ValidateSpecificUniqueness(nombreLogico, i + 1, fila, clavesUnicas, log))
+                        if (ValidateSpecificUniqueness(nombreLogico, filaNumero, fila, clavesUnicas, log))
                         {
                             registros.Add(fila);
                             filasAceptadas++;
@@ -1019,8 +319,15 @@ namespace ImplementadorCUAD.Services
                     }
                     else
                     {
-                        log($"{nombreLogico} fila {i + 1}: {string.Join(" | ", erroresFila)}");
+                        log($"{nombreLogico} fila {filaNumero}: {string.Join(" | ", erroresFila)}");
                         filasRechazadas++;
+                    }
+
+                    totalFilasDatos++;
+
+                    if (totalFilasDatos % 1000 == 0 && progress is not null)
+                    {
+                        progress.Report(0);
                     }
                 }
 
