@@ -14,6 +14,9 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <SolidColorBrush x:Key="LogInfoBrush" Color="#22C55E" />
+        <SolidColorBrush x:Key="LogErrorBrush" Color="#EF4444" />
+        <SolidColorBrush x:Key="LogWarnBrush" Color="#EAB308" />
         <SolidColorBrush x:Key="PanelBrush" Color="#1E293B" />
         <SolidColorBrush x:Key="PanelBorderBrush" Color="#32455F" />
         <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F8FAFC" />
@@ -555,18 +558,31 @@
                             <ItemsControl ItemsSource="{Binding Logs}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBox Text="{Binding Message, Mode=OneWay}"
-                                                 Foreground="#CBD5E1"
-                                                 FontSize="14"
-                                                 FontFamily="Consolas"
-                                                 TextWrapping="NoWrap"
-                                                 Margin="0,0,0,2"
-                                                 Background="Transparent"
-                                                 BorderThickness="0"
-                                                 IsReadOnly="True"
-                                                 IsReadOnlyCaretVisible="False"
-                                                 HorizontalScrollBarVisibility="Auto"
-                                                 VerticalScrollBarVisibility="Hidden" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <TextBlock FontSize="14" FontFamily="Consolas" TextWrapping="NoWrap" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding Prefix}" />
+                                                        <Setter Property="Foreground" Value="{StaticResource LogInfoBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Prefix}" Value="[ERROR]">
+                                                                <Setter Property="Foreground" Value="{StaticResource LogErrorBrush}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Prefix}" Value="[WARN]">
+                                                                <Setter Property="Foreground" Value="{StaticResource LogWarnBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text=" " FontSize="14" FontFamily="Consolas" Foreground="#CBD5E1" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding MessageBody, Mode=OneWay}"
+                                                       Foreground="#CBD5E1"
+                                                       FontSize="14"
+                                                       FontFamily="Consolas"
+                                                       TextWrapping="NoWrap"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
