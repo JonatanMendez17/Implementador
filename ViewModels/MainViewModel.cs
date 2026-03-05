@@ -532,6 +532,12 @@ namespace ImplementadorCUAD.ViewModels
                     Log("No se encontraron registros para eliminar con la entidad seleccionada.");
                 }
 
+                DialogService.Show(
+                    $"La entidad '{entidadNombre}' fue limpiada correctamente.",
+                    "Limpieza de base",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
                 ValidacionFinalizada = false;
                 Progreso = 0;
                 _validationResult = new ImplementacionValidationResult();

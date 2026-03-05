@@ -1,214 +1,180 @@
 <Configuracion>
 
-  <!-- Archivo de categorías de socios:
-       Debe coincidir exactamente con los encabezados del CSV exportado desde Excel -->
+  <!--=======================================
+  | CONFIGURACIÓN DE COLUMNAS PARA ARCHIVOS |
+  ===========================================
+  Esto permite adaptar la importación a diferentes formatos de archivo sin necesidad de modificar el código de la aplicación.
+
+  1. Los archivos que se cargan en la aplicación deben contener, como mínimo, las columnas definidas en esta configuración.
+  2. Si una columna no está presente en el archivo a cargar, se puede deshabilitar comentando su columna en este archivo de configuración.
+  3. Si el archivo contiene un nombre de columna diferente al esperado, se agregar como un nuevo alias dentro este archivo configuración. -->
+
+
+  <!-- Archivo de categorías de socios:-->
   <Archivo nombre="Categorias">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
-        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
       <Columna nombre="Código Categoría" tipo="texto" largoMaximo="10">
-        <!-- para configuracion de columna -->
         <Alias>Código Categoría</Alias>
       </Columna>
       <Columna nombre="Categoría" tipo="texto" largoMaximo="50">
-        <!-- para configuracion de columna -->
         <Alias>Categoría</Alias>
       </Columna>
       <Columna nombre="Descripción Categoría" tipo="texto" largoMaximo="100">
-        <!-- para configuracion de columna -->
         <Alias>Descripción Categoría</Alias>
       </Columna>
       <Columna nombre="Categoría Predeterminada" tipo="texto" largoMaximo="1">
-        <!-- para configuracion de columna -->
         <Alias>Categoría Predeterminada</Alias>
       </Columna>
       <Columna nombre="Monto CS" tipo="decimal" largoMaximo="15">
-        <!-- para configuracion de columna -->
         <Alias>Monto CS</Alias>
       </Columna>
       <Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10">
-        <!-- para configuracion de columna -->
         <Alias>Concepto Descuento</Alias>
       </Columna>
     </Columnas>
   </Archivo>
 
   <!-- Archivo padrón de socio -->
-  <!-- Encabezado esperado:
-       Entidad, Nro Socio, Fecha Alta Socio, Documento, CUIT, Beneficio, Código Categoría -->
   <Archivo nombre="Padron">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
-        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
       <Columna nombre="Nro Socio" tipo="int" largoMaximo="10">
-        <!-- para configuracion de columna -->
         <Alias>Nro Socio</Alias>
       </Columna>
       <Columna nombre="Fecha Alta Socio" tipo="fecha" largoMaximo="20">
-        <!-- para configuracion de columna -->
         <Alias>Fecha Alta Socio</Alias>
       </Columna>
       <Columna nombre="Documento" tipo="texto" largoMaximo="20">
-        <!-- para configuracion de columna -->
         <Alias>Documento</Alias>
       </Columna>
-      <!--<Columna nombre="CUIT" tipo="texto" largoMaximo="11">
-        --><!-- para configuracion de columna --><!--
+      <Columna nombre="CUIT" tipo="texto" largoMaximo="11">
+         para configuracion de columna 
         <Alias>CUIT</Alias>
-      </Columna>-->
-      <!--<Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
-        --><!-- para configuracion de columna --><!--
+      </Columna>
+      <Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
+         para configuracion de columna 
         <Alias>Beneficio</Alias>
-      </Columna>-->
+      </Columna>
       <Columna nombre="Código Categoría" tipo="texto" largoMaximo="10">
-        <!-- para configuracion de columna -->
         <Alias>Código Categoría</Alias>
       </Columna>
     </Columnas>
   </Archivo>
 
   <!-- Archivo de consumo -->
-  <!-- Encabezado esperado:
-       Entidad, Nro Socio, CUIT, Beneficio, Código Consumo, Cuotas Pendientes, Monto Deuda, Concepto Descuento -->
   <Archivo nombre="Consumos">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
-        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
       <Columna nombre="Nro Socio" tipo="int" largoMaximo="10">
-        <!-- para configuracion de columna -->
         <Alias>Nro Socio</Alias>
       </Columna>
-      <!--<Columna nombre="CUIT" tipo="texto" largoMaximo="11">
-        --><!-- para configuracion de columna --><!--
+      <Columna nombre="CUIT" tipo="texto" largoMaximo="11">
+         para configuracion de columna 
         <Alias>CUIT</Alias>
-      </Columna>-->
-      <!--<Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
-        --><!-- para configuracion de columna --><!--
+      </Columna>
+      <Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
+         para configuracion de columna 
         <Alias>Beneficio</Alias>
-      </Columna>-->
+      </Columna>
       <Columna nombre="Código Consumo" clave="Codigo Consumo" tipo="texto" largoMaximo="20">
-        <!-- para configuracion de columna -->
         <Alias>Código Consumo</Alias>
         <Alias>Código</Alias>
         <Alias>Codigo</Alias>
         <Alias>Consumo</Alias>
       </Columna>
       <Columna nombre="Cuotas Pendientes" tipo="int" largoMaximo="5">
-        <!-- para configuracion de columna -->
         <Alias>Cuotas Pendientes</Alias>
       </Columna>
       <Columna nombre="Monto Deuda" tipo="decimal" largoMaximo="15">
-        <!-- para configuracion de columna -->
         <Alias>Monto Deuda</Alias>
       </Columna>
       <Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10">
-        <!-- para configuracion de columna -->
         <Alias>Concepto Descuento</Alias>
       </Columna>
     </Columnas>
   </Archivo>
 
   <!-- Archivo de consumo detalle -->
-  <!-- Encabezado esperado:
-       Entidad, Código Consumo, Nro Cuota, Fecha Vencimiento, Monto -->
   <Archivo nombre="ConsumosDetalle">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
-        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
       <Columna nombre="Código Consumo" tipo="int" largoMaximo="10">
-        <!-- para configuracion de columna -->
         <Alias>Código Consumo</Alias>
       </Columna>
       <Columna nombre="Nro Cuota" tipo="int" largoMaximo="5">
-        <!-- para configuracion de columna -->
         <Alias>Nro Cuota</Alias>
       </Columna>
       <Columna nombre="Fecha Vencimiento" tipo="fecha" largoMaximo="20">
-        <!-- para configuracion de columna -->
         <Alias>Fecha Vencimiento</Alias>
       </Columna>
       <Columna nombre="Monto" tipo="decimal" largoMaximo="15">
-        <!-- para configuracion de columna -->
         <Alias>Monto</Alias>
       </Columna>
     </Columnas>
   </Archivo>
 
-  <!-- Archivo de servicio -->
-  <!-- Encabezado esperado:
-       Entidad, Nro de Socio, CUIT, Nro Beneficio, Código Consumo, Importe Cuota, Concepto Descuento -->
+  <!-- Archivo de consumo servicio -->
   <Archivo nombre="Servicios">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
-        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
       <Columna nombre="Nro de Socio" tipo="int" largoMaximo="10">
-        <!-- para configuracion de columna -->
         <Alias>Nro Socio</Alias>
       </Columna>
       <Columna nombre="CUIT" tipo="texto" largoMaximo="11">
-        <!-- para configuracion de columna -->
         <Alias>CUIT</Alias>
       </Columna>
-      <!--<Columna nombre="Nro Beneficio" tipo="texto" largoMaximo="20">
-        --><!-- para configuracion de columna --><!--
+      <Columna nombre="Nro Beneficio" tipo="texto" largoMaximo="20">
+         para configuracion de columna 
         <Alias>Nro Beneficio</Alias>
-      </Columna>-->
+      </Columna>
       <Columna nombre="Código Consumo" tipo="int" largoMaximo="10">
-        <!-- para configuracion de columna -->
         <Alias>Código Consumo</Alias>
       </Columna>
       <Columna nombre="Importe Cuota" tipo="decimal" largoMaximo="15">
-        <!-- para configuracion de columna -->
         <Alias>Importe Cuota</Alias>
       </Columna>
       <Columna nombre="Concepto Descuento" tipo="int" largoMaximo="10">
-        <!-- para configuracion de columna -->
         <Alias>Concepto Descuento</Alias>
       </Columna>
     </Columnas>
   </Archivo>
 
   <!-- Archivo catálogo de servicios -->
-  <!-- Encabezado esperado:
-       Entidad, Servicio, Importe, Comentarios / Info de Servicio -->
   <Archivo nombre="CatalogoServicios">
     <Columnas>
       <Columna nombre="Entidad" clave="Entidad" tipo="texto" largoMaximo="10" requerida="true">
-        <!-- para configuracion de columna -->
         <Alias>Entidad</Alias>
         <Alias>Institucion</Alias>
         <Alias>Institución</Alias>
       </Columna>
       <Columna nombre="Servicio" tipo="texto" largoMaximo="100">
-        <!-- para configuracion de columna -->
         <Alias>Servicio</Alias>
       </Columna>
       <Columna nombre="Importe" tipo="decimal" largoMaximo="15">
-        <!-- para configuracion de columna -->
         <Alias>Importe</Alias>
       </Columna>
       <Columna nombre="Comentarios / Info de Servicio" tipo="texto" largoMaximo="255">
-        <!-- para configuracion de columna -->
         <Alias>Comentarios / Info de Servicio</Alias>
       </Columna>
     </Columnas>
