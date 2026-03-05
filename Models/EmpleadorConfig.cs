@@ -1,0 +1,18 @@
+namespace ImplementadorCUAD.Models
+{
+    /// <summary>
+    /// Empleador definido en configuración, con su connection string para la base de destino.
+    /// </summary>
+    public class EmpleadorConfig
+    {
+        public string Nombre { get; set; } = string.Empty;
+        /// <summary>
+        /// Connection string completo, o null si se usa baseDatos + ConexionBase.
+        /// </summary>
+        public string? ConnectionString { get; set; }
+        /// <summary>
+        /// Nombre de base de datos cuando se usa ConexionBase (opción B).
+        /// </summary>
+        public string? BaseDatos { get; set; }
+    }
+}

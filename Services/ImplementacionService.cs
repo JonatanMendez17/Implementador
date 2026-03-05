@@ -16,7 +16,7 @@ namespace ImplementadorCUAD.Services
 
         public async Task CopyToDatabaseAsync(ImplementacionValidationResult validationResult, ImplementacionFileSelection selection, Action<string> log, Action<int> reportProgress)
         {
-            using var db = _dbContextFactory.Create();
+            using var db = _dbContextFactory.Create(selection.TargetConnectionString);
 
             var insertadosPadron = 0;
             var insertadosConsumosDetalle = 0;

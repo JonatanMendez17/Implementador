@@ -36,9 +36,9 @@ namespace ImplementadorCUAD.Services
             return true;
         }
 
-        public bool ValidateNoExistingDataForEntidad(string entidad, Empleador? empleador, Action<string> log)
+        public bool ValidateNoExistingDataForEntidad(string entidad, Empleador? empleador, string? targetConnectionString, Action<string> log)
         {
-            using var db = _dbContextFactory.Create();
+            using var db = _dbContextFactory.Create(targetConnectionString);
             var existe = db.ExistsImportedDataForEntidad(entidad);
             if (existe)
             {

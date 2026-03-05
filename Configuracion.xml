@@ -1,13 +1,11 @@
 <Configuracion>
 
-  <!--=======================================
-  | CONFIGURACIÓN DE COLUMNAS PARA ARCHIVOS |
-  ===========================================
+  <!--CONFIGURACIÓN DE COLUMNAS PARA ARCHIVOS
   Esto permite adaptar la importación a diferentes formatos de archivo sin necesidad de modificar el código de la aplicación.
 
   1. Los archivos que se cargan en la aplicación deben contener, como mínimo, las columnas definidas en esta configuración.
   2. Si una columna no está presente en el archivo a cargar, se puede deshabilitar comentando su columna en este archivo de configuración.
-  3. Si el archivo contiene un nombre de columna diferente al esperado, se agregar como un nuevo alias dentro este archivo configuración. -->
+  3. Si el archivo contiene un nombre de columna diferente al esperado, se agregar como un nuevo alias dentro este archivo configuración. -->-->
 
 
   <!-- Archivo de categorías de socios:-->
@@ -56,14 +54,14 @@
       <Columna nombre="Documento" tipo="texto" largoMaximo="20">
         <Alias>Documento</Alias>
       </Columna>
-      <Columna nombre="CUIT" tipo="texto" largoMaximo="11">
+      <!--<Columna nombre="CUIT" tipo="texto" largoMaximo="11">
          para configuracion de columna 
         <Alias>CUIT</Alias>
-      </Columna>
-      <Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
+      </Columna>-->
+      <!--<Columna nombre="Beneficio" tipo="texto" largoMaximo="20">
          para configuracion de columna 
         <Alias>Beneficio</Alias>
-      </Columna>
+      </Columna>-->
       <Columna nombre="Código Categoría" tipo="texto" largoMaximo="10">
         <Alias>Código Categoría</Alias>
       </Columna>
@@ -179,5 +177,17 @@
       </Columna>
     </Columnas>
   </Archivo>
+
+  <!-- CONEXIONES DB
+       Si no existe Conexiones o Cuad, se usa el connection string de App.config para todo. -->
+    
+  <Conexiones>
+    <Cuad connectionString="Server=(localdb)\MSSQLLocalDB;Database=CUAD;Trusted_Connection=True;TrustServerCertificate=True;" />
+    <ConexionBase connectionString="Server=(localdb)\MSSQLLocalDB;Trusted_Connection=True;TrustServerCertificate=True;" />
+      <Empleador nombre="ACTIVOS" baseDatos="DBI_Activos" />
+      <Empleador nombre="PASIVOS" baseDatos="DBI_Pasivos" />
+      <Empleador nombre="LEY 5110" baseDatos="DBI_Ley5110" />
+      <Empleador nombre="MALVINAS" baseDatos="DBI_Malvinas" />
+  </Conexiones>
 
 </Configuracion>

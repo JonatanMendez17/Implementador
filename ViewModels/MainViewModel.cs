@@ -225,14 +225,32 @@ namespace ImplementadorCUAD.ViewModels
 
             Progreso = 0;
 
+            var conexionesService = new ConexionesConfigService();
+            var empleadoresConfig = conexionesService.GetEmpleadores();
+            Empleador = new ObservableCollection<Empleador>();
+            var idx = 1;
+            foreach (var ec in empleadoresConfig)
+            {
+                Empleador.Add(new Empleador
+                {
+                    Id = idx,
+                    EmrId = idx,
+                    Nombre = ec.Nombre,
+                    ConnectionString = ec.ConnectionString
+                });
+                idx++;
+            }
+            if (Empleador.Count == 0)
+            {
+                Empleador.Add(new Empleador { Id = 1, EmrId = 1, Nombre = "Default", ConnectionString = null });
+            }
+            Empleador.Insert(0, new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
+
             using (var db = _dbContextFactory.Create())
             {
-                Empleador = new ObservableCollection<Empleador>(db.GetEmpleador());
                 Entidad = new ObservableCollection<Entidad>(db.GetEntidad());
             }
-
             Entidad.Insert(0, new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" });
-            Empleador.Insert(0, new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
             EntidadSeleccionada = Entidad.FirstOrDefault();
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
 
@@ -272,7 +290,8 @@ namespace ImplementadorCUAD.ViewModels
                 ArchivoConsumos = ArchivoConsumos,
                 ArchivosConsumosDetalle = _archivosConsumosDetalle.ToList(),
                 ArchivoServicios = ArchivoServicios,
-                ArchivoCatalogoServicios = ArchivoCatalogoServicios
+                ArchivoCatalogoServicios = ArchivoCatalogoServicios,
+                TargetConnectionString = EmpleadorSeleccionado?.ConnectionString
             };
         }
 
@@ -427,6 +446,7 @@ namespace ImplementadorCUAD.ViewModels
             var sinDatosPrevios = _generalValidationService.ValidateNoExistingDataForEntidad(
                 entidadComun,
                 EmpleadorSeleccionado,
+                EmpleadorSeleccionado?.ConnectionString,
                 Log);
 
             ValidacionFinalizada = sinDatosPrevios;
@@ -518,7 +538,7 @@ namespace ImplementadorCUAD.ViewModels
 
             try
             {
-                using var db = _dbContextFactory.Create();
+                using var db = _dbContextFactory.Create(EmpleadorSeleccionado?.ConnectionString);
                 var eliminados = db.DeleteImportedDataForEntidad(
                     entidadSeleccionada.Nombre ?? string.Empty,
                     entidadSeleccionada.EntId);

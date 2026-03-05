@@ -11,7 +11,14 @@ namespace ImplementadorCUAD.Data
 
         public AppDbContext()
         {
-            _connectionString = ConnectionSettings.ConnectionString;
+            _connectionString = ConnectionSettings.CuadConnectionString;
+        }
+
+        public AppDbContext(string connectionString)
+        {
+            _connectionString = string.IsNullOrWhiteSpace(connectionString)
+                ? ConnectionSettings.CuadConnectionString
+                : connectionString;
         }
 
         public void Dispose()
@@ -178,7 +185,7 @@ namespace ImplementadorCUAD.Data
 
                     command.Parameters.AddWithValue(
                         "@NroPuesto",
-                        (object?)registro.NroPuesto ?? DBNull.Value);
+                        registro.NroPuesto ?? 0);
 
                     command.Parameters.AddWithValue("@CodigoCategoria", registro.CodigoCategoria);
                 },
