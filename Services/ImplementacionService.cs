@@ -1,8 +1,5 @@
-using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ImplementadorCUAD.Services
 {
@@ -17,11 +14,7 @@ namespace ImplementadorCUAD.Services
             _dbContextFactory = dbContextFactory;
         }
 
-        public async Task CopyToDatabaseAsync(
-            ImplementacionValidationResult validationResult,
-            ImplementacionFileSelection selection,
-            Action<string> log,
-            Action<int> reportProgress)
+        public async Task CopyToDatabaseAsync(ImplementacionValidationResult validationResult, ImplementacionFileSelection selection, Action<string> log, Action<int> reportProgress)
         {
             using var db = _dbContextFactory.Create();
 

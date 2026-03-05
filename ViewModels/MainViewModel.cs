@@ -1,14 +1,11 @@
 using Microsoft.Win32;
 using ImplementadorCUAD.Commands;
-using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Services;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -375,14 +372,6 @@ namespace ImplementadorCUAD.ViewModels
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
             }
-
-            // Modo prueba: validaciones de archivos obligatorios deshabilitadas para permitir carga parcial.
-            //if (string.IsNullOrWhiteSpace(ArchivoCategorias)) { ... }
-            //if (string.IsNullOrWhiteSpace(ArchivoPadron)) { ... }
-            //if (string.IsNullOrWhiteSpace(ArchivoConsumos)) { ... }
-            //if (string.IsNullOrWhiteSpace(ArchivoConsumosDetalle)) { ... }
-            //if (string.IsNullOrWhiteSpace(ArchivoServicios)) { ... }
-            //if (string.IsNullOrWhiteSpace(ArchivoCatalogoServicios)) { ... }
 
             EstaProcesando = true;
             Progreso = 0;

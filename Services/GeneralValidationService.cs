@@ -1,17 +1,12 @@
-using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 
 namespace ImplementadorCUAD.Services
 {
-    public class GeneralValidationService
+    public class GeneralValidationService(IAppDbContextFactory dbContextFactory)
     {
-        private readonly IAppDbContextFactory _dbContextFactory;
+        private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-        public GeneralValidationService(IAppDbContextFactory dbContextFactory)
-        {
-            _dbContextFactory = dbContextFactory;
-        }
         public bool ValidateEntidadConsistency(ImplementacionValidationResult validationResult, Action<string> log, out string entidadComun)
         {
             entidadComun = string.Empty;

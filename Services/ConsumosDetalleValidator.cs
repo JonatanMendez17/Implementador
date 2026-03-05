@@ -1,20 +1,13 @@
-using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using System.Globalization;
 using System.IO;
-using System.Text.Json;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class ConsumosDetalleValidator
+public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFactory)
 {
-    private readonly IAppDbContextFactory _dbContextFactory;
-
-    public ConsumosDetalleValidator(IAppDbContextFactory dbContextFactory)
-    {
-        _dbContextFactory = dbContextFactory;
-    }
+    private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
     public void Apply(ImplementacionValidationResult result, Action<string> log)
     {
@@ -126,36 +119,6 @@ public sealed class ConsumosDetalleValidator
                 continue;
             }
 
-            AgentDebugLog(
-                "G1",
-                "ConsumosDetalleValidator.Apply:codigo_iteracion",
-                "Inicio de validacion por codigo de consumo",
-                new
-                {
-                    codigo,
-                    filasDetalleCount = filasDetalle.Count,
-                    cuotasPendientesText,
-                    montoDeudaText,
-                    cuotasEsperadas,
-                    montoEsperado
-                });
-
-            if (string.Equals(codigo?.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
-            {
-                AgentDebugLog(
-                    "H1",
-                    "ConsumosDetalleValidator.Apply:expected_totals",
-                    "Totales esperados para consumo detalle",
-                    new
-                    {
-                        codigo,
-                        cuotasPendientesText,
-                        montoDeudaText,
-                        cuotasEsperadas,
-                        montoEsperado
-                    });
-            }
-
             var cuotasDetalle = filasDetalle.Count;
             var sumaDetalle = 0m;
             var parseOk = true;
@@ -178,21 +141,6 @@ public sealed class ConsumosDetalleValidator
 
                 numerosCuota.Add(nroCuota);
                 sumaDetalle += montoCuota;
-
-                if (string.Equals(codigo?.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
-                {
-                    AgentDebugLog(
-                        "H2",
-                        "ConsumosDetalleValidator.Apply:detalle_cuota",
-                        "Detalle de cuota individual para consumo",
-                        new
-                        {
-                            codigo,
-                            nroCuota,
-                            montoText,
-                            montoCuota
-                        });
-                }
             }
 
             if (!parseOk)
@@ -218,21 +166,6 @@ public sealed class ConsumosDetalleValidator
                 codigosInvalidosPorTotales.Add(codigo);
                 log($"ConsumosDetalle: los periodos (Nro Cuota) no son consecutivos para codigo de consumo '{codigo}'.");
                 continue;
-            }
-
-            if (string.Equals(codigo?.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
-            {
-                AgentDebugLog(
-                    "H3",
-                    "ConsumosDetalleValidator.Apply:resumen_detalle",
-                    "Resumen de detalle calculado para consumo",
-                    new
-                    {
-                        codigo,
-                        cuotasDetalle,
-                        sumaDetalle,
-                        montoEsperado
-                    });
             }
 
             var sumaCoincide = Math.Abs(sumaDetalle - montoEsperado) <= 0.01m;
@@ -301,27 +234,5 @@ public sealed class ConsumosDetalleValidator
                DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out fecha);
     }
 
-    private static void AgentDebugLog(string hypothesisId, string location, string message, object data)
-    {
-        try
-        {
-            var payload = new
-            {
-                id = $"log_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{Guid.NewGuid():N}",
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                location,
-                message,
-                data,
-                runId = "pre-fix",
-                hypothesisId
-            };
-
-            var line = JsonSerializer.Serialize(payload) + Environment.NewLine;
-            File.AppendAllText(@"c:\Users\Administrador\Desktop\MigradorCUAD\.cursor\debug.log", line);
-        }
-        catch
-        {
-        }
-    }
 }
 
