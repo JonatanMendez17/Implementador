@@ -72,9 +72,7 @@ namespace ImplementadorCUAD.Services
             return resultado;
         }
 
-        public List<ImportarConsumoCab> MapConsumos(
-            IEnumerable<Dictionary<string, string>> datos,
-            Action<string> log)
+        public List<ImportarConsumoCab> MapConsumos(IEnumerable<Dictionary<string, string>> datos, Action<string> log)
         {
             var resultado = new List<ImportarConsumoCab>();
 
@@ -129,9 +127,7 @@ namespace ImplementadorCUAD.Services
             return resultado;
         }
 
-        public List<ImportarConsumosDet> MapConsumosDetalle(
-            IEnumerable<Dictionary<string, string>> datos,
-            Action<string> log)
+        public List<ImportarConsumosDet> MapConsumosDetalle(IEnumerable<Dictionary<string, string>> datos, Action<string> log)
         {
             var resultado = new List<ImportarConsumosDet>();
 

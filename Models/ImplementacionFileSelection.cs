@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace ImplementadorCUAD.Models
 {
     public class ImplementacionFileSelection

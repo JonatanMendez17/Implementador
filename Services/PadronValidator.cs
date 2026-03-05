@@ -1,18 +1,11 @@
-using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
-using System.Globalization;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class PadronValidator
+public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 {
-    private readonly IAppDbContextFactory _dbContextFactory;
-
-    public PadronValidator(IAppDbContextFactory dbContextFactory)
-    {
-        _dbContextFactory = dbContextFactory;
-    }
+    private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
     public void Apply(ImplementacionValidationResult result, Action<string> log)
     {
@@ -162,11 +155,7 @@ public sealed class PadronValidator
         result.DatosPadronValidados = padronFiltrado;
     }
 
-    private static bool IsCategoriaValida(
-        string? codigoCategoria,
-        string? nombreCategoriaPadron,
-        HashSet<string> categoriasValidasCodigo,
-        HashSet<string> categoriasValidasNombre)
+    private static bool IsCategoriaValida( string? codigoCategoria, string? nombreCategoriaPadron, HashSet<string> categoriasValidasCodigo, HashSet<string> categoriasValidasNombre)
     {
         if (categoriasValidasCodigo.Count == 0 && categoriasValidasNombre.Count == 0)
         {

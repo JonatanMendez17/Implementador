@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace ImplementadorCUAD.Models
 {
     public class Empleador

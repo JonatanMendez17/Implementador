@@ -1,18 +1,12 @@
-using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using System.Globalization;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class CatalogoServiciosValidator
+public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFactory)
 {
-    private readonly IAppDbContextFactory _dbContextFactory;
-
-    public CatalogoServiciosValidator(IAppDbContextFactory dbContextFactory)
-    {
-        _dbContextFactory = dbContextFactory;
-    }
+    private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
     public void Apply(ImplementacionValidationResult result, Action<string> log)
     {

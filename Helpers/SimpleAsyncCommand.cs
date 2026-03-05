@@ -1,14 +1,9 @@
-﻿using System.Windows.Input;
+using System.Windows.Input;
 
-public class SimpleAsyncCommand : ICommand
+public class SimpleAsyncCommand(Func<Task> execute) : ICommand
 {
-    private readonly Func<Task> _execute;
+    private readonly Func<Task> _execute = execute;
     private bool _isExecuting;
-
-    public SimpleAsyncCommand(Func<Task> execute)
-    {
-        _execute = execute;
-    }
 
     public bool CanExecute(object? parameter)
         => !_isExecuting;

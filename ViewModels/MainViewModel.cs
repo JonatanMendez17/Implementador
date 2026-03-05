@@ -1,14 +1,11 @@
 using Microsoft.Win32;
 using ImplementadorCUAD.Commands;
-using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Services;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -40,7 +37,7 @@ namespace ImplementadorCUAD.ViewModels
         private bool _logTruncationMessageShown;
 
         private const int MaxVisibleLogEntries = 50;
-        private static readonly LogEntry LogTruncationPlaceholder = new LogEntry(null, "[INFO] Para ver todo el log, exporte a archivo.");
+        private static readonly LogEntry LogTruncationPlaceholder = new LogEntry(null, "[INFO]", "Para ver todo el log, exporte a archivo.");
 
         public Empleador? EmpleadorSeleccionado
         {
@@ -376,14 +373,6 @@ namespace ImplementadorCUAD.ViewModels
                     MessageBoxImage.Information);
             }
 
-            // Modo prueba: validaciones de archivos obligatorios deshabilitadas para permitir carga parcial.
-            //if (string.IsNullOrWhiteSpace(ArchivoCategorias)) { ... }
-            //if (string.IsNullOrWhiteSpace(ArchivoPadron)) { ... }
-            //if (string.IsNullOrWhiteSpace(ArchivoConsumos)) { ... }
-            //if (string.IsNullOrWhiteSpace(ArchivoConsumosDetalle)) { ... }
-            //if (string.IsNullOrWhiteSpace(ArchivoServicios)) { ... }
-            //if (string.IsNullOrWhiteSpace(ArchivoCatalogoServicios)) { ... }
-
             EstaProcesando = true;
             Progreso = 0;
 
@@ -660,14 +649,14 @@ namespace ImplementadorCUAD.ViewModels
         {
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var prefix = GetLogPrefix(message);
-            var entry = new LogEntry(timestamp, $"{prefix} {message}");
+            var entry = new LogEntry(timestamp, prefix, message);
             AddLogEntry(entry);
         }
 
         private void LogRaw(string message)
         {
             var prefix = GetLogPrefix(message);
-            var entry = new LogEntry(null, $"{prefix} {message}");
+            var entry = new LogEntry(null, prefix, message);
             AddLogEntry(entry);
         }
 
@@ -729,13 +718,17 @@ namespace ImplementadorCUAD.ViewModels
 
         public sealed class LogEntry
         {
-            public LogEntry(string? timestamp, string message)
+            public LogEntry(string? timestamp, string prefix, string messageBody)
             {
                 Timestamp = timestamp;
-                Message = message;
+                Prefix = prefix;
+                MessageBody = messageBody;
+                Message = $"{prefix} {messageBody}";
             }
 
             public string? Timestamp { get; }
+            public string Prefix { get; }
+            public string MessageBody { get; }
             public string Message { get; }
 
             public string ToExportString()
@@ -763,6 +756,14 @@ namespace ImplementadorCUAD.ViewModels
 
             if (trimmed.StartsWith("⚠️") ||
                 trimmed.StartsWith("Aviso", StringComparison.OrdinalIgnoreCase))
+            {
+                return "[WARN]";
+            }
+
+            // Validación no pasó: rechazadas, no se pudo validar/cargar, o error de fila
+            if (trimmed.IndexOf("rechazada", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                trimmed.IndexOf(" no se pudo ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                (trimmed.IndexOf(" fila ", StringComparison.OrdinalIgnoreCase) >= 0 && trimmed.IndexOf(":", StringComparison.Ordinal) >= 0))
             {
                 return "[WARN]";
             }

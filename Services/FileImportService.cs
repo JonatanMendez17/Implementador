@@ -1,28 +1,18 @@
 using ExcelDataReader;
-using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Text.Json;
 
 namespace ImplementadorCUAD.Services
 {
-    public class FileImportService
+    public class FileImportService(IAppDbContextFactory dbContextFactory)
     {
-        private readonly IAppDbContextFactory _dbContextFactory;
+        private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-        public FileImportService(IAppDbContextFactory dbContextFactory)
-        {
-            _dbContextFactory = dbContextFactory;
-        }
-        public ImplementacionValidationResult ValidateAndLoadFiles(
-            ImplementacionFileSelection selection,
-            Action<string> log,
-            IProgress<int>? progress = null)
+        public ImplementacionValidationResult ValidateAndLoadFiles( ImplementacionFileSelection selection, Action<string> log, IProgress<int>? progress = null)
         {
             var result = new ImplementacionValidationResult();
 
@@ -156,9 +146,6 @@ namespace ImplementadorCUAD.Services
                         rowIndex++;
                         builder.Clear();
 
-                        var debugCells = new List<object>();
-                        var rowMatchesConsumo = false;
-
                         for (int i = 0; i < reader.FieldCount; i++)
                         {
                             if (i > 0)
@@ -171,7 +158,6 @@ namespace ImplementadorCUAD.Services
                             string valor;
                             if (raw is IFormattable formattable && raw is not DateTime)
                             {
-                                // Numericos: forzar cultura invariante para evitar comas decimales dentro del CSV
                                 valor = formattable.ToString(null, CultureInfo.InvariantCulture);
                             }
                             else
@@ -180,38 +166,9 @@ namespace ImplementadorCUAD.Services
                             }
 
                             builder.Append(valor);
-
-                            var rawText = raw?.ToString() ?? string.Empty;
-                            if (string.Equals(rawText.Trim(), "4458026", StringComparison.OrdinalIgnoreCase))
-                            {
-                                rowMatchesConsumo = true;
-                            }
-
-                            debugCells.Add(new
-                            {
-                                columnIndex = i,
-                                rawType = raw?.GetType().FullName,
-                                rawValue = raw,
-                                textValue = valor
-                            });
                         }
 
                         filas.Add(builder.ToString());
-
-                        if (rowMatchesConsumo)
-                        {
-                            AgentDebugLog(
-                                "R1",
-                                "FileImportService.ReadFileLines:xlsx_row",
-                                "Fila leida desde Excel para codigo de consumo 4458026",
-                                new
-                                {
-                                    rutaArchivo,
-                                    rowIndex,
-                                    rowText = builder.ToString(),
-                                    cells = debugCells
-                                });
-                        }
                     }
                 } while (reader.NextResult());
 
@@ -228,11 +185,7 @@ namespace ImplementadorCUAD.Services
             }
         }
 
-        private List<Dictionary<string, string>>? LoadFile(
-            string nombreLogico,
-            string? rutaArchivo,
-            Action<string> log,
-            IProgress<int>? progress)
+        private List<Dictionary<string, string>>? LoadFile( string nombreLogico, string? rutaArchivo, Action<string> log, IProgress<int>? progress)
         {
             try
             {
@@ -359,9 +312,7 @@ namespace ImplementadorCUAD.Services
             }
         }
 
-        private static int? ResolveColumnIndex(
-            ColumnaConfiguracion config,
-            Dictionary<string, int> indicePorEncabezadoNormalizado)
+        private static int? ResolveColumnIndex( ColumnaConfiguracion config, Dictionary<string, int> indicePorEncabezadoNormalizado)
         {
             var candidatos = new List<string>();
 
@@ -417,6 +368,11 @@ namespace ImplementadorCUAD.Services
             }
 
             return builder.ToString();
+        }
+
+        private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
+        {
+            return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
         }
 
         private static bool ValidateGeneralRules(string valor, ColumnaConfiguracion config, out string error)
@@ -502,12 +458,7 @@ namespace ImplementadorCUAD.Services
             return Regex.IsMatch(texto, @"[^\p{L}\p{N}\s\.\,\;\:\-\/\\\(\)\'\""\#\%\&\+]");
         }
 
-        private static bool ValidateSpecificUniqueness(
-            string nombreLogico,
-            int numeroFila,
-            Dictionary<string, string> fila,
-            HashSet<string> clavesUnicas,
-            Action<string> log)
+        private static bool ValidateSpecificUniqueness( string nombreLogico, int numeroFila, Dictionary<string, string> fila, HashSet<string> clavesUnicas, Action<string> log)
         {
             if (nombreLogico.Equals("Padron", StringComparison.OrdinalIgnoreCase))
             {
@@ -578,35 +529,5 @@ namespace ImplementadorCUAD.Services
             return false;
         }
 
-        private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
-        {
-            return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
-        }
-
-        private static void AgentDebugLog(string hypothesisId, string location, string message, object data)
-        {
-            // #region agent log
-            try
-            {
-                var payload = new
-                {
-                    id = $"log_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{Guid.NewGuid():N}",
-                    timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                    location,
-                    message,
-                    data,
-                    runId = "pre-fix",
-                    hypothesisId
-                };
-
-                var line = JsonSerializer.Serialize(payload) + Environment.NewLine;
-                File.AppendAllText(@"c:\Users\Administrador\Desktop\MigradorCUAD\.cursor\debug.log", line);
-            }
-            catch
-            {
-         
-            }
-            // #endregion
-        }
     }
 }
