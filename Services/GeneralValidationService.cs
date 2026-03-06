@@ -13,22 +13,22 @@ namespace ImplementadorCUAD.Services
 
             var entidades = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            AddEntidad("Categorias", validationResult.DatosCategoriasValidadas, entidades, log);
-            AddEntidad("Padron", validationResult.DatosPadronValidados, entidades, log);
+            AddEntidad("Categorias Socios", validationResult.DatosCategoriasValidadas, entidades, log);
+            AddEntidad("Padron Socios", validationResult.DatosPadronValidados, entidades, log);
             AddEntidad("Consumos", validationResult.DatosConsumosValidados, entidades, log);
-            AddEntidad("ConsumosDetalle", validationResult.DatosConsumosDetalleValidados, entidades, log);
-            AddEntidad("Servicios", validationResult.DatosServiciosValidados, entidades, log);
-            AddEntidad("CatalogoServicios", validationResult.DatosCatalogoServiciosValidados, entidades, log);
+            AddEntidad("Consumos Detalle", validationResult.DatosConsumosDetalleValidados, entidades, log);
+            AddEntidad("Catalogo Servicios", validationResult.DatosCatalogoServiciosValidados, entidades, log);
+            AddEntidad("Consumos Servicios", validationResult.DatosServiciosValidados, entidades, log);
 
             if (entidades.Count == 0)
             {
-                log("ERROR: no se encontro el valor de 'Entidad' en los archivos cargados.");
+                log("No se encontro el valor de 'Entidad' en los archivos cargados.");
                 return false;
             }
 
             if (entidades.Count > 1)
             {
-                log($"ERROR: la entidad no coincide entre archivos. Valores detectados: {string.Join(", ", entidades)}.");
+                log($"La entidad no coincide entre archivos. Valores detectados: {string.Join(", ", entidades)}.");
                 return false;
             }
 
@@ -63,7 +63,7 @@ namespace ImplementadorCUAD.Services
                 numeroFila++;
                 if (!fila.TryGetValue("Entidad", out var entidad) || string.IsNullOrWhiteSpace(entidad))
                 {
-                    log($"ERROR: {nombreArchivo} fila {numeroFila}: columna 'Entidad' vacia o inexistente.");
+                    log($"{nombreArchivo} fila {numeroFila}: columna 'Entidad' vacia o inexistente.");
                     continue;
                 }
 
