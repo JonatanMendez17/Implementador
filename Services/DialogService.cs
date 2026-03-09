@@ -44,7 +44,9 @@ namespace ImplementadorCUAD.Services
             WindowStyle = WindowStyle.None;
             AllowsTransparency = true;
             Background = Brushes.Transparent;
-            ShowInTaskbar = false;
+            ShowInTaskbar = true;
+            Topmost = true;
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             var rootBorder = new Border
             {
@@ -121,6 +123,15 @@ namespace ImplementadorCUAD.Services
 
             rootBorder.Child = panel;
             Content = rootBorder;
+
+            // Permitir arrastrar la ventana haciendo clic en cualquier parte del recuadro
+            rootBorder.MouseLeftButtonDown += (_, e) =>
+            {
+                if (e.ButtonState == MouseButtonState.Pressed)
+                {
+                    DragMove();
+                }
+            };
 
             ConfigureButtons();
         }
