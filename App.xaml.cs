@@ -34,7 +34,7 @@ namespace ImplementadorCUAD
                     "Revise en el archivo Configuracion.xml que:\n" +
                     "  • El servidor SQL existe y está encendido.\n" +
                     "  • El nombre de la base de datos es correcto.\n" +
-                    "  • El usuario y la contraseña (si se usan) son válidos.\n\n" +
+                    "  • El usuario y la contraseña son válidos.\n\n" +
                     $"Detalle técnico (para soporte):\n{ex.Message}",
                     "Error de conexión a base de datos",
                     MessageBoxButton.OK,
