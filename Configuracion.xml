@@ -177,9 +177,9 @@
   </Archivo>
 
   <!-- CONEXIONES A BASES DE DATOS
-  Cuad: base CUAD (solo lectura)
+  Cuad: base CUAD
   ConexionBase: servidor y autenticación comunes. Se combina con baseDatos de cada empleador.
-  Empleador: cada uno apunta a su base (baseDatos) donde se importan los 6 archivos.-->
+  Empleador: cada uno apunta a su base donde se importan los 6 archivos.-->
   
   <Conexiones>
     <Cuad connectionString="Server=(localdb)\MSSQLLocalDB;Database=CUA;Trusted_Connection=True;TrustServerCertificate=True;" />

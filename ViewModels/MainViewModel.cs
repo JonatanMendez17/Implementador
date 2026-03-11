@@ -295,15 +295,35 @@ namespace ImplementadorCUAD.ViewModels
             }
 
             // 2) Entidades desde CUAD usando la configuración actual
-            using (var db = _dbContextFactory.Create())
+            try
             {
-                var entidades = db.GetEntidad();
-                Entidad.Clear();
-                Entidad.Add(new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" });
-                foreach (var ent in entidades)
+                using (var db = _dbContextFactory.Create())
                 {
-                    Entidad.Add(ent);
+                    var entidades = db.GetEntidad();
+                    Entidad.Clear();
+                    Entidad.Add(new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" });
+                    foreach (var ent in entidades)
+                    {
+                        Entidad.Add(ent);
+                    }
                 }
+            }
+            catch (SqlException ex) when (ex.Number == 208)
+            {
+                DialogService.Show(
+                    "La conexión se estableció correctamente, pero la base de datos no contiene la o las tablas esperadas.\n\n" +
+                    "Verifique que la base configurada sea la base CUAD correcta o vuelva a ejecutar la apliacion",
+                    "Error de esquema",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            catch (SqlException ex)
+            {
+                DialogService.Show(
+                    $"Error al consultar la base de datos CUAD.\n\n{ex.Message}",
+                    "Error de conexión",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
 
             EntidadSeleccionada = Entidad.FirstOrDefault();

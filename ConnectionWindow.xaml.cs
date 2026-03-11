@@ -1,5 +1,6 @@
 using System.Windows;
 using ImplementadorCUAD.Data;
+using Microsoft.Data.SqlClient;
 
 namespace ImplementadorCUAD
 {
@@ -27,7 +28,20 @@ namespace ImplementadorCUAD
 
             try
             {
-                using var db = new AppDbContext(connectionString);
+                // Validar que la cadena especifique una base de datos (Database / Initial Catalog)
+                var builder = new SqlConnectionStringBuilder(connectionString);
+                if (string.IsNullOrWhiteSpace(builder.InitialCatalog))
+                {
+                    MessageBox.Show(
+                        "La cadena de conexión no especifica la base de datos (Database o Initial Catalog).\n" +
+                        "Ejemplo: Server=...;Database=CUAD;Trusted_Connection=True;",
+                        "Conexión",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                using var db = new AppDbContext(builder.ConnectionString);
                 db.EnsureConnection();
             }
             catch (Exception ex)
