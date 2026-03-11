@@ -226,28 +226,18 @@ namespace ImplementadorCUAD.ViewModels
 
             Progreso = 0;
 
-            var conexionesService = new ConexionesConfigService();
-            var empleadoresConfig = conexionesService.GetEmpleadores();
-            Empleador = new ObservableCollection<Empleador>();
-            var idx = 1;
-            foreach (var ec in empleadoresConfig)
+            // Inicializar colecciones con valores por defecto; se completan
+            // cuando la conexión a CUAD ya fue validada e inicializada.
+            Empleador = new ObservableCollection<Empleador>
             {
-                Empleador.Add(new Empleador
-                {
-                    Id = idx,
-                    EmrId = idx,
-                    Nombre = ec.Nombre,
-                    ConnectionString = ec.ConnectionString
-                });
-                idx++;
-            }
-            Empleador.Insert(0, new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
+                new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" }
+            };
 
-            using (var db = _dbContextFactory.Create())
+            Entidad = new ObservableCollection<Entidad>
             {
-                Entidad = new ObservableCollection<Entidad>(db.GetEntidad());
-            }
-            Entidad.Insert(0, new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" });
+                new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" }
+            };
+
             EntidadSeleccionada = Entidad.FirstOrDefault();
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
 
@@ -276,6 +266,48 @@ namespace ImplementadorCUAD.ViewModels
             ExportarLogCommand = new RelayCommand(_ => ExportarLog());
             LimpiarUiCommand = new RelayCommand(_ => LimpiarSoloUi(), _ => !EstaProcesando);
             LimpiarBaseEntidadCommand = new RelayCommand(LimpiarBaseEntidad, PuedeLimpiarBaseEntidad);
+        }
+
+        /// <summary>
+        /// Carga empleadores desde Configuracion.xml y entidades desde CUAD.
+        /// Debe llamarse sólo cuando la conexión a CUAD ya fue validada.
+        /// </summary>
+        public void InitializeAfterConnectionEstablished()
+        {
+            // 1) Empleadores desde Configuracion.xml
+            var conexionesService = new ConexionesConfigService();
+            var empleadoresConfig = conexionesService.GetEmpleadores();
+
+            Empleador.Clear();
+            Empleador.Add(new Empleador { Id = 0, EmrId = 0, Nombre = "Seleccionar" });
+
+            var idx = 1;
+            foreach (var ec in empleadoresConfig)
+            {
+                Empleador.Add(new Empleador
+                {
+                    Id = idx,
+                    EmrId = idx,
+                    Nombre = ec.Nombre,
+                    ConnectionString = ec.ConnectionString
+                });
+                idx++;
+            }
+
+            // 2) Entidades desde CUAD usando la configuración actual
+            using (var db = _dbContextFactory.Create())
+            {
+                var entidades = db.GetEntidad();
+                Entidad.Clear();
+                Entidad.Add(new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" });
+                foreach (var ent in entidades)
+                {
+                    Entidad.Add(ent);
+                }
+            }
+
+            EntidadSeleccionada = Entidad.FirstOrDefault();
+            EmpleadorSeleccionado = Empleador.FirstOrDefault();
         }
 
         private ImplementacionFileSelection BuildSelection()

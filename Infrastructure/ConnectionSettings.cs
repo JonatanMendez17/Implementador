@@ -5,32 +5,46 @@ namespace ImplementadorCUAD.Infrastructure
 {
     public static class ConnectionSettings
     {
-        private static string? _cuadConnectionString;
+        private const string DefaultConnectionString =
+            "Server=(localdb)\\MSSQLLocalDB;Database=ImplementadorCUAD_DB;Trusted_Connection=True;TrustServerCertificate=True;";
+
+        static ConnectionSettings()
+        {
+            var fromEnv = Environment.GetEnvironmentVariable("IMPLEMENTADORCUAD_CONNECTIONSTRING");
+            if (!string.IsNullOrWhiteSpace(fromEnv))
+            {
+                ConnectionString = fromEnv;
+                return;
+            }
+
+            var fromConfig = ConfigurationManager.ConnectionStrings["ImplementadorCUADDb"]?.ConnectionString;
+            if (!string.IsNullOrWhiteSpace(fromConfig))
+            {
+                ConnectionString = fromConfig;
+                return;
+            }
+
+            ConnectionString = DefaultConnectionString;
+        }
+
+        /// <summary>
+        /// Cadena de conexión "general" obtenida de variables de entorno, app.config o valor por defecto.
+        /// </summary>
+        public static string ConnectionString { get; set; }
 
         /// <summary>
         /// Connection string de la base CUAD (solo lectura).
-        /// Se obtiene exclusivamente desde Configuracion.xml (sección Conexiones / nodo Cuad@connectionString).
-        /// Si no está configurada, se lanza una excepción para bloquear el inicio de la aplicación.
+        /// Intenta leerla desde Configuracion.xml (sección <Conexiones><Cuad .../>). Si no hay valor,
+        /// utiliza la ConnectionString general como último recurso (modo una sola base).
         /// </summary>
         public static string CuadConnectionString
         {
             get
             {
-                if (_cuadConnectionString != null)
-                {
-                    return _cuadConnectionString;
-                }
-
-                var fromConexiones = new ConexionesConfigService().GetCuadConnectionString();
-                if (string.IsNullOrWhiteSpace(fromConexiones))
-                {
-                    throw new InvalidOperationException(
-                        "No se encontró la cadena de conexión CUAD en Configuracion.xml. " +
-                        "Revise el nodo <Conexiones><Cuad connectionString=\"...\" /></Conexiones> antes de iniciar la aplicación.");
-                }
-
-                _cuadConnectionString = fromConexiones;
-                return _cuadConnectionString;
+                var fromConfigXml = new ConexionesConfigService().GetCuadConnectionString();
+                return !string.IsNullOrWhiteSpace(fromConfigXml)
+                    ? fromConfigXml
+                    : ConnectionString;
             }
         }
     }
