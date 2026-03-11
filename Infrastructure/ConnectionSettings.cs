@@ -8,8 +8,6 @@ namespace ImplementadorCUAD.Infrastructure
         private const string DefaultConnectionString =
             "Server=(localdb)\\MSSQLLocalDB;Database=ImplementadorCUAD_DB;Trusted_Connection=True;TrustServerCertificate=True;";
 
-        private static string? _cuadConnectionString;
-
         static ConnectionSettings()
         {
             var fromEnv = Environment.GetEnvironmentVariable("IMPLEMENTADORCUAD_CONNECTIONSTRING");
@@ -29,20 +27,24 @@ namespace ImplementadorCUAD.Infrastructure
             ConnectionString = DefaultConnectionString;
         }
 
+        /// <summary>
+        /// Cadena de conexión "general" obtenida de variables de entorno, app.config o valor por defecto.
+        /// </summary>
         public static string ConnectionString { get; set; }
 
         /// <summary>
-        /// Connection string de la base CUAD (solo lectura). Si no hay sección Conexiones en config, devuelve ConnectionString (modo una sola base).
+        /// Connection string de la base CUAD (solo lectura).
+        /// Intenta leerla desde Configuracion.xml (sección <Conexiones><Cuad .../>). Si no hay valor,
+        /// utiliza la ConnectionString general como último recurso (modo una sola base).
         /// </summary>
         public static string CuadConnectionString
         {
             get
             {
-                if (_cuadConnectionString != null)
-                    return _cuadConnectionString;
-                var fromConexiones = new ConexionesConfigService().GetCuadConnectionString();
-                _cuadConnectionString = !string.IsNullOrWhiteSpace(fromConexiones) ? fromConexiones : ConnectionString;
-                return _cuadConnectionString;
+                var fromConfigXml = new ConexionesConfigService().GetCuadConnectionString();
+                return !string.IsNullOrWhiteSpace(fromConfigXml)
+                    ? fromConfigXml
+                    : ConnectionString;
             }
         }
     }
