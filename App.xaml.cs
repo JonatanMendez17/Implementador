@@ -1,24 +1,21 @@
 using System;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
 using Microsoft.Data.SqlClient;
 using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Services;
-using Microsoft.Data.SqlClient;
 
 namespace ImplementadorCUAD
 {
     public partial class App : Application
     {
-        public App()
-        {
-            // Manejo global de errores no controlados
-            DispatcherUnhandledException += OnDispatcherUnhandledException;
-            AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainUnhandledException;
-            TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
-        }
+        //public App()
+        //{
+        //    // Manejo global de errores no controlados
+        //    DispatcherUnhandledException += OnDispatcherUnhandledException;
+        //    AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainUnhandledException;
+        //    TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+        //}
 
         protected override void OnStartup(StartupEventArgs e)
         {
