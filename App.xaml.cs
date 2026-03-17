@@ -33,10 +33,34 @@ namespace ImplementadorCUAD
                         db.EnsureConnection();
                     }
 
-                    // Conexión a CUAD OK: inicializar datos en el ViewModel y no mostrar el modal.
-                    if (mainWindow.DataContext is ViewModels.MainViewModel vmWithConfig)
+                    // Conexión a CUAD OK (a nivel de servidor/base). Ahora inicializamos el ViewModel.
+                    try
                     {
-                        vmWithConfig.InitializeAfterConnectionEstablished();
+                        if (mainWindow.DataContext is ViewModels.MainViewModel vmWithConfig)
+                        {
+                            vmWithConfig.InitializeAfterConnectionEstablished();
+                        }
+                    }
+                    catch (Microsoft.Data.SqlClient.SqlException ex)
+                    {
+                        // Errores típicos aquí: tablas/vistas que no existen en la base apuntada.
+                        MessageBox.Show(
+                            $"No se pudo inicializar la aplicación con la base seleccionada.\n" +
+                            $"Verifique que la base CUAD tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
+                            "Error al leer CUAD",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                        // Dejamos la ventana abierta, pero sin datos inicializados.
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(
+                            $"Ocurrió un error inesperado al inicializar la aplicación.\n\n{ex.Message}",
+                            "Error al iniciar",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                        return;
                     }
 
                     return;
@@ -106,9 +130,32 @@ namespace ImplementadorCUAD
             }
 
             // 3.4) Conexión OK luego de actualizar XML: inicializar datos en el ViewModel.
-            if (mainWindow.DataContext is ViewModels.MainViewModel vm)
+            try
             {
-                vm.InitializeAfterConnectionEstablished();
+                if (mainWindow.DataContext is ViewModels.MainViewModel vm)
+                {
+                    vm.InitializeAfterConnectionEstablished();
+                }
+            }
+            catch (Microsoft.Data.SqlClient.SqlException ex)
+            {
+                MessageBox.Show(
+                    $"No se pudo inicializar la aplicación con la base seleccionada.\n" +
+                    $"Verifique que la base CUAD tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
+                    "Error al leer CUAD",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                // No cerramos la app para que el usuario vea el mensaje y pueda corregir la configuración.
+                return;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Ocurrió un error inesperado al inicializar la aplicación.\n\n{ex.Message}",
+                    "Error al iniciar",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
             }
         }
 

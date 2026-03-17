@@ -182,13 +182,13 @@
   Empleador: cada uno apunta a su base (baseDatos) donde se importan los 6 archivos.-->
   
   <Conexiones>
-    <Cuad connectionString="Server=(localdb)\MSSQLLocalDB;Database=CUA;Trusted_Connection=True;TrustServerCertificate=True;" />
-    <ConexionBase connectionString="Server=(localdb)\MSSQLLocalDB;Trusted_Connection=True;TrustServerCertificate=True;" />
-      <Empleador nombre="BDI" baseDatos="BDI_test" />
-      <Empleador nombre="ACTIVOS" baseDatos="DBI_Activos" />
-      <Empleador nombre="PASIVOS" baseDatos="DBI_Pasivos" />
-      <Empleador nombre="LEY 5110" baseDatos="DBI_Ley5110" />
-      <Empleador nombre="MALVINAS" baseDatos="DBI_Malvinas" />
+    <Cuad connectionString="Server=localhost;Database=CUAD1;Trusted_Connection=True;TrustServerCertificate=True;" />
+    <ConexionBase connectionString="Server=localhost;Trusted_Connection=True;TrustServerCertificate=True;" />
+      <Empleador nombre="BDI" baseDatos="BDI_Test" />
+      <Empleador nombre="ACTIVOS" baseDatos="BDI_Activos" />
+      <Empleador nombre="PASIVOS" baseDatos="BDI_Pasivos" />
+      <Empleador nombre="LEY 5110" baseDatos="BDI_Ley5110" />
+      <Empleador nombre="MALVINAS" baseDatos="BDI_Malvinas" />
   </Conexiones>
 
 </Configuracion>
