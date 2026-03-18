@@ -16,18 +16,17 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="Ingrese el connection string de la base de datos destino"
+                   Text="Ingrese el connection string"
                    Foreground="#E5E7EB"
                    FontSize="16"
                    FontWeight="SemiBold"
                    Margin="0,0,0,8" />
 
         <TextBlock Grid.Row="1"
-                   Text="La aplicación usará esta conexión para todas las operaciones (CUAD y empleador)."
                    Foreground="#9CA3AF"
                    FontSize="12"
                    TextWrapping="Wrap"
-                   Margin="0,0,0,12" />
+                   Margin="0,0,0,12" ><Run Text="La aplicación usará esta conexión para "/><Run Language="es-es" Text="acceder a la base de datos"/><Run Text="."/></TextBlock>
 
         <TextBox x:Name="ConnectionStringTextBox"
                  Grid.Row="2"
