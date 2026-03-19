@@ -1,5 +1,6 @@
 using System.Windows;
 using ImplementadorCUAD.Data;
+using ImplementadorCUAD.Services;
 
 namespace ImplementadorCUAD
 {
@@ -17,7 +18,7 @@ namespace ImplementadorCUAD
             var connectionString = ConnectionStringTextBox.Text?.Trim();
             if (string.IsNullOrWhiteSpace(connectionString))
             {
-                MessageBox.Show(
+                DialogService.Show(
                     "Debe ingresar un connection string.",
                     "Conexión",
                     MessageBoxButton.OK,
@@ -32,7 +33,7 @@ namespace ImplementadorCUAD
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
+                DialogService.Show(
                     $"No se pudo establecer la conexión.\n\n{ex.Message}",
                     "Conexión",
                     MessageBoxButton.OK,
@@ -43,6 +44,11 @@ namespace ImplementadorCUAD
             SelectedConnectionString = connectionString;
             DialogResult = true;
             Close();
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
