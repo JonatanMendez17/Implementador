@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using Microsoft.Data.SqlClient;
 using ImplementadorCUAD.Data;
@@ -11,6 +12,48 @@ namespace ImplementadorCUAD
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            // Manejo global para evitar cierres abruptos sin informar al usuario.
+            DispatcherUnhandledException += (_, args) =>
+            {
+                try
+                {
+                    args.Handled = true;
+                    MessageBox.Show(
+                        $"Se produjo un error inesperado en la aplicación.\n\n{args.Exception.Message}",
+                        "Error inesperado",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+                catch
+                {
+                    // Si falla mostrar el mensaje, no escalamos para no romper el manejador.
+                }
+            };
+
+            AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            {
+                var ex = args.ExceptionObject as Exception;
+                try
+                {
+                    // Best-effort: si la app está por terminar no hay garantía de que el UI llegue.
+                    if (Application.Current != null)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            MessageBox.Show(
+                                $"Se produjo un error inesperado en la aplicación.\n\n{ex?.Message ?? ex?.ToString()}",
+                                "Error inesperado",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+                        });
+                    }
+                }
+                catch
+                {
+                    // No hacemos nada: es posible que el proceso ya esté finalizando.
+                }
+            };
 
             var mainWindow = new MainWindow();
             MainWindow = mainWindow;
@@ -79,8 +122,20 @@ namespace ImplementadorCUAD
 
             // ConnectionWindow ya validó la conexión. Persistir en XML e invalidar cache.
             var userConnectionString = configWindow.SelectedConnectionString;
-            new ConexionesConfigService().SetCuadConnectionString(userConnectionString);
-            ConnectionSettings.InvalidateCache();
+            try
+            {
+                new ConexionesConfigService().SetCuadConnectionString(userConnectionString);
+                ConnectionSettings.InvalidateCache();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"No se pudo guardar la configuración en '{ConexionesConfigService.RutaConfiguracionXml}'.\n\n{ex.Message}",
+                    "Error de configuración",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
 
             try
             {
