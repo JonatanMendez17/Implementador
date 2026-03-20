@@ -1,11 +1,9 @@
 using System;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
+using Microsoft.Data.SqlClient;
 using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Services;
-using Microsoft.Data.SqlClient;
 
 namespace ImplementadorCUAD
 {
@@ -15,12 +13,52 @@ namespace ImplementadorCUAD
         {
             base.OnStartup(e);
 
-            // Paso 1: crear y mostrar siempre la ventana principal.
+            // Manejo global para evitar cierres abruptos sin informar al usuario.
+            DispatcherUnhandledException += (_, args) =>
+            {
+                try
+                {
+                    args.Handled = true;
+                    DialogService.Show(
+                        $"Se produjo un error inesperado en la aplicación.\n\n{args.Exception.Message}",
+                        "Error inesperado",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+                catch
+                {
+                    // Si falla mostrar el message, no escalamos para no romper el manejador.
+                }
+            };
+
+            AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            {
+                var ex = args.ExceptionObject as Exception;
+                try
+                {
+                    // Best-effort: si la app está por terminar no hay garantía de que el UI llegue.
+                    if (Application.Current != null)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            DialogService.Show(
+                                $"Se produjo un error inesperado en la aplicación.\n\n{ex?.Message ?? ex?.ToString()}",
+                                "Error inesperado",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+                        });
+                    }
+                }
+                catch
+                {
+                    // No hacemos nada: es posible que el proceso ya esté finalizando.
+                }
+            };
+
             var mainWindow = new MainWindow();
             MainWindow = mainWindow;
             mainWindow.Show();
 
-            // Paso 2: intentar usar la configuración existente de Configuracion.xml / app.config (sin modal).
             var initialCuadConnection = ConnectionSettings.CuadConnectionString;
             var hasInitialConfig = !string.IsNullOrWhiteSpace(initialCuadConnection);
 
@@ -28,96 +66,104 @@ namespace ImplementadorCUAD
             {
                 try
                 {
-                    // Probar la conexión con un timeout corto para no demorar el arranque si la config es inválida.
                     var testConnectionString = WithShortTimeout(initialCuadConnection, 3);
                     using (var db = new AppDbContext(testConnectionString))
                     {
                         db.EnsureConnection();
                     }
 
-                    // Conexión a CUAD OK: inicializar datos en el ViewModel y no mostrar el modal.
-                    if (mainWindow.DataContext is ViewModels.MainViewModel vmWithConfig)
+                    try
                     {
-                        vmWithConfig.InitializeAfterConnectionEstablished();
+                        if (mainWindow.DataContext is ViewModels.MainViewModel vmWithConfig)
+                        {
+                            vmWithConfig.InitializeAfterConnection();
+                        }
+                    }
+                    catch (SqlException ex)
+                    {
+                        DialogService.Show(
+                            $"No se pudo inicializar la aplicación con la base seleccionada.\n" +
+                            $"Verifique que la base CUAD tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
+                            "Error al leer CUAD",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        DialogService.Show(
+                            $"Ocurrió un error inesperado al inicializar la aplicación.\n\n{ex.Message}",
+                            "Error al iniciar",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                        return;
                     }
 
                     return;
                 }
                 catch
                 {
-                    // Si la conexión falla aún con configuración existente, caemos al flujo del modal.
+                    // Si la conexión falla con la configuración existente, caemos al flujo del modal.
                 }
             }
 
-            // Paso 3: no hay configuración válida de CUAD o la conexión falló: pedir al usuario el connection string.
+            // No hay configuración válida de CUAD o la conexión falló: pedir al usuario el connection string.
             var configWindow = new ConnectionWindow
             {
                 Owner = mainWindow
             };
             var result = configWindow.ShowDialog();
 
-            if (result != true || string.IsNullOrWhiteSpace(configWindow.SelectedConnectionString))
+            if (result != true || string.IsNullOrWhiteSpace(configWindow.SelectedConnection))
             {
                 Shutdown();
                 return;
             }
 
-            var userConnectionString = configWindow.SelectedConnectionString;
-
-            // 3.1) Validar que el connection string proporcionado funcione contra CUAD.
+            // ConnectionWindow ya validó la conexión. Persistir en XML e invalidar cache.
+            var userConnectionString = configWindow.SelectedConnection;
             try
             {
-                var testConnectionString = WithShortTimeout(userConnectionString, 3);
-                using (var db = new AppDbContext(testConnectionString))
-                {
-                    db.EnsureConnection();
-                }
+                new ConnectionsConfigService().SetCuadConnectionString(userConnectionString);
+                ConnectionSettings.InvalidateCache();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"No se pudo establecer la conexión con la cadena ingresada.\n\n{ex.Message}",
-                    "Error de conexión",
+                DialogService.Show(
+                    $"No se pudo guardar la configuración en '{ConnectionsConfigService.RutaConfiguracionXml}'.\n\n{ex.Message}",
+                    "Error de configuración",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
-                Shutdown();
                 return;
             }
 
-            // 3.2) Persistir el connection string de CUAD en Configuracion.xml para futuras ejecuciones.
-            new ConexionesConfigService().SetCuadConnectionString(userConnectionString);
-
-            // 3.3) Verificar que, leído desde Configuracion.xml a través de ConnectionSettings/AppDbContext(), también funcione.
             try
             {
-                var verifyConnectionString = WithShortTimeout(ConnectionSettings.CuadConnectionString, 3);
-                using (var db = new AppDbContext(verifyConnectionString))
+                if (mainWindow.DataContext is ViewModels.MainViewModel vm)
                 {
-                    db.EnsureConnection();
+                    vm.InitializeAfterConnection();
                 }
+            }
+            catch (SqlException ex)
+            {
+                DialogService.Show(
+                    $"No se pudo inicializar la aplicación con la base seleccionada.\n" +
+                    $"Verifique que la base CUAD tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
+                    "Error al leer CUAD",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"La conexión sigue fallando incluso luego de actualizar Configuracion.xml.\n\n{ex.Message}",
-                    "Error de conexión",
+                DialogService.Show(
+                    $"Ocurrió un error inesperado al inicializar la aplicación.\n\n{ex.Message}",
+                    "Error al iniciar",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
-                Shutdown();
-                return;
-            }
-
-            // 3.4) Conexión OK luego de actualizar XML: inicializar datos en el ViewModel.
-            if (mainWindow.DataContext is ViewModels.MainViewModel vm)
-            {
-                vm.InitializeAfterConnectionEstablished();
             }
         }
 
-        /// <summary>
-        /// Devuelve una copia del connection string con un Connect Timeout reducido.
-        /// Si el string es inválido, se devuelve tal cual sin modificar.
-        /// </summary>
         private static string WithShortTimeout(string connectionString, int timeoutSeconds)
         {
             try
@@ -131,7 +177,54 @@ namespace ImplementadorCUAD
             catch
             {
                 return connectionString;
+>>>>>>>>> Temporary merge branch 2
             }
+            catch (Exception ex)
+            {
+                DialogService.Show(
+                    $"Se produjo un error al iniciar la aplicación.\n\nMensaje: {ex.Message}\n\nDetalles:\n{ex}",
+                    "Error al iniciar",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+
+                // Cerrar la aplicación porque el inicio falló
+                Shutdown(-1);
+            }
+        }
+
+        private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            DialogService.Show(
+                $"Se produjo un error inesperado en la interfaz.\n\nMensaje: {e.Exception.Message}\n\nDetalles:\n{e.Exception}",
+                "Error de aplicación",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+
+            // Marcamos como manejado para evitar que WPF cierre la app de forma silenciosa
+            e.Handled = true;
+        }
+
+        private static void OnCurrentDomainUnhandledException(object? sender, UnhandledExceptionEventArgs e)
+        {
+            if (e.ExceptionObject is Exception ex)
+            {
+                DialogService.Show(
+                    $"Se produjo un error crítico.\n\nMensaje: {ex.Message}\n\nDetalles:\n{ex}",
+                    "Error crítico",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private static void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+        {
+            DialogService.Show(
+                $"Se produjo un error en una tarea en segundo plano.\n\nMensaje: {e.Exception.Message}\n\nDetalles:\n{e.Exception}",
+                "Error en tarea",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+
+            e.SetObserved();
         }
     }
 }

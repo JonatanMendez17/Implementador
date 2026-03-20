@@ -13,7 +13,7 @@ public sealed class ConsumosValidator
         _dbContextFactory = dbContextFactory;
     }
 
-    public void Apply(ImplementacionValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, Action<string> log)
     {
         if (result.DatosConsumosValidados.Count == 0)
         {
@@ -21,6 +21,7 @@ public sealed class ConsumosValidator
         }
 
         HashSet<string> entidadesCuad;
+        HashSet<string> conceptosDescuentoVigentes;
         try
         {
             using var db = _dbContextFactory.Create();
@@ -33,11 +34,14 @@ public sealed class ConsumosValidator
                 .Where(v => !string.IsNullOrWhiteSpace(v))
                 .Select(v => v!)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            conceptosDescuentoVigentes = db.GetConceptosDescuentoVigentesParaConsumos();
         }
         catch (Exception ex)
         {
             log($"Consumos: No se pudo validar entidades de CUAD. {ex.Message}");
             result.DatosConsumosValidados = new List<Dictionary<string, string>>();
+            conceptosDescuentoVigentes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             return;
         }
 
@@ -52,15 +56,16 @@ public sealed class ConsumosValidator
 
         for (int i = 0; i < result.DatosConsumosValidados.Count; i++)
         {
-            var fila = result.DatosConsumosValidados[i];
-            var numeroFila = i + 2;
+            var row = result.DatosConsumosValidados[i];
+            var rowNumber = i + 2;
             var erroresFila = new List<string>();
 
-            var entidad = GetFirstValue(fila, "Entidad");
-            var nroSocio = GetFirstValue(fila, "Nro Socio");
-            var cuitConsumo = GetFirstValue(fila, "CUIT");
-            var beneficioConsumo = GetFirstValue(fila, "Beneficio");
-            var codigoConsumo = GetFirstValue(fila, "Codigo Consumo", "Código Consumo");
+            var entidad = GetFirstValue(row, "Entidad");
+            var nroSocio = GetFirstValue(row, "Nro Socio");
+            var cuitConsumo = GetFirstValue(row, "CUIT");
+            var beneficioConsumo = GetFirstValue(row, "Beneficio");
+            var codigoConsumo = GetFirstValue(row, "Codigo Consumo", "Código Consumo");
+            var conceptoDescuentoText = GetFirstValue(row, "Concepto Descuento");
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
@@ -96,14 +101,24 @@ public sealed class ConsumosValidator
                 erroresFila.Add($"El codigo de consumo '{codigoConsumo}' se encuentra repetido.");
             }
 
+            if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(conceptoDescuentoText) &&
+                conceptosDescuentoVigentes.Count > 0)
+            {
+                var keyConcepto = $"{entidad.Trim()}|{conceptoDescuentoText.Trim()}";
+                if (!conceptosDescuentoVigentes.Contains(keyConcepto))
+                {
+                    erroresFila.Add($"El concepto de descuento '{conceptoDescuentoText}' no existe como código de descuento vigente en CUAD para la entidad '{entidad?.Trim()}'.");
+                }
+            }
+
             if (erroresFila.Count == 0)
             {
-                consumosFiltrados.Add(fila);
+                consumosFiltrados.Add(row);
             }
             else
             {
                 rechazadas++;
-                log($"Consumos fila {numeroFila}: {string.Join(" | ", erroresFila)}");
+                log($"Consumos row {rowNumber}: {string.Join(" | ", erroresFila)}");
             }
         }
 
@@ -115,11 +130,11 @@ public sealed class ConsumosValidator
         result.DatosConsumosValidados = consumosFiltrados;
     }
 
-    private static bool TryGetFirstValue(Dictionary<string, string> fila, out string value, params string[] posiblesClaves)
+    private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
     {
         foreach (var clave in posiblesClaves)
         {
-            if (fila.TryGetValue(clave, out var encontrado))
+            if (row.TryGetValue(clave, out var encontrado))
             {
                 value = encontrado;
                 return true;
@@ -130,9 +145,9 @@ public sealed class ConsumosValidator
         return false;
     }
 
-    private static string GetFirstValue(Dictionary<string, string> fila, params string[] posiblesClaves)
+    private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
     {
-        return TryGetFirstValue(fila, out var value, posiblesClaves) ? value : string.Empty;
+        return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
     }
 
     private static bool EqualsTrimmed(string? left, string? right)
