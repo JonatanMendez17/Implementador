@@ -5,12 +5,14 @@ using System.Text.RegularExpressions;
 using ExcelDataReader;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
+using Microsoft.Extensions.Logging;
 
 namespace ImplementadorCUAD.Services
 {
-    public class FileImportService(IAppDbContextFactory dbContextFactory)
+    public class FileImportService(IAppDbContextFactory dbContextFactory, ILogger<FileImportService>? logger = null)
     {
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
+        private readonly ILogger<FileImportService>? _logger = logger;
 
         public ImplementationValidationResult ValidateAndLoadFiles( ImplementationFileSelection selection, Action<string> log, IProgress<int>? progress = null)
         {
@@ -109,6 +111,7 @@ namespace ImplementadorCUAD.Services
             if (!result.HasLoadedData)
             {
                 log("No se pudo cargar ningun archivo.");
+                _logger?.LogWarning("No se pudo cargar ningun archivo.");
             }
 
             return result;
@@ -316,6 +319,7 @@ namespace ImplementadorCUAD.Services
             catch (Exception ex)
             {
                 log($"Error al cargar {logicalName}: {ex.Message}");
+                _logger?.LogError(ex, "Error al cargar {LogicalName}", logicalName);
                 return null;
             }
         }

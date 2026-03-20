@@ -1,11 +1,13 @@
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
+using Microsoft.Extensions.Logging;
 
 namespace ImplementadorCUAD.Services
 {
-    public class GeneralValidationService(IAppDbContextFactory dbContextFactory)
+    public class GeneralValidationService(IAppDbContextFactory dbContextFactory, ILogger<GeneralValidationService>? logger = null)
     {
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
+        private readonly ILogger<GeneralValidationService>? _logger = logger;
 
         public bool ValidateEntidadConsistency(ImplementationValidationResult validationResult, Action<string> log, out string entidadComun)
         {
@@ -23,12 +25,14 @@ namespace ImplementadorCUAD.Services
             if (entidades.Count == 0)
             {
                 log("No se encontro el value de 'Entidad' en los archivos cargados.");
+                _logger?.LogWarning("No se encontro el value de Entidad en los archivos cargados.");
                 return false;
             }
 
             if (entidades.Count > 1)
             {
                 log($"La entidad no coincide entre archivos. Valores detectados: {string.Join(", ", entidades)}.");
+                _logger?.LogWarning("La entidad no coincide entre archivos. Valores detectados: {Entidades}", string.Join(", ", entidades));
                 return false;
             }
 
@@ -41,6 +45,7 @@ namespace ImplementadorCUAD.Services
             if (string.IsNullOrWhiteSpace(targetConnectionString))
             {
                 log($"No se encontró base de data para empleador '{empleador?.Nombre ?? "seleccionado"}'.");
+                _logger?.LogWarning("No se encontro base de data para empleador {Empleador}.", empleador?.Nombre ?? "seleccionado");
                 return false;
             }
             using var db = _dbContextFactory.Create(targetConnectionString);
@@ -49,6 +54,7 @@ namespace ImplementadorCUAD.Services
             {
                 var nombreEmpleador = empleador?.Nombre ?? "(sin empleador seleccionado)";
                 log($"Ya existe informacion cargada para la entidad '{entidad}' en el contexto del empleador '{nombreEmpleador}'.");
+                _logger?.LogWarning("Ya existe informacion cargada para entidad {Entidad} en empleador {Empleador}.", entidad, nombreEmpleador);
                 return false;
             }
 

@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 using ImplementadorCUAD.Commands;
 using ImplementadorCUAD.Infrastructure;
@@ -19,6 +20,7 @@ namespace ImplementadorCUAD.ViewModels
         private readonly FileImportService _fileImportService;
         private readonly GeneralValidationService _generalValidationService;
         private readonly ImplementationService _implementationService;
+        private readonly ILogger<MainViewModel> _logger;
         private ImplementationValidationResult _validationResult = new();
 
         private Empleador? _empleadorSeleccionado;
@@ -39,7 +41,7 @@ namespace ImplementadorCUAD.ViewModels
         private bool _logTruncationMessageShown;
 
         private const int MaxVisibleLogEntries = 50;
-        private static readonly LogEntry LogTruncationPlaceholder = new LogEntry(null, "[INFO]", "Para ver todo el log, exporte a archivo.");
+        private static readonly LogEntry LogTruncationPlaceholder = new LogEntry(null, LogSeverity.Information, "Para ver todo el log, exporte a archivo.");
 
         public Empleador? EmpleadorSeleccionado
         {
@@ -221,12 +223,15 @@ namespace ImplementadorCUAD.ViewModels
         public ICommand ClearUiCommand { get; }
         public ICommand ClearDataCommand { get; }
 
-        public MainViewModel()
+        public MainViewModel(ILogger<MainViewModel> logger)
         {
+            _logger = logger;
             _dbContextFactory = new AppDbContextFactory();
-            _fileImportService = new FileImportService(_dbContextFactory);
-            _generalValidationService = new GeneralValidationService(_dbContextFactory);
+            var loggerFactory = App.LoggerFactory;
+            _fileImportService = new FileImportService(_dbContextFactory, loggerFactory.CreateLogger<FileImportService>());
+            _generalValidationService = new GeneralValidationService(_dbContextFactory, loggerFactory.CreateLogger<GeneralValidationService>());
             _implementationService = new ImplementationService(new ImplementationMapperService(), _dbContextFactory);
+            UiLogStream.LogReceived += OnUiLogReceived;
 
             Logs = new ObservableCollection<LogEntry>();
             LogRaw("Esperando carga de archivos para validacion...");
@@ -448,7 +453,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (SqlException ex)
             {
-                Log($"Error de base de data al cargar o validar archivos: {ex.Message}");
+                LogError($"Error de base de data al cargar o validar archivos: {ex.Message}");
                 ValidationCompleted = false;
                 DialogService.Show(
                     $"Error al consultar la base de data (CUAD).\n\n{ex.Message}",
@@ -459,7 +464,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (Exception ex)
             {
-                Log($"Error al validar archivos: {ex.Message}");
+                LogError($"Error al validar archivos: {ex.Message}");
                 ValidationCompleted = false;
                 DialogService.Show(
                     $"Error inesperado al validar.\n\n{ex.Message}",
@@ -498,14 +503,14 @@ namespace ImplementadorCUAD.ViewModels
 
                 if (!MatchesSelectedEntidad(entidadComun))
                 {
-                    Log($"ERROR: la entidad detectada en archivos ('{entidadComun}') no coincide con la entidad seleccionada.");
+                    LogError($"La entidad detectada en archivos ('{entidadComun}') no coincide con la entidad seleccionada.");
                     ValidationCompleted = false;
                     return;
                 }
 
                 if (HasEmpleadorSeleccionadoReal() && string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
                 {
-                    Log($"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
+                    LogWarning($"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
                     ValidationCompleted = false;
                     return;
                 }
@@ -520,7 +525,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (SqlException ex)
             {
-                Log($"Error de base de data al validar: {ex.Message}");
+                LogError($"Error de base de data al validar: {ex.Message}");
                 ValidationCompleted = false;
                 DialogService.Show(
                     $"Error al consultar la base de data.\n\n{ex.Message}",
@@ -530,7 +535,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (Exception ex)
             {
-                Log($"Error al validar: {ex.Message}");
+                LogError($"Error al validar: {ex.Message}");
                 ValidationCompleted = false;
                 DialogService.Show(
                     $"Error inesperado al validar.\n\n{ex.Message}",
@@ -564,7 +569,7 @@ namespace ImplementadorCUAD.ViewModels
 
             if (string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
             {
-                Log($"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
+                LogWarning($"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre ?? "seleccionado"}'.");
                 DialogService.Show(
                     $"No se encontró base de data para empleador '{EmpleadorSeleccionado?.Nombre}'.",
                     "Implementación",
@@ -575,7 +580,7 @@ namespace ImplementadorCUAD.ViewModels
 
             var entidadSeleccionada = EntidadSeleccionada!;
             var empleadorInfo = EmpleadorSeleccionado?.Nombre ?? "(sin empleador seleccionado)";
-            Log($"Contexto de implementacion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
+            LogInformation($"Contexto de implementacion: Entidad='{entidadSeleccionada.Nombre}' (ID {entidadSeleccionada.EntId}), Empleador='{empleadorInfo}'.");
 
             if (!ValidationCompleted || !_validationResult.HasLoadedData)
             {
@@ -587,11 +592,11 @@ namespace ImplementadorCUAD.ViewModels
 
                 if (resultado != MessageBoxResult.Yes)
                 {
-                    Log("Implementación cancelada por el usuario.");
+                    LogWarning("Implementación cancelada por el usuario.");
                     return;
                 }
 
-                Log("El usuario confirmo implementar con validaciones pendientes.");
+                LogWarning("El usuario confirmo implementar con validaciones pendientes.");
             }
 
             IsProcessing = true;
@@ -619,7 +624,7 @@ namespace ImplementadorCUAD.ViewModels
             catch (SqlException ex)
             {
                 cronometro.Stop();
-                Log($"Error de base de data al implementar: {ex.Message}");
+                LogError($"Error de base de data al implementar: {ex.Message}");
                 DialogService.Show(
                     $"Error al escribir en la base de data.\n\n{ex.Message}",
                     "Implementación",
@@ -629,7 +634,7 @@ namespace ImplementadorCUAD.ViewModels
             catch (Exception ex)
             {
                 cronometro.Stop();
-                Log($"Error al implementar: {ex.Message}");
+                LogError($"Error al implementar: {ex.Message}");
                 DialogService.Show(
                     $"Error inesperado al implementar.\n\n{ex.Message}",
                     "Implementación",
@@ -662,7 +667,7 @@ namespace ImplementadorCUAD.ViewModels
             if (!HasEmpleadorSeleccionadoReal() || string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString))
             {
                 var nombreEmpleador = EmpleadorSeleccionado?.Nombre ?? "seleccionado";
-                Log($"No se encontró base de data para empleador '{nombreEmpleador}'.");
+                LogWarning($"No se encontró base de data para empleador '{nombreEmpleador}'.");
                 DialogService.Show(
                     string.IsNullOrWhiteSpace(EmpleadorSeleccionado?.ConnectionString)
                         ? $"No se encontró base de data para empleador '{nombreEmpleador}'."
@@ -685,7 +690,7 @@ namespace ImplementadorCUAD.ViewModels
 
             if (confirmacion != MessageBoxResult.Yes)
             {
-                Log("Limpieza de base cancelada por el usuario.");
+                LogWarning("Limpieza de base cancelada por el usuario.");
                 return;
             }
 
@@ -697,12 +702,12 @@ namespace ImplementadorCUAD.ViewModels
                     entidadSeleccionada.EntId);
 
                 var totalEliminado = eliminados.Padron + eliminados.ConsumoCab + eliminados.ConsumoDet;
-                Log($"Limpieza ejecutada para entidad '{entidadNombre}' y empleador '{empleadorInfo}'.");
-                Log($"Registros eliminados: Padron={eliminados.Padron}, ConsumoCab={eliminados.ConsumoCab}, ConsumoDet={eliminados.ConsumoDet}, Total={totalEliminado}.");
+                LogInformation($"Limpieza ejecutada para entidad '{entidadNombre}' y empleador '{empleadorInfo}'.");
+                LogInformation($"Registros eliminados: Padron={eliminados.Padron}, ConsumoCab={eliminados.ConsumoCab}, ConsumoDet={eliminados.ConsumoDet}, Total={totalEliminado}.");
 
                 if (totalEliminado == 0)
                 {
-                    Log("No se encontraron registros para eliminar con la entidad seleccionada.");
+                    LogWarning("No se encontraron registros para eliminar con la entidad seleccionada.");
                 }
 
                 DialogService.Show(
@@ -717,7 +722,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (SqlException ex)
             {
-                Log($"Error de base de data al limpiar: {ex.Message}");
+                LogError($"Error de base de data al limpiar: {ex.Message}");
                 DialogService.Show(
                     $"Error al consultar o modificar la base de data.\n\n{ex.Message}",
                     "Limpieza de base",
@@ -726,7 +731,7 @@ namespace ImplementadorCUAD.ViewModels
             }
             catch (Exception ex)
             {
-                Log($"Error al limpiar la base para la entidad seleccionada: {ex.Message}");
+                LogError($"Error al limpiar la base para la entidad seleccionada: {ex.Message}");
                 DialogService.Show(
                     $"No se pudo limpiar la base.\n\n{ex.Message}",
                     "Limpieza de base",
@@ -744,7 +749,7 @@ namespace ImplementadorCUAD.ViewModels
 
             if (teniaEstado)
             {
-                Log(message);
+                LogInformation(message);
             }
         }
 
@@ -803,7 +808,7 @@ namespace ImplementadorCUAD.ViewModels
         {
             if (_fullLogForExport.Count == 0)
             {
-                Log("No hay mensajes de log para exportar.");
+                LogWarning("No hay mensajes de log para exportar.");
                 return;
             }
 
@@ -824,29 +829,68 @@ namespace ImplementadorCUAD.ViewModels
             try
             {
                 File.WriteAllLines(dialog.FileName, _fullLogForExport.Select(l => l.ToExportString()));
-                Log($"Log exportado a: {dialog.FileName}");
+                LogInformation($"Log exportado a: {dialog.FileName}");
                 DialogService.Show($"Log generado en:\n{dialog.FileName}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                Log($"Error al exportar el log: {ex.Message}");
+                LogError($"Error al exportar el log: {ex.Message}");
                 DialogService.Show($"No se pudo exportar el log.\n{ex.Message}", "Exportar log", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
+        private void LogInformation(string message)
+        {
+            Log(message, LogSeverity.Information);
+        }
+
+        private void LogWarning(string message)
+        {
+            Log(message, LogSeverity.Warning);
+        }
+
+        private void LogError(string message)
+        {
+            Log(message, LogSeverity.Error);
+        }
+
         private void Log(string message)
         {
-            var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            var prefix = GetLogPrefix(message);
-            var entry = new LogEntry(timestamp, prefix, message);
-            AddLogEntry(entry);
+            LogInformation(message);
         }
 
         private void LogRaw(string message)
         {
-            var prefix = GetLogPrefix(message);
-            var entry = new LogEntry(null, prefix, message);
+            var entry = new LogEntry(null, LogSeverity.Information, message);
             AddLogEntry(entry);
+        }
+
+        private void Log(string message, LogSeverity severity)
+        {
+            WriteToILogger(message, severity);
+        }
+
+        private void OnUiLogReceived(UiLogRecord record)
+        {
+            var timestamp = record.TimestampUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var entry = new LogEntry(timestamp, record.Severity, record.Message);
+            AddLogEntry(entry);
+        }
+
+        private void WriteToILogger(string message, LogSeverity severity)
+        {
+            switch (severity)
+            {
+                case LogSeverity.Warning:
+                    _logger.LogWarning("{Message}", message);
+                    break;
+                case LogSeverity.Error:
+                    _logger.LogError("{Message}", message);
+                    break;
+                default:
+                    _logger.LogInformation("{Message}", message);
+                    break;
+            }
         }
 
         private void AddLogEntry(LogEntry entry)
@@ -907,16 +951,17 @@ namespace ImplementadorCUAD.ViewModels
 
         public sealed class LogEntry
         {
-            public LogEntry(string? timestamp, string prefix, string messageBody)
+            public LogEntry(string? timestamp, LogSeverity severity, string messageBody)
             {
                 Timestamp = timestamp;
-                Prefix = prefix;
+                Severity = severity;
                 MessageBody = messageBody;
-                Message = $"{prefix} {messageBody}";
+                Message = $"{Prefix} {messageBody}";
             }
 
             public string? Timestamp { get; }
-            public string Prefix { get; }
+            public LogSeverity Severity { get; }
+            public string Prefix => GetPrefix(Severity);
             public string MessageBody { get; }
             public string Message { get; }
 
@@ -928,36 +973,14 @@ namespace ImplementadorCUAD.ViewModels
             }
         }
 
-        private static string GetLogPrefix(string message)
+        private static string GetPrefix(LogSeverity severity)
         {
-            if (string.IsNullOrWhiteSpace(message))
+            return severity switch
             {
-                return "[INFO]";
-            }
-
-            var trimmed = message.TrimStart();
-
-            if (trimmed.StartsWith("ERROR", StringComparison.OrdinalIgnoreCase) ||
-                trimmed.StartsWith("Error", StringComparison.OrdinalIgnoreCase))
-            {
-                return "[ERROR]";
-            }
-
-            if (trimmed.StartsWith("⚠️") ||
-                trimmed.StartsWith("Aviso", StringComparison.OrdinalIgnoreCase))
-            {
-                return "[WARN]";
-            }
-
-            // Validación no pasó: rechazadas, no se pudo validar/cargar, o error de row
-            if (trimmed.IndexOf("rechazada", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                trimmed.IndexOf(" no se pudo ", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                (trimmed.IndexOf(" row ", StringComparison.OrdinalIgnoreCase) >= 0 && trimmed.IndexOf(":", StringComparison.Ordinal) >= 0))
-            {
-                return "[WARN]";
-            }
-
-            return "[INFO]";
+                LogSeverity.Warning => "[WARN]",
+                LogSeverity.Error => "[ERROR]",
+                _ => "[INFO]"
+            };
         }
 
         private string GetArchivosConsumosDetalleNombre()

@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Services;
@@ -9,9 +10,22 @@ namespace ImplementadorCUAD
 {
     public partial class App : Application
     {
+        public static ILoggerFactory LoggerFactory { get; private set; } = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
+        {
+            builder.SetMinimumLevel(LogLevel.Information).AddDebug();
+        });
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
+            {
+                builder
+                    .SetMinimumLevel(LogLevel.Information)
+                    .AddDebug()
+                    .AddProvider(new UiLoggerProvider());
+            });
 
             // Manejo global para evitar cierres abruptos sin informar al usuario.
             DispatcherUnhandledException += (_, args) =>
@@ -55,7 +69,7 @@ namespace ImplementadorCUAD
                 }
             };
 
-            var mainWindow = new MainWindow();
+            var mainWindow = new MainWindow(new ViewModels.MainViewModel(LoggerFactory.CreateLogger<ViewModels.MainViewModel>()));
             MainWindow = mainWindow;
             mainWindow.Show();
 
