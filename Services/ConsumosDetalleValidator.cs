@@ -8,7 +8,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementationValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, IAppLogger log)
     {
         if (result.DatosConsumosDetalleValidados.Count == 0)
         {
@@ -31,7 +31,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
         }
         catch (Exception ex)
         {
-            log($"Consumos Detalle: No se pudo validar entidades de CUAD. {ex.Message}");
+            log.Error($"Consumos Detalle: No se pudo validar entidades de CUAD. {ex.Message}");
             result.DatosConsumosDetalleValidados = new List<Dictionary<string, string>>();
             return;
         }
@@ -80,7 +80,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             else
             {
                 rechazadas++;
-                log($"Consumos Detalle row {rowNumber}: {string.Join(" | ", erroresFila)}");
+                log.Warn($"Consumos Detalle row {rowNumber}: {string.Join(" | ", erroresFila)}");
             }
         }
 
@@ -107,14 +107,14 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             if (!int.TryParse(cuotasPendientesText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cuotasEsperadas))
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"Consumos Detalle: No se pudo leer 'Cuotas Pendientes' para el codigo de consumo '{codigo}'.");
+                log.Warn($"Consumos Detalle: No se pudo leer 'Cuotas Pendientes' para el codigo de consumo '{codigo}'.");
                 continue;
             }
 
             if (!TryParseDecimalFlexible(montoDeudaText, out var montoEsperado))
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"Consumos Detalle: No se pudo leer el 'Monto Deuda' para el codigo de consumo '{codigo}'.");
+                log.Warn($"Consumos Detalle: No se pudo leer el 'Monto Deuda' para el codigo de consumo '{codigo}'.");
                 continue;
             }
 
@@ -145,7 +145,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             if (!parseOk)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"Consumos Detalle: Para el código de consumo '{codigo}' hay al menos una row con 'Monto' o 'Nro Cuota' inválidos.");
+                log.Warn($"Consumos Detalle: Para el código de consumo '{codigo}' hay al menos una row con 'Monto' o 'Nro Cuota' inválidos.");
                 continue;
             }
 
@@ -163,7 +163,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             if (!consecutivas)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"Consumos Detalle: Los Nro Cuota no son consecutivos para codigo de consumo '{codigo}'.");
+                log.Warn($"Consumos Detalle: Los Nro Cuota no son consecutivos para codigo de consumo '{codigo}'.");
                 continue;
             }
 
@@ -171,7 +171,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             if (cuotasDetalle != cuotasEsperadas || !sumaCoincide)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log($"Consumos Detalle: La cantidad de cuotas y monto deuda no coinciden para el codigo de consumo '{codigo}'. Esperado cuotas={cuotasEsperadas}, monto={montoEsperado}. Detalle cuotas={cuotasDetalle}, monto={sumaDetalle}.");
+                log.Warn($"Consumos Detalle: La cantidad de cuotas y monto deuda no coinciden para el codigo de consumo '{codigo}'. Esperado cuotas={cuotasEsperadas}, monto={montoEsperado}. Detalle cuotas={cuotasDetalle}, monto={sumaDetalle}.");
             }
         }
 
@@ -195,7 +195,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
 
         if (rechazadas > 0)
         {
-            log($"Resumen validacion Consumos Detalle: aceptadas={detalleFiltrado.Count}, rechazadas={rechazadas}.");
+            log.Info($"Resumen validacion Consumos Detalle: aceptadas={detalleFiltrado.Count}, rechazadas={rechazadas}.");
         }
 
         result.DatosConsumosDetalleValidados = detalleFiltrado;

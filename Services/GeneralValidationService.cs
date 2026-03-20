@@ -9,7 +9,7 @@ namespace ImplementadorCUAD.Services
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
         private readonly ILogger<GeneralValidationService>? _logger = logger;
 
-        public bool ValidateEntidadConsistency(ImplementationValidationResult validationResult, Action<string> log, out string entidadComun)
+        public bool ValidateEntidadConsistency(ImplementationValidationResult validationResult, IAppLogger log, out string entidadComun)
         {
             entidadComun = string.Empty;
 
@@ -24,14 +24,14 @@ namespace ImplementadorCUAD.Services
 
             if (entidades.Count == 0)
             {
-                log("No se encontro el value de 'Entidad' en los archivos cargados.");
+                log.Error("No se encontro el value de 'Entidad' en los archivos cargados.");
                 _logger?.LogWarning("No se encontro el value de Entidad en los archivos cargados.");
                 return false;
             }
 
             if (entidades.Count > 1)
             {
-                log($"La entidad no coincide entre archivos. Valores detectados: {string.Join(", ", entidades)}.");
+                log.Error($"La entidad no coincide entre archivos. Valores detectados: {string.Join(", ", entidades)}.");
                 _logger?.LogWarning("La entidad no coincide entre archivos. Valores detectados: {Entidades}", string.Join(", ", entidades));
                 return false;
             }
@@ -40,11 +40,11 @@ namespace ImplementadorCUAD.Services
             return true;
         }
 
-        public bool ValidateNoExistingDataForEntidad(string entidad, Empleador? empleador, string? targetConnectionString, Action<string> log)
+        public bool ValidateNoExistingDataForEntidad(string entidad, Empleador? empleador, string? targetConnectionString, IAppLogger log)
         {
             if (string.IsNullOrWhiteSpace(targetConnectionString))
             {
-                log($"No se encontró base de data para empleador '{empleador?.Nombre ?? "seleccionado"}'.");
+                log.Error($"No se encontró base de data para empleador '{empleador?.Nombre ?? "seleccionado"}'.");
                 _logger?.LogWarning("No se encontro base de data para empleador {Empleador}.", empleador?.Nombre ?? "seleccionado");
                 return false;
             }
@@ -53,7 +53,7 @@ namespace ImplementadorCUAD.Services
             if (existe)
             {
                 var nombreEmpleador = empleador?.Nombre ?? "(sin empleador seleccionado)";
-                log($"Ya existe informacion cargada para la entidad '{entidad}' en el contexto del empleador '{nombreEmpleador}'.");
+                log.Warn($"Ya existe informacion cargada para la entidad '{entidad}' en el contexto del empleador '{nombreEmpleador}'.");
                 _logger?.LogWarning("Ya existe informacion cargada para entidad {Entidad} en empleador {Empleador}.", entidad, nombreEmpleador);
                 return false;
             }
@@ -61,7 +61,7 @@ namespace ImplementadorCUAD.Services
             return true;
         }
 
-        private static void AddEntidad(string fileName, IEnumerable<Dictionary<string, string>> rows, HashSet<string> entidades, Action<string> log)
+        private static void AddEntidad(string fileName, IEnumerable<Dictionary<string, string>> rows, HashSet<string> entidades, IAppLogger log)
         {
             var rowNumber = 1;
             foreach (var row in rows)
@@ -69,7 +69,7 @@ namespace ImplementadorCUAD.Services
                 rowNumber++;
                 if (!row.TryGetValue("Entidad", out var entidad) || string.IsNullOrWhiteSpace(entidad))
                 {
-                    log($"{fileName} row {rowNumber}: columna 'Entidad' vacia o inexistente.");
+                    log.Warn($"{fileName} row {rowNumber}: columna 'Entidad' vacia o inexistente.");
                     continue;
                 }
 

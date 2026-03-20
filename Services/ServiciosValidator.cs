@@ -8,7 +8,7 @@ public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementationValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, IAppLogger log)
     {
         if (result.DatosServiciosValidados.Count == 0)
         {
@@ -31,7 +31,7 @@ public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
         }
         catch (Exception ex)
         {
-            log($"Consumos Servicios: no se pudo validar entidades de CUAD. {ex.Message}");
+            log.Error($"Consumos Servicios: no se pudo validar entidades de CUAD. {ex.Message}");
             result.DatosServiciosValidados = new List<Dictionary<string, string>>();
             return;
         }
@@ -112,13 +112,13 @@ public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
             else
             {
                 rechazadas++;
-                log($"Consumos Servicios row {rowNumber}: {string.Join(" | ", erroresFila)}");
+                log.Warn($"Consumos Servicios row {rowNumber}: {string.Join(" | ", erroresFila)}");
             }
         }
 
         if (rechazadas > 0)
         {
-            log($"Resumen validacion Consumos Servicios: aceptadas={serviciosFiltrados.Count}, rechazadas={rechazadas}.");
+            log.Info($"Resumen validacion Consumos Servicios: aceptadas={serviciosFiltrados.Count}, rechazadas={rechazadas}.");
         }
 
         result.DatosServiciosValidados = serviciosFiltrados;

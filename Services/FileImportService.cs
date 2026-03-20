@@ -14,7 +14,7 @@ namespace ImplementadorCUAD.Services
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
         private readonly ILogger<FileImportService>? _logger = logger;
 
-        public ImplementationValidationResult ValidateAndLoadFiles( ImplementationFileSelection selection, Action<string> log, IProgress<int>? progress = null)
+        public ImplementationValidationResult ValidateAndLoadFiles(ImplementationFileSelection selection, IAppLogger log, IProgress<int>? progress = null)
         {
             var result = new ImplementationValidationResult();
 
@@ -43,7 +43,7 @@ namespace ImplementadorCUAD.Services
                     var ruta = archivosConsumosDetalle[i];
                     if (string.IsNullOrWhiteSpace(ruta)) continue;
                     if (n > 1)
-                        log($"ConsumosDetalle: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
+                        log.Info($"ConsumosDetalle: cargando archivo {i + 1}/{n}: {Path.GetFileName(ruta)}");
                     var data = LoadFile("ConsumosDetalle", ruta, log, progress);
                     if (data != null && data.Count > 0)
                         datosConsumosDetalle.AddRange(data);
@@ -110,7 +110,7 @@ namespace ImplementadorCUAD.Services
 
             if (!result.HasLoadedData)
             {
-                log("No se pudo cargar ningun archivo.");
+                log.Error("No se pudo cargar ningun archivo.");
                 _logger?.LogWarning("No se pudo cargar ningun archivo.");
             }
 
@@ -190,7 +190,7 @@ namespace ImplementadorCUAD.Services
             }
         }
 
-        private List<Dictionary<string, string>>? LoadFile( string logicalName, string? filePath, Action<string> log, IProgress<int>? progress)
+        private List<Dictionary<string, string>>? LoadFile(string logicalName, string? filePath, IAppLogger log, IProgress<int>? progress)
         {
             try
             {
@@ -201,7 +201,7 @@ namespace ImplementadorCUAD.Services
 
                 if (!File.Exists(filePath))
                 {
-                    log($"Archivo invalido: {logicalName}");
+                    log.Error($"Archivo invalido: {logicalName}");
                     return null;
                 }
 
@@ -209,7 +209,7 @@ namespace ImplementadorCUAD.Services
                 var columnasConfig = configService.GetColumns(logicalName);
                 if (columnasConfig.Count == 0)
                 {
-                    log($"No existe configuracion XML para {logicalName}");
+                    log.Error($"No existe configuracion XML para {logicalName}");
                     return null;
                 }
 
@@ -217,7 +217,7 @@ namespace ImplementadorCUAD.Services
 
                 if (!enumerator.MoveNext())
                 {
-                    log($"El Archivo {logicalName} se encuentra vacio.");
+                    log.Error($"El Archivo {logicalName} se encuentra vacio.");
                     return null;
                 }
 
@@ -242,7 +242,7 @@ namespace ImplementadorCUAD.Services
 
                     if (!indice.HasValue && config.Requerida)
                     {
-                        log($"{logicalName}: Falta columna requerida para '{config.Clave}'.");
+                        log.Error($"{logicalName}: Falta columna requerida para '{config.Clave}'.");
                         return null;
                     }
                 }
@@ -300,7 +300,7 @@ namespace ImplementadorCUAD.Services
                     }
                     else
                     {
-                        log($"{logicalName} row {filaNumero}: {string.Join(" | ", erroresFila)}");
+                        log.Warn($"{logicalName} row {filaNumero}: {string.Join(" | ", erroresFila)}");
                         filasRechazadas++;
                     }
 
@@ -312,13 +312,13 @@ namespace ImplementadorCUAD.Services
                     }
                 }
 
-                log($"{logicalName}: Validaciones realizadas correctamente.");
-                log($"Resumen {logicalName}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
+                log.Info($"{logicalName}: Validaciones realizadas correctamente.");
+                log.Info($"Resumen {logicalName}: total={totalFilasDatos}, aceptadas={filasAceptadas}, rechazadas={filasRechazadas}.");
                 return registros;
             }
             catch (Exception ex)
             {
-                log($"Error al cargar {logicalName}: {ex.Message}");
+                log.Error($"Error al cargar {logicalName}: {ex.Message}");
                 _logger?.LogError(ex, "Error al cargar {LogicalName}", logicalName);
                 return null;
             }
@@ -470,21 +470,21 @@ namespace ImplementadorCUAD.Services
             return Regex.IsMatch(texto, @"[^\p{L}\p{N}\s\.\,\;\:\-\/\\\(\)\'\""\#\%\&\+]");
         }
 
-        private static bool ValidateSpecificUniqueness( string logicalName, int rowNumber, Dictionary<string, string> row, HashSet<string> uniqueKeys, Action<string> log)
+        private static bool ValidateSpecificUniqueness(string logicalName, int rowNumber, Dictionary<string, string> row, HashSet<string> uniqueKeys, IAppLogger log)
         {
             if (logicalName.Equals("Padron", StringComparison.OrdinalIgnoreCase))
             {
                 var nroSocio = GetFirstValue(row, "Nro Socio");
                 if (string.IsNullOrWhiteSpace(nroSocio))
                 {
-                    log($"Padron row {rowNumber}: 'Nro Socio' vacio.");
+                    log.Warn($"Padron row {rowNumber}: 'Nro Socio' vacio.");
                     return false;
                 }
 
                 var clave = $"PADRON::{nroSocio.Trim()}";
                 if (!uniqueKeys.Add(clave))
                 {
-                    log($"Padron row {rowNumber}: numero de socio '{nroSocio}' repetido.");
+                    log.Warn($"Padron row {rowNumber}: numero de socio '{nroSocio}' repetido.");
                     return false;
                 }
 
@@ -496,14 +496,14 @@ namespace ImplementadorCUAD.Services
                 var nroConsumo = GetFirstValue(row, "Codigo Consumo", "Código Consumo", "Codigo", "Código", "CÃ³digo");
                 if (string.IsNullOrWhiteSpace(nroConsumo))
                 {
-                    log($"Consumos row {rowNumber}: codigo (nro de consumo) vacio.");
+                    log.Warn($"Consumos row {rowNumber}: codigo (nro de consumo) vacio.");
                     return false;
                 }
 
                 var clave = $"CONSUMOS::{nroConsumo.Trim()}";
                 if (!uniqueKeys.Add(clave))
                 {
-                    log($"Consumos row {rowNumber}: nro de consumo '{nroConsumo}' repetido.");
+                    log.Warn($"Consumos row {rowNumber}: nro de consumo '{nroConsumo}' repetido.");
                     return false;
                 }
 

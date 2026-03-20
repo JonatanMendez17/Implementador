@@ -21,6 +21,7 @@ namespace ImplementadorCUAD.ViewModels
         private readonly FileImportService _fileImportService;
         private readonly GeneralValidationService _generalValidationService;
         private readonly ImplementationService _implementationService;
+        private readonly IAppLogger _appLogger;
         private readonly ILogger _logger;
         private bool _isDisposed;
         private ImplementationValidationResult _validationResult = new();
@@ -233,6 +234,7 @@ namespace ImplementadorCUAD.ViewModels
             _fileImportService = new FileImportService(_dbContextFactory, loggerFactory.CreateLogger<FileImportService>());
             _generalValidationService = new GeneralValidationService(_dbContextFactory, loggerFactory.CreateLogger<GeneralValidationService>());
             _implementationService = new ImplementationService(new ImplementationMapperService(), _dbContextFactory);
+            _appLogger = new AppLoggerAdapter(LogInformation, LogWarning, LogError);
             UiLogStream.LogReceived += OnUiLogReceived;
 
             Logs = new ObservableCollection<LogEntry>();
@@ -451,7 +453,7 @@ namespace ImplementadorCUAD.ViewModels
                 var progress = new Progress<int>(p => Progress = p);
 
                 _validationResult = await Task.Run(
-                    () => _fileImportService.ValidateAndLoadFiles(selection, Log, progress));
+                    () => _fileImportService.ValidateAndLoadFiles(selection, _appLogger, progress));
             }
             catch (SqlException ex)
             {
@@ -494,7 +496,7 @@ namespace ImplementadorCUAD.ViewModels
             {
                 var entidadConsistente = _generalValidationService.ValidateEntidadConsistency(
                     _validationResult,
-                    Log,
+                    _appLogger,
                     out var entidadComun);
 
                 if (!entidadConsistente)
@@ -521,7 +523,7 @@ namespace ImplementadorCUAD.ViewModels
                     entidadComun,
                     EmpleadorSeleccionado,
                     EmpleadorSeleccionado?.ConnectionString,
-                    Log);
+                    _appLogger);
 
                 ValidationCompleted = sinDatosPrevios;
             }
@@ -611,7 +613,7 @@ namespace ImplementadorCUAD.ViewModels
                 await _implementationService.CopyToDatabaseAsync(
                     _validationResult,
                     BuildSelection(),
-                    Log,
+                    _appLogger,
                     progress => Application.Current?.Dispatcher.InvokeAsync(() => Progress = progress));
 
                 cronometro.Stop();
@@ -874,11 +876,6 @@ namespace ImplementadorCUAD.ViewModels
         private void LogError(string message)
         {
             Log(message, LogSeverity.Error);
-        }
-
-        private void Log(string message)
-        {
-            LogInformation(message);
         }
 
         private void LogRaw(string message)

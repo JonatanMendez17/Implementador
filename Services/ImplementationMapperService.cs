@@ -1,11 +1,12 @@
 using ImplementadorCUAD.Models;
 using System.Globalization;
+using ImplementadorCUAD.Infrastructure;
 
 namespace ImplementadorCUAD.Services
 {
     public class ImplementationMapperService
     {
-        public List<ImportarPadronSocio> MapPadronSocios(IEnumerable<Dictionary<string, string>> data, Action<string> log)
+        public List<ImportarPadronSocio> MapPadronSocios(IEnumerable<Dictionary<string, string>> data, IAppLogger log)
         {
             var resultado = new List<ImportarPadronSocio>();
 
@@ -26,7 +27,7 @@ namespace ImplementadorCUAD.Services
                         string.IsNullOrWhiteSpace(documentoTexto) ||
                         string.IsNullOrWhiteSpace(codigoCategoria))
                     {
-                        log("Fila de padrón socio incompleta. Se omite el registro.");
+                        log.Warn("Fila de padrón socio incompleta. Se omite el registro.");
                         continue;
                     }
 
@@ -34,7 +35,7 @@ namespace ImplementadorCUAD.Services
                         !TryParseDateFlexible(fechaAltaTexto, out var fechaAltaSocio) ||
                         !TryParseIntFlexible(documentoTexto, out var documento))
                     {
-                        log("Fila de padrón socio con formato inválido. Se omite el registro.");
+                        log.Warn("Fila de padrón socio con formato inválido. Se omite el registro.");
                         continue;
                     }
 
@@ -43,7 +44,7 @@ namespace ImplementadorCUAD.Services
                     {
                         if (!TryParseLongDigitsOnly(cuitTexto, out var cuitParseado))
                         {
-                            log("CUIT inválido. Se omite el registro.");
+                            log.Warn("CUIT inválido. Se omite el registro.");
                             continue;
                         }
 
@@ -65,14 +66,14 @@ namespace ImplementadorCUAD.Services
                 }
                 catch (Exception ex)
                 {
-                    log($"Error mapeando row de padrón: {ex.Message}");
+                    log.Error($"Error mapeando row de padrón: {ex.Message}");
                 }
             }
 
             return resultado;
         }
 
-        public List<ImportarConsumoCab> MapConsumos(IEnumerable<Dictionary<string, string>> data, Action<string> log)
+        public List<ImportarConsumoCab> MapConsumos(IEnumerable<Dictionary<string, string>> data, IAppLogger log)
         {
             var resultado = new List<ImportarConsumoCab>();
 
@@ -100,7 +101,7 @@ namespace ImplementadorCUAD.Services
                         string.IsNullOrWhiteSpace(montoDeudaTexto) ||
                         string.IsNullOrWhiteSpace(conceptoDescuentoTexto))
                     {
-                        log("Fila de consumos incompleta. Se omite el registro.");
+                        log.Warn("Fila de consumos incompleta. Se omite el registro.");
                         continue;
                     }
 
@@ -119,14 +120,14 @@ namespace ImplementadorCUAD.Services
                 }
                 catch (Exception ex)
                 {
-                    log($"Error mapeando row de consumos: {ex.Message}");
+                    log.Error($"Error mapeando row de consumos: {ex.Message}");
                 }
             }
 
             return resultado;
         }
 
-        public List<ImportarConsumosDet> MapConsumosDetalle(IEnumerable<Dictionary<string, string>> data, Action<string> log)
+        public List<ImportarConsumosDet> MapConsumosDetalle(IEnumerable<Dictionary<string, string>> data, IAppLogger log)
         {
             var resultado = new List<ImportarConsumosDet>();
 
@@ -146,7 +147,7 @@ namespace ImplementadorCUAD.Services
                         string.IsNullOrWhiteSpace(fechaVencimientoTexto) ||
                         string.IsNullOrWhiteSpace(montoTexto))
                     {
-                        log("Fila de consumos detalle incompleta. Se omite el registro.");
+                        log.Warn("Fila de consumos detalle incompleta. Se omite el registro.");
                         continue;
                     }
 
@@ -163,7 +164,7 @@ namespace ImplementadorCUAD.Services
                 }
                 catch (Exception ex)
                 {
-                    log($"Error mapeando row de consumos detalle: {ex.Message}");
+                    log.Error($"Error mapeando row de consumos detalle: {ex.Message}");
                 }
             }
 
