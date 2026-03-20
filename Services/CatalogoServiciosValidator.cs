@@ -8,7 +8,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementationValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, IAppLogger log)
     {
         if (result.DatosCatalogoServiciosValidados.Count == 0)
         {
@@ -23,7 +23,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
         }
         catch (Exception ex)
         {
-            log($"Catalogo Servicios: no se pudo leer el catalogo de servicios de CUAD. {ex.Message}");
+            log.Error($"Catalogo Servicios: no se pudo leer el catalogo de servicios de CUAD. {ex.Message}");
             result.DatosCatalogoServiciosValidados = [];
             return;
         }
@@ -49,7 +49,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
 
             if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
             {
-                log($"Catalogo Servicios row {rowNumber}: La entidad se encuentra vacia.");
+                log.Warn($"Catalogo Servicios row {rowNumber}: La entidad se encuentra vacia.");
                 filaValida = false;
             }
             else
@@ -57,14 +57,14 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
                 var clave = $"{entidad.Trim()}|{servicio.Trim()}";
                 if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCuad))
                 {
-                    log($" Catalogo Servicios row {rowNumber}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
+                    log.Warn($" Catalogo Servicios row {rowNumber}: servicio '{servicio}' no existe en CUAD para la entidad '{entidad}'.");
                     filaValida = false;
                 }
                 else
                 {
                     if (!TryParseDecimalFlexible(importeTexto, out var importeArchivo))
                     {
-                        log($"Catalogo Servicios row {rowNumber}: El importe '{importeTexto}' es invalido.");
+                        log.Warn($"Catalogo Servicios row {rowNumber}: El importe '{importeTexto}' es invalido.");
                         filaValida = false;
                     }
                     else
@@ -72,7 +72,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
                         var diferencia = Math.Abs(importeArchivo - refCuad.Importe);
                         if (diferencia > 0.01m)
                         {
-                            log($"Catalogo Servicios row {rowNumber}: El importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
+                            log.Warn($"Catalogo Servicios row {rowNumber}: El importe '{importeArchivo}' no coincide con CUAD ({refCuad.Importe}).");
                             filaValida = false;
                         }
                     }
@@ -91,7 +91,7 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
 
         if (rechazadas > 0)
         {
-            log($"Resumen validaciones Catalogo Servicios: aceptadas={filtrado.Count}, rechazadas={rechazadas}.");
+            log.Info($"Resumen validaciones Catalogo Servicios: aceptadas={filtrado.Count}, rechazadas={rechazadas}.");
         }
 
         result.DatosCatalogoServiciosValidados = filtrado;

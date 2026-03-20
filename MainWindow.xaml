@@ -579,10 +579,10 @@
                                                         <Setter Property="Text" Value="{Binding Prefix}" />
                                                         <Setter Property="Foreground" Value="{StaticResource LogInfoBrush}" />
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Prefix}" Value="[ERROR]">
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Error">
                                                                 <Setter Property="Foreground" Value="{StaticResource LogErrorBrush}" />
                                                             </DataTrigger>
-                                                            <DataTrigger Binding="{Binding Prefix}" Value="[WARN]">
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Warning">
                                                                 <Setter Property="Foreground" Value="{StaticResource LogWarnBrush}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>

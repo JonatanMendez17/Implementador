@@ -13,7 +13,7 @@ public sealed class ConsumosValidator
         _dbContextFactory = dbContextFactory;
     }
 
-    public void Apply(ImplementationValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, IAppLogger log)
     {
         if (result.DatosConsumosValidados.Count == 0)
         {
@@ -39,7 +39,7 @@ public sealed class ConsumosValidator
         }
         catch (Exception ex)
         {
-            log($"Consumos: No se pudo validar entidades de CUAD. {ex.Message}");
+            log.Error($"Consumos: No se pudo validar entidades de CUAD. {ex.Message}");
             result.DatosConsumosValidados = new List<Dictionary<string, string>>();
             conceptosDescuentoVigentes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             return;
@@ -118,13 +118,13 @@ public sealed class ConsumosValidator
             else
             {
                 rechazadas++;
-                log($"Consumos row {rowNumber}: {string.Join(" | ", erroresFila)}");
+                log.Warn($"Consumos row {rowNumber}: {string.Join(" | ", erroresFila)}");
             }
         }
 
         if (rechazadas > 0)
         {
-            log($"Resumen validacion Consumos: aceptadas={consumosFiltrados.Count}, rechazadas={rechazadas}.");
+            log.Info($"Resumen validacion Consumos: aceptadas={consumosFiltrados.Count}, rechazadas={rechazadas}.");
         }
 
         result.DatosConsumosValidados = consumosFiltrados;

@@ -9,7 +9,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementationValidationResult result, Action<string> log)
+    public void Apply(ImplementationValidationResult result, IAppLogger log)
     {
         if (result.DatosPadronValidados.Count == 0)
         {
@@ -51,13 +51,13 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
                 var predeterminadas = kvp.Value.Count(c => c.EsPredeterminada);
                 if (predeterminadas > 1)
                 {
-                    log($"Categorias Socios: La entidad '{entidadRef}' tiene mas de una categoria predeterminada en CUAD.");
+                    log.Warn($"Categorias Socios: La entidad '{entidadRef}' tiene mas de una categoria predeterminada en CUAD.");
                 }
             }
         }
         catch (Exception ex)
         {
-            log($"Categorias Socios: No se pudo leer categorias de CUAD. {ex.Message}");
+            log.Error($"Categorias Socios: No se pudo leer categorias de CUAD. {ex.Message}");
             categoriasCuadPorEntidad = new Dictionary<string, List<CategoriaCuadRef>>(StringComparer.OrdinalIgnoreCase);
             categoriasConCuotaSocial = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
@@ -76,7 +76,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         }
         catch (Exception ex)
         {
-            log($"Padron socios: no se pudo abrir conexión CUAD para validar Empleado/Persona. {ex.Message}");
+            log.Error($"Padron socios: no se pudo abrir conexión CUAD para validar Empleado/Persona. {ex.Message}");
         }
 
         for (int i = 0; i < result.DatosPadronValidados.Count; i++)
@@ -207,13 +207,13 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
             else
             {
                 rechazadas++;
-                log($"Padron row {rowNumber}: {string.Join(" | ", erroresFila)}");
+                log.Warn($"Padron row {rowNumber}: {string.Join(" | ", erroresFila)}");
             }
         }
 
         if (rechazadas > 0)
         {
-            log($"Resumen validacion Padron socios: aceptadas={padronFiltrado.Count}, rechazadas={rechazadas}.");
+            log.Info($"Resumen validacion Padron socios: aceptadas={padronFiltrado.Count}, rechazadas={rechazadas}.");
         }
 
         dbValidacionEmpleado?.Dispose();
