@@ -599,7 +599,7 @@ namespace ImplementadorCUAD.Services
 
                     return true;
 
-                case "texto":
+                case "string":
                     return true;
 
                 default:
