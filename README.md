@@ -1,6 +1,6 @@
 # Implementador CUAD
 
-Aplicación de escritorio WPF (.NET 8) para importar y validar archivos de CUAD (categorías, padrón, consumos, consumos detalle, servicios, catálogo de servicios) y cargarlos en SQL Server. La aplicación trabaja con una **base CUAD** (solo lectura) y una **base por empleador** (donde se importan los 6 archivos).
+Aplicación de escritorio WPF (.NET 8) para importar y validar archivos de CUAD (categorías, padrón, consumos, consumos detalle, servicios, catálogo de servicios) y cargarlos en SQL Server. La aplicación trabaja con una **base** (solo lectura) y una **base por empleador** (donde se importan los 6 archivos).
 
 ## Requisitos
 
@@ -12,7 +12,7 @@ Aplicación de escritorio WPF (.NET 8) para importar y validar archivos de CUAD 
 
 1. Abrir la solución `ImplementadorCUAD.sln` en Visual Studio.
 2. Restaurar paquetes NuGet y compilar la solución.
-3. Configurar `Configuration.xml` con las bases CUAD y empleadores.
+3. Configurar `Configuration.xml` con la base y empleadores.
 4. Ejecutar el proyecto `ImplementadorCUAD` como proyecto de inicio.
 
 ## Configuración
@@ -20,8 +20,8 @@ Aplicación de escritorio WPF (.NET 8) para importar y validar archivos de CUAD 
 
 En la sección `<Conexiones>` se definen:
 
-- **`<Cuad>`**: connection string de la base CUAD (solo lectura). De ahí se obtienen entidades, categorías y catálogo.
-- **`<ConexionBase>`**: servidor y autenticación comunes. Se combina con el atributo `baseDatos` de cada empleador.
+- **`<ConexionBase>`**: connection string de la base (solo lectura). De ahí se obtienen entidades, categorías y catálogo.
+- **`<ConexionEmpleadores>`**: servidor y autenticación comunes para construir las conexiones destino de cada empleador.
 - **`<Empleador>`**: cada empleador que aparece en el desplegable, con `nombre` y `baseDatos` (nombre de la base donde se importan los 6 archivos).
 
 También se puede indicar un connection string completo por empleador con el atributo `connectionString` en lugar de `baseDatos`.
@@ -35,7 +35,7 @@ Si una columna no viene en el archivo, se puede comentar en la configuración pa
 
 ## Uso de la aplicación
 
-1. Seleccionar **Empleador** y **Entidad** en los desplegables (entidades provienen de la base CUAD).
+1. Seleccionar **Empleador** y **Entidad** en los desplegables (entidades provienen de la base).
 2. Cargar los archivos (Categorías, Padrón, Consumos, Consumos detalle, Servicios, Catálogo de servicios) según corresponda.
 3. Pulsar **Validar** para comprobar consistencia y que no existan datos previos para esa entidad en la base del empleador.
 4. Pulsar **Implementar datos** para insertar en la base del empleador seleccionado.
