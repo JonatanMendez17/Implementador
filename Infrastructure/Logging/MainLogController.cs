@@ -3,10 +3,10 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Threading;
 using WpfApplication = System.Windows.Application;
-using ImplementadorCUAD.Models;
-using ImplementadorCUAD.ViewModels;
+using Implementador.Models;
+using Implementador.ViewModels;
 
-namespace ImplementadorCUAD.Infrastructure.Logging
+namespace Implementador.Infrastructure.Logging
 {
     /// <summary>
     /// Controla el buffer de logs (para evitar bloqueos de UI) y la exportación.

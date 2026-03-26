@@ -1,6 +1,6 @@
-using ImplementadorCUAD.Data;
+using Implementador.Data;
 
-namespace ImplementadorCUAD.Infrastructure;
+namespace Implementador.Infrastructure;
 
 public interface IAppDbContextFactory
 {

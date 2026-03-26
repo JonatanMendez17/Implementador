@@ -1,7 +1,7 @@
-using ImplementadorCUAD.Infrastructure.Configuration;
+using Implementador.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace ImplementadorCUAD.Infrastructure
+namespace Implementador.Infrastructure
 {
     public static class ConnectionSettings
     {

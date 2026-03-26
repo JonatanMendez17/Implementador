@@ -1,10 +1,10 @@
-using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Infrastructure;
+using Implementador.Models;
+using Implementador.Infrastructure;
 using System.Globalization;
-using ImplementadorCUAD.Application.Validation.Common;
-using ImplementadorCUAD.Application.Validation.Core;
+using Implementador.Application.Validation.Common;
+using Implementador.Application.Validation.Core;
 
-namespace ImplementadorCUAD.Application.Validation;
+namespace Implementador.Application.Validation;
 
 public sealed class ConsumosDetalleValidator : RowValidatorBase
 {
@@ -16,7 +16,7 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
         }
 
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
-        var entidadesCuad = safeSnapshot.EntidadesCuad;
+        var entidadesRef = safeSnapshot.EntidadesRef;
 
         var consumosPorCodigo = result.DatosConsumosValidados
             .Where(f => !string.IsNullOrWhiteSpace(RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
@@ -35,7 +35,7 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
             var codigoConsumo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo");
             var fechaVencimientoText = RowValueReader.GetFirstValue(row, "Fecha Vencimiento");
 
-            if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
+            if (string.IsNullOrWhiteSpace(entidad) || !entidadesRef.Contains(entidad.Trim()))
             {
                 erroresFila.Add($"La entidad '{entidad}' no existe en la base.");
             }

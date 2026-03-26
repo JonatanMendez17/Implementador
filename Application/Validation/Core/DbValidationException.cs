@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Application.Validation.Core;
+namespace Implementador.Application.Validation.Core;
 
 public sealed class DbValidationException : Exception
 {

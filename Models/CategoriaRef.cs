@@ -1,6 +1,6 @@
-namespace ImplementadorCUAD.Models
+namespace Implementador.Models
 {
-    public class CategoriaCuadRef
+    public class CategoriaRef
     {
         public int Id { get; set; }
         public string Entidad { get; set; } = string.Empty;

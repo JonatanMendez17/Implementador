@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Models
+namespace Implementador.Models
 {
     /// <summary>
     /// Empleador definido en configuración, con su connection string para la base de destino.

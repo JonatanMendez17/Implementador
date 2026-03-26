@@ -1,7 +1,7 @@
-using ImplementadorCUAD.Models;
+using Implementador.Models;
 using Microsoft.Extensions.Logging;
 
-namespace ImplementadorCUAD.Infrastructure.Logging
+namespace Implementador.Infrastructure.Logging
 {
     public sealed record UiLogRecord(DateTime TimestampUtc, LogSeverity Severity, string Message);
 

@@ -1,11 +1,11 @@
-using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Infrastructure;
-using ImplementadorCUAD.Data;
+using Implementador.Models;
+using Implementador.Infrastructure;
+using Implementador.Data;
 using System.Globalization;
-using ImplementadorCUAD.Application.Validation.Common;
-using ImplementadorCUAD.Application.Validation.Core;
+using Implementador.Application.Validation.Common;
+using Implementador.Application.Validation.Core;
 
-namespace ImplementadorCUAD.Application.Validation;
+namespace Implementador.Application.Validation;
 
 public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : RowValidatorBase
 {
@@ -41,9 +41,9 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
         }
 
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
-        var categoriasCuadPorEntidad = safeSnapshot.CategoriasCuadPorEntidad;
+        var categoriasPorEntidadRef = safeSnapshot.CategoriasPorEntidadRef;
         var categoriasConCuotaSocial = safeSnapshot.CategoriasConCuotaSocial;
-        foreach (var kvp in categoriasCuadPorEntidad)
+        foreach (var kvp in categoriasPorEntidadRef)
         {
             var entidadRef = kvp.Key;
             var predeterminadas = kvp.Value.Count(c => c.EsPredeterminada);
@@ -110,14 +110,14 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
             if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(codigoCategoria))
             {
                 var entidadClave = entidad.Trim();
-                if (categoriasCuadPorEntidad.TryGetValue(entidadClave, out var categoriasEntidad))
+                if (categoriasPorEntidadRef.TryGetValue(entidadClave, out var categoriasEntidad))
                 {
                     var codigoNorm = codigoCategoria.Trim();
-                    var categoriaCuad = categoriasEntidad
+                    var categoriaRef = categoriasEntidad
                         .FirstOrDefault(c =>
                             string.Equals(c.CodigoCategoria, codigoNorm, StringComparison.OrdinalIgnoreCase));
 
-                    if (categoriaCuad == null)
+                    if (categoriaRef == null)
                     {
                         erroresFila.Add($"La categoria '{codigoCategoria}' no existe en la base para la entidad '{entidadClave}'.");
                     }

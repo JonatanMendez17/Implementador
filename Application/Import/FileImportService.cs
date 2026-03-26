@@ -3,16 +3,16 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using ExcelDataReader;
-using ImplementadorCUAD.Infrastructure;
-using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Application.Configuration;
-using ImplementadorCUAD.Application.Validation;
-using ImplementadorCUAD.Application.Validation.Common;
-using ImplementadorCUAD.Application.Validation.Core;
+using Implementador.Infrastructure;
+using Implementador.Models;
+using Implementador.Application.Configuration;
+using Implementador.Application.Validation;
+using Implementador.Application.Validation.Common;
+using Implementador.Application.Validation.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
 
-namespace ImplementadorCUAD.Application.Import
+namespace Implementador.Application.Import
 {
     public class FileImportService(IAppDbContextFactory dbContextFactory, ILogger<FileImportService>? logger = null)
     {

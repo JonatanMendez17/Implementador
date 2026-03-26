@@ -1,10 +1,9 @@
-using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Infrastructure;
-using System.Globalization;
-using ImplementadorCUAD.Application.Validation.Common;
-using ImplementadorCUAD.Application.Validation.Core;
+using Implementador.Models;
+using Implementador.Infrastructure;
+using Implementador.Application.Validation.Common;
+using Implementador.Application.Validation.Core;
 
-namespace ImplementadorCUAD.Application.Validation;
+namespace Implementador.Application.Validation;
 
 public sealed class CatalogoServiciosValidator : RowValidatorBase
 {
@@ -36,7 +35,7 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
                 }
 
                 var clave = $"{entidad.Trim()}|{servicio.Trim()}";
-                if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCuad))
+                if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCatalogo))
                 {
                     erroresFila.Add($"servicio '{servicio}' no existe en la base para la entidad '{entidad}'.");
                     return erroresFila;
@@ -48,10 +47,10 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
                     return erroresFila;
                 }
 
-                var diferencia = Math.Abs(importeArchivo - refCuad.Importe);
+                var diferencia = Math.Abs(importeArchivo - refCatalogo.Importe);
                 if (diferencia > 0.01m)
                 {
-                    erroresFila.Add($"El importe '{importeArchivo}' no coincide con la base ({refCuad.Importe}).");
+                    erroresFila.Add($"El importe '{importeArchivo}' no coincide con la base ({refCatalogo.Importe}).");
                 }
 
                 return erroresFila;

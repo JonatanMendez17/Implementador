@@ -1,8 +1,8 @@
-using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Application.Workflows;
-using ImplementadorCUAD.Infrastructure;
+using Implementador.Models;
+using Implementador.Application.Workflows;
+using Implementador.Infrastructure;
 
-namespace ImplementadorCUAD.ViewModels.Coordinators;
+namespace Implementador.ViewModels.Coordinators;
 
 internal sealed class MainWorkflowFacade
 {

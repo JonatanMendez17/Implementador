@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace ImplementadorCUAD
+namespace Implementador
 {
     /// <summary>
     /// Versión de la aplicación para la UI. Se lee del ensamblado (definido en .csproj).

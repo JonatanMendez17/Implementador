@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Models
+namespace Implementador.Models
 {
     public class ImportarPadronSocio
     {

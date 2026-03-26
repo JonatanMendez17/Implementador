@@ -1,7 +1,7 @@
-using ImplementadorCUAD.Models;
+using Implementador.Models;
 using Microsoft.Win32;
 
-namespace ImplementadorCUAD.ViewModels.Coordinators;
+namespace Implementador.ViewModels.Coordinators;
 
 public sealed class FileSelectionCoordinator
 {

@@ -8,19 +8,19 @@ using WpfApplication = System.Windows.Application;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
-using ImplementadorCUAD.Application.Import;
-using ImplementadorCUAD.Application.Validation;
-using ImplementadorCUAD.Application.Implementation;
-using ImplementadorCUAD.Application.Workflows;
-using ImplementadorCUAD.Commands;
-using ImplementadorCUAD.Infrastructure;
-using ImplementadorCUAD.Infrastructure.Configuration;
-using ImplementadorCUAD.Infrastructure.Logging;
-using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Presentation.Dialogs;
-using ImplementadorCUAD.ViewModels.Coordinators;
+using Implementador.Application.Import;
+using Implementador.Application.Validation;
+using Implementador.Application.Implementation;
+using Implementador.Application.Workflows;
+using Implementador.Commands;
+using Implementador.Infrastructure;
+using Implementador.Infrastructure.Configuration;
+using Implementador.Infrastructure.Logging;
+using Implementador.Models;
+using Implementador.Presentation.Dialogs;
+using Implementador.ViewModels.Coordinators;
 
-namespace ImplementadorCUAD.ViewModels
+namespace Implementador.ViewModels
 {
     public class MainViewModel : ViewModelBase, IDisposable
     {

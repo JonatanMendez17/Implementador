@@ -10,10 +10,10 @@ Aplicación de escritorio WPF (.NET 8) para importar y validar archivos de CUAD 
 
 ## Ejecución
 
-1. Abrir la solución `ImplementadorCUAD.sln` en Visual Studio.
+1. Abrir la solución `Implementador.sln` en Visual Studio.
 2. Restaurar paquetes NuGet y compilar la solución.
 3. Configurar `Configuration.xml` con la base y empleadores.
-4. Ejecutar el proyecto `ImplementadorCUAD` como proyecto de inicio.
+4. Ejecutar el proyecto `Implementador` como proyecto de inicio.
 
 ## Configuración
 ### Conexiones a bases de datos (`Configuration.xml`)
@@ -45,5 +45,5 @@ La versión de la aplicación se muestra en la esquina superior derecha del pane
 
 ## Versionado
 
-La versión se define en `ImplementadorCUAD.csproj` (`Version`, `AssemblyVersion`, `FileVersion`). Al publicar una nueva versión, actualizar ahí (por ejemplo `1.0.0` → `1.1.0`).
+La versión se define en `Implementador.csproj` (`Version`, `AssemblyVersion`, `FileVersion`). Al publicar una nueva versión, actualizar ahí (por ejemplo `1.0.0` → `1.1.0`).
 La UI la muestra leyendo el ensamblado; no hace falta tocar otro archivo.

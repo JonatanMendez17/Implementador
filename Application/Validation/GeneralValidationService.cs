@@ -1,8 +1,8 @@
-using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Infrastructure;
+using Implementador.Models;
+using Implementador.Infrastructure;
 using Microsoft.Extensions.Logging;
 
-namespace ImplementadorCUAD.Application.Validation
+namespace Implementador.Application.Validation
 {
     public class GeneralValidationService(IAppDbContextFactory dbContextFactory, ILogger<GeneralValidationService>? logger = null)
     {

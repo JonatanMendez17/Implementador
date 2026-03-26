@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace ImplementadorCUAD.ViewModels
+namespace Implementador.ViewModels
 {
     public abstract class ViewModelBase : INotifyPropertyChanged
     {

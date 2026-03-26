@@ -1,6 +1,6 @@
-using ImplementadorCUAD.Infrastructure;
+using Implementador.Infrastructure;
 
-namespace ImplementadorCUAD.Infrastructure.Logging
+namespace Implementador.Infrastructure.Logging
 {
     public sealed class AppLoggerAdapter(Action<string> info, Action<string> warn, Action<string> error) : IAppLogger
     {

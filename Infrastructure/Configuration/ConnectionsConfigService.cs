@@ -1,9 +1,9 @@
 using System.Xml.Linq;
-using ImplementadorCUAD.Models;
+using Implementador.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
-namespace ImplementadorCUAD.Infrastructure.Configuration
+namespace Implementador.Infrastructure.Configuration
 {
     /// Lee y actualiza la sección Conexiones de `Configuration.xml`.
     /// - `ConexionBase`: base (solo lectura).

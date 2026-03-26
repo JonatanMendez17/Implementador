@@ -1,9 +1,9 @@
 using Microsoft.Data.SqlClient;
-using ImplementadorCUAD.Infrastructure;
-using ImplementadorCUAD.Models;
+using Implementador.Infrastructure;
+using Implementador.Models;
 using System.Globalization;
 
-namespace ImplementadorCUAD.Data
+namespace Implementador.Data
 {
     public class AppDbContext : IAppDbContext
     {
@@ -61,9 +61,9 @@ namespace ImplementadorCUAD.Data
             return resultado;
         }
 
-        public List<CategoriaCuadRef> GetCategoriasCuad()
+        public List<CategoriaRef> GetCategoriasRef()
         {
-            var resultado = new List<CategoriaCuadRef>();
+            var resultado = new List<CategoriaRef>();
 
             using var connection = CreateOpenConnection();
             // Las categorías de la base se obtienen desde las tablas físicas Mutual y Mutual_Categoria.
@@ -83,7 +83,7 @@ namespace ImplementadorCUAD.Data
 
             while (reader.Read())
             {
-                resultado.Add(new CategoriaCuadRef
+                resultado.Add(new CategoriaRef
                 {
                     Id = reader.GetInt32(0),
                     Entidad = reader.GetString(1),
@@ -268,9 +268,9 @@ namespace ImplementadorCUAD.Data
                 FROM src;";
         }
 
-        public List<CatalogoServicioCuadRef> GetCatalogoServiciosCuad()
+        public List<CatalogoServicioRef> GetCatalogoServiciosRef()
         {
-            var resultado = new List<CatalogoServicioCuadRef>();
+            var resultado = new List<CatalogoServicioRef>();
 
             using var connection = CreateOpenConnection();
             using var command = new SqlCommand(
@@ -287,7 +287,7 @@ namespace ImplementadorCUAD.Data
 
             while (reader.Read())
             {
-                resultado.Add(new CatalogoServicioCuadRef
+                resultado.Add(new CatalogoServicioRef
                 {
                     Id = reader.GetInt32(0),
                     Entidad = reader.GetString(1),

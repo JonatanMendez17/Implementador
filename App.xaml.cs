@@ -3,14 +3,14 @@ using System.Windows;
 using WpfApplication = System.Windows.Application;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
-using ImplementadorCUAD.Data;
-using ImplementadorCUAD.Infrastructure;
-using ImplementadorCUAD.Infrastructure.Configuration;
-using ImplementadorCUAD.Infrastructure.Logging;
-using ImplementadorCUAD.Presentation;
-using ImplementadorCUAD.Presentation.Dialogs;
+using Implementador.Data;
+using Implementador.Infrastructure;
+using Implementador.Infrastructure.Configuration;
+using Implementador.Infrastructure.Logging;
+using Implementador.Presentation;
+using Implementador.Presentation.Dialogs;
 
-namespace ImplementadorCUAD
+namespace Implementador
 {
     public partial class App : WpfApplication
     {
@@ -75,7 +75,7 @@ namespace ImplementadorCUAD
                 }
             };
 
-            var mainWindow = new MainWindow(new ViewModels.MainViewModel(LoggerFactory.CreateLogger("ImplementadorCUAD")));
+            var mainWindow = new MainWindow(new ViewModels.MainViewModel(LoggerFactory.CreateLogger("Implementador")));
             MainWindow = mainWindow;
             mainWindow.Show();
 

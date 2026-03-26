@@ -1,8 +1,8 @@
 using System.Globalization;
-using ImplementadorCUAD.Data;
-using ImplementadorCUAD.Infrastructure;
+using Implementador.Data;
+using Implementador.Infrastructure;
 
-namespace ImplementadorCUAD.Application.Validation.Core;
+namespace Implementador.Application.Validation.Core;
 
 public sealed class ValidationReferenceDataLoader(IAppDbContextFactory dbContextFactory)
 {
@@ -12,7 +12,7 @@ public sealed class ValidationReferenceDataLoader(IAppDbContextFactory dbContext
     {
         using var db = _dbContextFactory.Create();
 
-        var entidadesCuad = db.GetEntidad()
+        var entidadesRef = db.GetEntidad()
             .SelectMany(e => new[]
             {
                 e.Nombre?.Trim(),
@@ -22,11 +22,11 @@ public sealed class ValidationReferenceDataLoader(IAppDbContextFactory dbContext
             .Select(v => v!)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var categoriasCuadPorEntidad = db.GetCategoriasCuad()
+        var categoriasPorEntidadRef = db.GetCategoriasRef()
             .GroupBy(c => c.Entidad.Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
 
-        var catalogoPorEntidadServicio = db.GetCatalogoServiciosCuad()
+        var catalogoPorEntidadServicio = db.GetCatalogoServiciosRef()
             .ToDictionary(
                 c => $"{c.Entidad.Trim()}|{c.Servicio.Trim()}",
                 c => c,
@@ -34,9 +34,9 @@ public sealed class ValidationReferenceDataLoader(IAppDbContextFactory dbContext
 
         return new ValidationReferenceData
         {
-            EntidadesCuad = entidadesCuad,
+            EntidadesRef = entidadesRef,
             ConceptosDescuentoVigentes = db.GetConceptosDescuentoVigentesParaConsumos(),
-            CategoriasCuadPorEntidad = categoriasCuadPorEntidad,
+            CategoriasPorEntidadRef = categoriasPorEntidadRef,
             CategoriasConCuotaSocial = db.GetCategoriasConCuotaSocialVigente(),
             CatalogoPorEntidadServicio = catalogoPorEntidadServicio
         };

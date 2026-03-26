@@ -1,6 +1,6 @@
-using ImplementadorCUAD.Models;
+using Implementador.Models;
 
-namespace ImplementadorCUAD.Data;
+namespace Implementador.Data;
 
 public interface IAppDbContext : IDisposable
 {
@@ -8,9 +8,9 @@ public interface IAppDbContext : IDisposable
 
     List<Entidad> GetEntidad();
 
-    List<CategoriaCuadRef> GetCategoriasCuad();
+    List<CategoriaRef> GetCategoriasRef();
 
-    List<CatalogoServicioCuadRef> GetCatalogoServiciosCuad();
+    List<CatalogoServicioRef> GetCatalogoServiciosRef();
 
     HashSet<string> GetCategoriasConCuotaSocialVigente();
 

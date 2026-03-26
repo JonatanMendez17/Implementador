@@ -4,7 +4,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using WpfApplication = System.Windows.Application;
 
-namespace ImplementadorCUAD.Presentation.Dialogs
+namespace Implementador.Presentation.Dialogs
 {
     public static class DialogService
     {

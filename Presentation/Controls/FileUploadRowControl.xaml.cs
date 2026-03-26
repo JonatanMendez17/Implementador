@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace ImplementadorCUAD.Presentation.Controls;
+namespace Implementador.Presentation.Controls;
 
 public partial class FileUploadRowControl : UserControl
 {

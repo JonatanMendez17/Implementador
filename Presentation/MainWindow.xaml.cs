@@ -1,12 +1,12 @@
 using System.Windows;
 using Microsoft.Extensions.Logging;
-using ImplementadorCUAD.ViewModels;
+using Implementador.ViewModels;
 
-namespace ImplementadorCUAD.Presentation
+namespace Implementador.Presentation
 {
     public partial class MainWindow : Window
     {
-        public MainWindow() : this(new MainViewModel(App.LoggerFactory.CreateLogger("ImplementadorCUAD")))
+        public MainWindow() : this(new MainViewModel(App.LoggerFactory.CreateLogger("Implementador")))
         {
         }
 

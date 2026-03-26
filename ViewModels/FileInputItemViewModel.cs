@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
 
-namespace ImplementadorCUAD.ViewModels;
+namespace Implementador.ViewModels;
 
 public sealed class FileInputItemViewModel : ViewModelBase
 {

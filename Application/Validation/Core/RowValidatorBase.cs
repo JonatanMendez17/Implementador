@@ -1,6 +1,6 @@
-using ImplementadorCUAD.Infrastructure;
+using Implementador.Infrastructure;
 
-namespace ImplementadorCUAD.Application.Validation.Core;
+namespace Implementador.Application.Validation.Core;
 
 public abstract class RowValidatorBase
 {

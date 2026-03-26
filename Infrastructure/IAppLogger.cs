@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Infrastructure
+namespace Implementador.Infrastructure
 {
     public interface IAppLogger
     {

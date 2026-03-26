@@ -1,10 +1,10 @@
-using ImplementadorCUAD.Infrastructure;
-using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Application.Import;
-using ImplementadorCUAD.Application.Validation;
-using ImplementadorCUAD.Application.Implementation;
+using Implementador.Infrastructure;
+using Implementador.Models;
+using Implementador.Application.Import;
+using Implementador.Application.Validation;
+using Implementador.Application.Implementation;
 
-namespace ImplementadorCUAD.Application.Workflows
+namespace Implementador.Application.Workflows
 {
     internal sealed class MainWorkflowService
     {
