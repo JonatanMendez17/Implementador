@@ -2,7 +2,7 @@ using System.Globalization;
 using ImplementadorCUAD.Data;
 using ImplementadorCUAD.Infrastructure;
 
-namespace ImplementadorCUAD.Services.Validation;
+namespace ImplementadorCUAD.Application.Validation.Core;
 
 public sealed class ValidationReferenceDataLoader(IAppDbContextFactory dbContextFactory)
 {
@@ -42,3 +42,5 @@ public sealed class ValidationReferenceDataLoader(IAppDbContextFactory dbContext
         };
     }
 }
+
+

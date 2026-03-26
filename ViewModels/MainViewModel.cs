@@ -4,14 +4,20 @@ using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using WpfApplication = System.Windows.Application;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
+using ImplementadorCUAD.Application.Import;
+using ImplementadorCUAD.Application.Validation;
+using ImplementadorCUAD.Application.Implementation;
+using ImplementadorCUAD.Application.Workflows;
 using ImplementadorCUAD.Commands;
 using ImplementadorCUAD.Infrastructure;
+using ImplementadorCUAD.Infrastructure.Configuration;
+using ImplementadorCUAD.Infrastructure.Logging;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Presentation.Dialogs;
-using ImplementadorCUAD.Services;
 using ImplementadorCUAD.ViewModels.Coordinators;
 
 namespace ImplementadorCUAD.ViewModels
@@ -315,7 +321,7 @@ namespace ImplementadorCUAD.ViewModels
             IsProcessing = true;
             Progress = 0;
 
-            _logFlushTimer = new DispatcherTimer(DispatcherPriority.Normal, Application.Current.Dispatcher)
+            _logFlushTimer = new DispatcherTimer(DispatcherPriority.Normal, WpfApplication.Current.Dispatcher)
             {
                 Interval = TimeSpan.FromMilliseconds(150)
             };
@@ -440,7 +446,7 @@ namespace ImplementadorCUAD.ViewModels
                     _validationResult,
                     BuildSelection(),
                     _appLogger,
-                    progress => Application.Current?.Dispatcher.InvokeAsync(() => Progress = progress));
+                    progress => WpfApplication.Current?.Dispatcher.InvokeAsync(() => Progress = progress));
 
                 cronometro.Stop();
                 var duracion = cronometro.Elapsed;
@@ -765,5 +771,6 @@ namespace ImplementadorCUAD.ViewModels
         #endregion
     }
 }
+
 
 

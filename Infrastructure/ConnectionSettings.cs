@@ -1,4 +1,4 @@
-using ImplementadorCUAD.Services;
+using ImplementadorCUAD.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace ImplementadorCUAD.Infrastructure
@@ -37,3 +37,5 @@ namespace ImplementadorCUAD.Infrastructure
         public static void InvalidateCache() => _cachedBaseConnectionString = null;
     }
 }
+
+

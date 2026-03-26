@@ -2,7 +2,7 @@ using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using Microsoft.Extensions.Logging;
 
-namespace ImplementadorCUAD.Services
+namespace ImplementadorCUAD.Application.Validation
 {
     public class GeneralValidationService(IAppDbContextFactory dbContextFactory, ILogger<GeneralValidationService>? logger = null)
     {
@@ -79,3 +79,5 @@ namespace ImplementadorCUAD.Services
 
     }
 }
+
+

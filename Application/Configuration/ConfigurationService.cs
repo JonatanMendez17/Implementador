@@ -1,8 +1,9 @@
 using System.Xml.Linq;
 using System.IO;
+using ImplementadorCUAD.Infrastructure.Configuration;
 using ImplementadorCUAD.Models;
 
-namespace ImplementadorCUAD.Services
+namespace ImplementadorCUAD.Application.Configuration
 {
     /// Servicio encargado de leer la configuración de columnas
     public class ConfigurationService
@@ -75,3 +76,5 @@ namespace ImplementadorCUAD.Services
         }
     }
 }
+
+

@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Services.Common;
+namespace ImplementadorCUAD.Application.Validation.Common;
 
 public static class RowValueReader
 {
@@ -27,3 +27,5 @@ public static class RowValueReader
         return TryGetFirstValue(row, out var value, possibleKeys) ? value : string.Empty;
     }
 }
+
+

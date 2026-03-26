@@ -5,12 +5,14 @@ using System.Text.RegularExpressions;
 using ExcelDataReader;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Services.Common;
-using ImplementadorCUAD.Services.Validation;
+using ImplementadorCUAD.Application.Configuration;
+using ImplementadorCUAD.Application.Validation;
+using ImplementadorCUAD.Application.Validation.Common;
+using ImplementadorCUAD.Application.Validation.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
 
-namespace ImplementadorCUAD.Services
+namespace ImplementadorCUAD.Application.Import
 {
     public class FileImportService(IAppDbContextFactory dbContextFactory, ILogger<FileImportService>? logger = null)
     {

@@ -13,3 +13,5 @@ namespace ImplementadorCUAD
         public static string DisplayVersion => "v" + Version;
     }
 }
+
+

@@ -74,3 +74,4 @@ public partial class FileUploadRowControl : UserControl
         set => SetValue(ClearCommandProperty, value);
     }
 }
+

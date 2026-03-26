@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace ImplementadorCUAD.Services.Common;
+namespace ImplementadorCUAD.Application.Validation.Common;
 
 public static class ValueParsers
 {

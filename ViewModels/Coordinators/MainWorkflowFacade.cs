@@ -1,5 +1,5 @@
 using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Services;
+using ImplementadorCUAD.Application.Workflows;
 using ImplementadorCUAD.Infrastructure;
 
 namespace ImplementadorCUAD.ViewModels.Coordinators;
@@ -45,3 +45,4 @@ internal sealed class MainWorkflowFacade
         return _workflowService.ClearEntityForEmpleador(entidadSeleccionada, empleadorSeleccionado, log);
     }
 }
+

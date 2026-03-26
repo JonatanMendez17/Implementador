@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using WpfApplication = System.Windows.Application;
 
 namespace ImplementadorCUAD.Presentation.Dialogs
 {
@@ -24,8 +25,8 @@ namespace ImplementadorCUAD.Presentation.Dialogs
                 primaryButtonText,
                 secondaryButtonText,
                 tertiaryButtonText);
-            var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
-                        ?? Application.Current?.MainWindow;
+            var owner = WpfApplication.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                        ?? WpfApplication.Current?.MainWindow;
 
             if (owner != null && owner != dialog)
             {
@@ -349,12 +350,13 @@ namespace ImplementadorCUAD.Presentation.Dialogs
 
         private static Brush? TryGetBrushStatic(string resourceKey)
         {
-            return Application.Current?.TryFindResource(resourceKey) as Brush;
+            return WpfApplication.Current?.TryFindResource(resourceKey) as Brush;
         }
 
         private Brush? TryGetBrush(string resourceKey)
         {
-            return Application.Current?.TryFindResource(resourceKey) as Brush;
+            return WpfApplication.Current?.TryFindResource(resourceKey) as Brush;
         }
     }
 }
+

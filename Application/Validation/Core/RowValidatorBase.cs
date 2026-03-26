@@ -1,6 +1,6 @@
 using ImplementadorCUAD.Infrastructure;
 
-namespace ImplementadorCUAD.Services.Validation;
+namespace ImplementadorCUAD.Application.Validation.Core;
 
 public abstract class RowValidatorBase
 {
@@ -33,3 +33,5 @@ public abstract class RowValidatorBase
         return accepted;
     }
 }
+
+

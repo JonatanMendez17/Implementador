@@ -3,7 +3,7 @@ using ImplementadorCUAD.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
-namespace ImplementadorCUAD.Services
+namespace ImplementadorCUAD.Infrastructure.Configuration
 {
     /// Lee y actualiza la sección Conexiones de `Configuration.xml`.
     /// - `ConexionBase`: base (solo lectura).
@@ -140,3 +140,5 @@ namespace ImplementadorCUAD.Services
         }
     }
 }
+
+

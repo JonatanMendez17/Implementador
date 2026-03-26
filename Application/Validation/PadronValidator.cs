@@ -2,10 +2,10 @@ using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Data;
 using System.Globalization;
-using ImplementadorCUAD.Services.Common;
-using ImplementadorCUAD.Services.Validation;
+using ImplementadorCUAD.Application.Validation.Common;
+using ImplementadorCUAD.Application.Validation.Core;
 
-namespace ImplementadorCUAD.Services;
+namespace ImplementadorCUAD.Application.Validation;
 
 public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : RowValidatorBase
 {
@@ -248,4 +248,6 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
     }
 
 }
+
+
 

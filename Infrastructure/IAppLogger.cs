@@ -8,3 +8,5 @@ namespace ImplementadorCUAD.Infrastructure
         void Error(Exception ex, string message);
     }
 }
+
+

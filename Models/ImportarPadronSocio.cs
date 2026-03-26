@@ -11,3 +11,4 @@ namespace ImplementadorCUAD.Models
         public DateTime FechaAltaSocio { get; set; }
     }
 }
+

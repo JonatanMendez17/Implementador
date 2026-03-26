@@ -1,6 +1,6 @@
 using ImplementadorCUAD.Models;
 
-namespace ImplementadorCUAD.Services.Validation;
+namespace ImplementadorCUAD.Application.Validation.Core;
 
 public sealed class ValidationReferenceData
 {
@@ -14,3 +14,5 @@ public sealed class ValidationReferenceData
     public Dictionary<string, CatalogoServicioCuadRef> CatalogoPorEntidadServicio { get; init; } =
         new(StringComparer.OrdinalIgnoreCase);
 }
+
+

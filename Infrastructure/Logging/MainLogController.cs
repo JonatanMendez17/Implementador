@@ -2,10 +2,11 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Threading;
+using WpfApplication = System.Windows.Application;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.ViewModels;
 
-namespace ImplementadorCUAD.Services
+namespace ImplementadorCUAD.Infrastructure.Logging
 {
     /// <summary>
     /// Controla el buffer de logs (para evitar bloqueos de UI) y la exportación.
@@ -40,7 +41,7 @@ namespace ImplementadorCUAD.Services
 
         public void AddLogEntry(MainViewModel.LogEntry entry)
         {
-            var dispatcher = Application.Current?.Dispatcher;
+            var dispatcher = WpfApplication.Current?.Dispatcher;
             if (dispatcher != null && !dispatcher.CheckAccess())
             {
                 _logBuffer.Enqueue(entry);
@@ -91,7 +92,7 @@ namespace ImplementadorCUAD.Services
 
         public void ScheduleDeferredLogFlush()
         {
-            Application.Current?.Dispatcher.BeginInvoke(new Action(DeferredFlushNext), DispatcherPriority.Background);
+            WpfApplication.Current?.Dispatcher.BeginInvoke(new Action(DeferredFlushNext), DispatcherPriority.Background);
         }
 
         private void DeferredFlushNext()
@@ -101,4 +102,6 @@ namespace ImplementadorCUAD.Services
         }
     }
 }
+
+
 

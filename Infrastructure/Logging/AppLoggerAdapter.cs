@@ -1,6 +1,6 @@
 using ImplementadorCUAD.Infrastructure;
 
-namespace ImplementadorCUAD.Services
+namespace ImplementadorCUAD.Infrastructure.Logging
 {
     public sealed class AppLoggerAdapter(Action<string> info, Action<string> warn, Action<string> error) : IAppLogger
     {
@@ -14,3 +14,5 @@ namespace ImplementadorCUAD.Services
         public void Error(Exception ex, string message) => _error($"{message}. {ex.Message}");
     }
 }
+
+

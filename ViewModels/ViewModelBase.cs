@@ -24,3 +24,4 @@ namespace ImplementadorCUAD.ViewModels
         }
     }
 }
+

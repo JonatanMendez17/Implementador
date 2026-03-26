@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Services.Validation;
+namespace ImplementadorCUAD.Application.Validation.Core;
 
 public sealed class DbValidationException : Exception
 {
@@ -7,3 +7,5 @@ public sealed class DbValidationException : Exception
     {
     }
 }
+
+

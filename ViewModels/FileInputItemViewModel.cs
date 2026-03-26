@@ -99,3 +99,4 @@ public sealed class FileInputItemViewModel : ViewModelBase
         return string.IsNullOrWhiteSpace(path) ? string.Empty : Path.GetFileName(path);
     }
 }
+

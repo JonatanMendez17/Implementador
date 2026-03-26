@@ -1,5 +1,5 @@
 using ImplementadorCUAD.Models;
-using ImplementadorCUAD.Services;
+using ImplementadorCUAD.Infrastructure.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace ImplementadorCUAD.ViewModels.Coordinators;
@@ -89,3 +89,4 @@ internal sealed class LogUiController
         }
     }
 }
+

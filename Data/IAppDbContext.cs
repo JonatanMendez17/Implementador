@@ -32,3 +32,4 @@ public interface IAppDbContext : IDisposable
     (int Padron, int ConsumoCab, int ConsumoDet) DeleteImportedDataForEntidad(string entidadNombre, int entidadId);
 }
 
+

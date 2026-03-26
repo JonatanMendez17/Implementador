@@ -1,7 +1,7 @@
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
 
-namespace ImplementadorCUAD.Services
+namespace ImplementadorCUAD.Application.Implementation
 {
     public class ImplementationService(ImplementationMapperService mapperService, IAppDbContextFactory dbContextFactory)
     {
@@ -94,3 +94,5 @@ namespace ImplementadorCUAD.Services
         }
     }
 }
+
+
