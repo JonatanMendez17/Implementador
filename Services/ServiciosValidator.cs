@@ -2,40 +2,21 @@ using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using System.Globalization;
 using ImplementadorCUAD.Services.Common;
+using ImplementadorCUAD.Services.Validation;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
+public sealed class ServiciosValidator : RowValidatorBase
 {
-    private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
-
-    public void Apply(ImplementationValidationResult result, IAppLogger log)
+    public void Apply(ImplementationValidationResult result, IAppLogger log, ValidationReferenceData? snapshot = null)
     {
         if (result.DatosServiciosValidados.Count == 0)
         {
             return;
         }
 
-        HashSet<string> entidadesCuad;
-        try
-        {
-            using var db = _dbContextFactory.Create();
-            entidadesCuad = db.GetEntidad()
-                .SelectMany(e => new[]
-                {
-                    e.Nombre?.Trim(),
-                    e.EntId.ToString(CultureInfo.InvariantCulture)
-                })
-                .Where(v => !string.IsNullOrWhiteSpace(v))
-                .Select(v => v!)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        }
-        catch (Exception ex)
-        {
-            log.Error($"Consumos Servicios: no se pudo validar entidades de la base. {ex.Message}");
-            result.DatosServiciosValidados = new List<Dictionary<string, string>>();
-            return;
-        }
+        var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
+        var entidadesCuad = safeSnapshot.EntidadesCuad;
 
         var padronPorSocio = result.DatosPadronValidados
             .Where(f => RowValueReader.TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
@@ -47,14 +28,13 @@ public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
             .Where(c => !string.IsNullOrWhiteSpace(c))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var serviciosFiltrados = new List<Dictionary<string, string>>();
         var codigosServiciosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var rechazadas = 0;
-
-        for (int i = 0; i < result.DatosServiciosValidados.Count; i++)
-        {
-            var row = result.DatosServiciosValidados[i];
-            var rowNumber = i + 2;
+        var serviciosFiltrados = FilterValidRows(
+            "Consumos Servicios",
+            result.DatosServiciosValidados,
+            log,
+            (row, rowNumber) =>
+            {
             var erroresFila = new List<string>();
 
             var entidad = RowValueReader.GetFirstValue(row, "Entidad");
@@ -106,16 +86,9 @@ public sealed class ServiciosValidator(IAppDbContextFactory dbContextFactory)
                 }
             }
 
-            if (erroresFila.Count == 0)
-            {
-                serviciosFiltrados.Add(row);
-            }
-            else
-            {
-                rechazadas++;
-                log.Warn($"Consumos Servicios row {rowNumber}: {string.Join(" | ", erroresFila)}");
-            }
-        }
+            return erroresFila;
+            },
+            out var rechazadas);
 
         if (rechazadas > 0)
         {

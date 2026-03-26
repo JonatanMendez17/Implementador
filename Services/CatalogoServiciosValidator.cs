@@ -6,35 +6,17 @@ using ImplementadorCUAD.Services.Validation;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFactory) : RowValidatorBase
+public sealed class CatalogoServiciosValidator : RowValidatorBase
 {
-    private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
-
-    public void Apply(ImplementationValidationResult result, IAppLogger log)
+    public void Apply(ImplementationValidationResult result, IAppLogger log, ValidationReferenceData? snapshot = null)
     {
         if (result.DatosCatalogoServiciosValidados.Count == 0)
         {
             return;
         }
 
-        List<CatalogoServicioCuadRef> catalogoCuad;
-        try
-        {
-            using var db = _dbContextFactory.Create();
-            catalogoCuad = db.GetCatalogoServiciosCuad();
-        }
-        catch (Exception ex)
-        {
-            log.Error($"Catalogo Servicios: no se pudo leer el catálogo de servicios de la base. {ex.Message}");
-            result.DatosCatalogoServiciosValidados = [];
-            return;
-        }
-
-        var catalogoPorEntidadServicio = catalogoCuad
-            .ToDictionary(
-                c => $"{c.Entidad.Trim()}|{c.Servicio.Trim()}",
-                c => c,
-                StringComparer.OrdinalIgnoreCase);
+        var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
+        var catalogoPorEntidadServicio = safeSnapshot.CatalogoPorEntidadServicio;
 
         var filtrado = FilterValidRows(
             "Catalogo Servicios",

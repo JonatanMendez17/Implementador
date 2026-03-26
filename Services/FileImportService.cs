@@ -6,6 +6,7 @@ using ExcelDataReader;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Services.Common;
+using ImplementadorCUAD.Services.Validation;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
 
@@ -15,6 +16,7 @@ namespace ImplementadorCUAD.Services
     {
         private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
         private readonly ILogger<FileImportService>? _logger = logger;
+    private const DbErrorPolicy ValidationDbErrorPolicy = DbErrorPolicy.AbortValidation;
 
         public ImplementationValidationResult ValidateAndLoadFiles(ImplementationFileSelection selection, IAppLogger log, IProgress<int>? progress = null)
         {
@@ -98,17 +100,38 @@ namespace ImplementadorCUAD.Services
                 result.HasLoadedData = true;
             }
 
+            var snapshot = LoadReferenceData(log, out var snapshotLoaded);
+            if (!snapshotLoaded && ValidationDbErrorPolicy == DbErrorPolicy.AbortValidation)
+            {
+                log.Error("Validación detenida: no se pudieron cargar datos de referencia de base.");
+                result.DatosPadronValidados = [];
+                result.DatosConsumosValidados = [];
+                result.DatosConsumosDetalleValidados = [];
+                result.DatosServiciosValidados = [];
+                result.DatosCatalogoServiciosValidados = [];
+                result.HasLoadedData = false;
+                return result;
+            }
             var padronValidator = new PadronValidator(_dbContextFactory);
             var consumosValidator = new ConsumosValidator(_dbContextFactory);
-            var consumosDetalleValidator = new ConsumosDetalleValidator(_dbContextFactory);
-            var serviciosValidator = new ServiciosValidator(_dbContextFactory);
-            var catalogoServiciosValidator = new CatalogoServiciosValidator(_dbContextFactory);
+            var consumosDetalleValidator = new ConsumosDetalleValidator();
+            var serviciosValidator = new ServiciosValidator();
+            var catalogoServiciosValidator = new CatalogoServiciosValidator();
 
-            padronValidator.Apply(result, log);
-            consumosValidator.Apply(result, log);
-            consumosDetalleValidator.Apply(result, log);
-            serviciosValidator.Apply(result, log);
-            catalogoServiciosValidator.Apply(result, log);
+            try
+            {
+                padronValidator.Apply(result, log, snapshot, ValidationDbErrorPolicy);
+            }
+            catch (DbValidationException ex)
+            {
+                log.Error($"Validación detenida por error de base en padrón. {ex.Message}");
+                result.HasLoadedData = false;
+                return result;
+            }
+            consumosValidator.Apply(result, log, snapshot);
+            consumosDetalleValidator.Apply(result, log, snapshot);
+            serviciosValidator.Apply(result, log, snapshot);
+            catalogoServiciosValidator.Apply(result, log, snapshot);
 
             if (!result.HasLoadedData)
             {
@@ -117,6 +140,23 @@ namespace ImplementadorCUAD.Services
             }
 
             return result;
+        }
+
+        private ValidationReferenceData LoadReferenceData(IAppLogger log, out bool loaded)
+        {
+            try
+            {
+                var loader = new ValidationReferenceDataLoader(_dbContextFactory);
+                loaded = true;
+                return loader.Load();
+            }
+            catch (Exception ex)
+            {
+                log.Error($"No se pudo cargar datos de referencia para validación. {ex.Message}");
+                _logger?.LogError(ex, "No se pudo cargar datos de referencia para validación.");
+                loaded = false;
+                return ValidationReferenceData.Empty;
+            }
         }
 
         private IEnumerable<string> EnumerateFileLines(string filePath)

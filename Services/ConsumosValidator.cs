@@ -2,63 +2,39 @@ using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using System.Globalization;
 using ImplementadorCUAD.Services.Common;
+using ImplementadorCUAD.Services.Validation;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class ConsumosValidator
+public sealed class ConsumosValidator : RowValidatorBase
 {
-    private readonly IAppDbContextFactory _dbContextFactory;
-
     public ConsumosValidator(IAppDbContextFactory dbContextFactory)
     {
-        _dbContextFactory = dbContextFactory;
     }
 
-    public void Apply(ImplementationValidationResult result, IAppLogger log)
+    public void Apply(ImplementationValidationResult result, IAppLogger log, ValidationReferenceData? snapshot = null)
     {
         if (result.DatosConsumosValidados.Count == 0)
         {
             return;
         }
 
-        HashSet<string> entidadesCuad;
-        HashSet<string> conceptosDescuentoVigentes;
-        try
-        {
-            using var db = _dbContextFactory.Create();
-            entidadesCuad = db.GetEntidad()
-                .SelectMany(e => new[]
-                {
-                    e.Nombre?.Trim(),
-                    e.EntId.ToString(CultureInfo.InvariantCulture)
-                })
-                .Where(v => !string.IsNullOrWhiteSpace(v))
-                .Select(v => v!)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            conceptosDescuentoVigentes = db.GetConceptosDescuentoVigentesParaConsumos();
-        }
-        catch (Exception ex)
-        {
-            log.Error($"Consumos: no se pudo validar entidades de la base. {ex.Message}");
-            result.DatosConsumosValidados = new List<Dictionary<string, string>>();
-            conceptosDescuentoVigentes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            return;
-        }
+        var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
+        var entidadesCuad = safeSnapshot.EntidadesCuad;
+        var conceptosDescuentoVigentes = safeSnapshot.ConceptosDescuentoVigentes;
 
         var padronPorSocio = result.DatosPadronValidados
             .Where(f => RowValueReader.TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
             .GroupBy(f => RowValueReader.GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
-        var consumosFiltrados = new List<Dictionary<string, string>>();
         var codigosConsumoVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var rechazadas = 0;
-
-        for (int i = 0; i < result.DatosConsumosValidados.Count; i++)
-        {
-            var row = result.DatosConsumosValidados[i];
-            var rowNumber = i + 2;
+        var consumosFiltrados = FilterValidRows(
+            "Consumos",
+            result.DatosConsumosValidados,
+            log,
+            (row, rowNumber) =>
+            {
             var erroresFila = new List<string>();
 
             var entidad = RowValueReader.GetFirstValue(row, "Entidad");
@@ -112,16 +88,9 @@ public sealed class ConsumosValidator
                 }
             }
 
-            if (erroresFila.Count == 0)
-            {
-                consumosFiltrados.Add(row);
-            }
-            else
-            {
-                rechazadas++;
-                log.Warn($"Consumos row {rowNumber}: {string.Join(" | ", erroresFila)}");
-            }
-        }
+            return erroresFila;
+            },
+            out var rechazadas);
 
         if (rechazadas > 0)
         {

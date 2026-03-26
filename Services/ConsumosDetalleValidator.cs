@@ -2,53 +2,33 @@ using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using System.Globalization;
 using ImplementadorCUAD.Services.Common;
+using ImplementadorCUAD.Services.Validation;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFactory)
+public sealed class ConsumosDetalleValidator : RowValidatorBase
 {
-    private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
-
-    public void Apply(ImplementationValidationResult result, IAppLogger log)
+    public void Apply(ImplementationValidationResult result, IAppLogger log, ValidationReferenceData? snapshot = null)
     {
         if (result.DatosConsumosDetalleValidados.Count == 0)
         {
             return;
         }
 
-        HashSet<string> entidadesCuad;
-        try
-        {
-            using var db = _dbContextFactory.Create();
-            entidadesCuad = db.GetEntidad()
-                .SelectMany(e => new[]
-                {
-                    e.Nombre?.Trim(),
-                    e.EntId.ToString(CultureInfo.InvariantCulture)
-                })
-                .Where(v => !string.IsNullOrWhiteSpace(v))
-                .Select(v => v!)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        }
-        catch (Exception ex)
-        {
-            log.Error($"Consumos Detalle: No se pudo validar entidades de la base. {ex.Message}");
-            result.DatosConsumosDetalleValidados = new List<Dictionary<string, string>>();
-            return;
-        }
+        var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
+        var entidadesCuad = safeSnapshot.EntidadesCuad;
 
         var consumosPorCodigo = result.DatosConsumosValidados
             .Where(f => !string.IsNullOrWhiteSpace(RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
             .GroupBy(f => RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
-        var detalleFiltrado = new List<Dictionary<string, string>>();
-        var rechazadas = 0;
-
-        for (int i = 0; i < result.DatosConsumosDetalleValidados.Count; i++)
-        {
-            var row = result.DatosConsumosDetalleValidados[i];
-            var rowNumber = i + 2;
+        var detalleFiltrado = FilterValidRows(
+            "Consumos Detalle",
+            result.DatosConsumosDetalleValidados,
+            log,
+            (row, rowNumber) =>
+            {
             var erroresFila = new List<string>();
 
             var entidad = RowValueReader.GetFirstValue(row, "Entidad");
@@ -74,16 +54,9 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
                 erroresFila.Add("La date de vencimiento no puede ser hoy o anterior.");
             }
 
-            if (erroresFila.Count == 0)
-            {
-                detalleFiltrado.Add(row);
-            }
-            else
-            {
-                rechazadas++;
-                log.Warn($"Consumos Detalle row {rowNumber}: {string.Join(" | ", erroresFila)}");
-            }
-        }
+            return erroresFila;
+            },
+            out var rechazadas);
 
         var detallePorCodigo = detalleFiltrado
             .Where(f => !string.IsNullOrWhiteSpace(RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo")))

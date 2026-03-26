@@ -3,14 +3,19 @@ using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Data;
 using System.Globalization;
 using ImplementadorCUAD.Services.Common;
+using ImplementadorCUAD.Services.Validation;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
+public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : RowValidatorBase
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
-    public void Apply(ImplementationValidationResult result, IAppLogger log)
+    public void Apply(
+        ImplementationValidationResult result,
+        IAppLogger log,
+        ValidationReferenceData? snapshot = null,
+        DbErrorPolicy dbErrorPolicy = DbErrorPolicy.ContinueWithWarnings)
     {
         if (result.DatosPadronValidados.Count == 0)
         {
@@ -35,55 +40,35 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
             }
         }
 
-        Dictionary<string, List<CategoriaCuadRef>> categoriasCuadPorEntidad;
-        HashSet<string> categoriasConCuotaSocial;
-        try
+        var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
+        var categoriasCuadPorEntidad = safeSnapshot.CategoriasCuadPorEntidad;
+        var categoriasConCuotaSocial = safeSnapshot.CategoriasConCuotaSocial;
+        foreach (var kvp in categoriasCuadPorEntidad)
         {
-            using var db = _dbContextFactory.Create();
-            categoriasCuadPorEntidad = db.GetCategoriasCuad()
-                .GroupBy(c => c.Entidad.Trim(), StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
-
-            categoriasConCuotaSocial = db.GetCategoriasConCuotaSocialVigente();
-
-            foreach (var kvp in categoriasCuadPorEntidad)
+            var entidadRef = kvp.Key;
+            var predeterminadas = kvp.Value.Count(c => c.EsPredeterminada);
+            if (predeterminadas > 1)
             {
-                var entidadRef = kvp.Key;
-                var predeterminadas = kvp.Value.Count(c => c.EsPredeterminada);
-                if (predeterminadas > 1)
-                {
-                    log.Warn($"Categorias Socios: La entidad '{entidadRef}' tiene mas de una categoria predeterminada en la base.");
-                }
+                log.Warn($"Categorias Socios: La entidad '{entidadRef}' tiene mas de una categoria predeterminada en la base.");
             }
         }
-        catch (Exception ex)
-        {
-            log.Error($"Categorias Socios: No se pudo leer categorías de la base. {ex.Message}");
-            categoriasCuadPorEntidad = new Dictionary<string, List<CategoriaCuadRef>>(StringComparer.OrdinalIgnoreCase);
-            categoriasConCuotaSocial = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        }
 
-        var padronFiltrado = new List<Dictionary<string, string>>();
         var sociosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var socioCategoria = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var documentosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var beneficiosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var empleadoPorSocioDocumento = new Dictionary<string, (bool Existe, int EmrId)>(StringComparer.OrdinalIgnoreCase);
-        var rechazadas = 0;
-        IAppDbContext? dbValidacionEmpleado = null;
-        try
-        {
-            dbValidacionEmpleado = _dbContextFactory.Create();
-        }
-        catch (Exception ex)
-        {
-            log.Error($"Padron socios: no se pudo abrir conexión a la base para validar Empleado/Persona. {ex.Message}");
-        }
+        var empleadoPorSocioDocumento = LoadEmpleadoLookup(
+            result.DatosPadronValidados,
+            log,
+            out var lookupDisponible,
+            dbErrorPolicy);
 
-        for (int i = 0; i < result.DatosPadronValidados.Count; i++)
-        {
-            var row = result.DatosPadronValidados[i];
-            var rowNumber = i + 2;
+        var padronFiltrado = FilterValidRows(
+            "Padron",
+            result.DatosPadronValidados,
+            log,
+            (row, rowNumber) =>
+            {
             var erroresFila = new List<string>();
 
             var entidad = RowValueReader.GetFirstValue(row, "Entidad");
@@ -167,58 +152,79 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
                 var documentoNormalizado = documento.Trim();
                 var cacheKey = $"{socioNormalizado}|{documentoNormalizado}";
 
-                if (!empleadoPorSocioDocumento.TryGetValue(cacheKey, out var cacheValue))
+                if (!long.TryParse(documentoNormalizado, NumberStyles.None, CultureInfo.InvariantCulture, out var documentoNumero) || documentoNumero <= 0)
                 {
-                    if (!long.TryParse(documentoNormalizado, NumberStyles.None, CultureInfo.InvariantCulture, out var documentoNumero) || documentoNumero <= 0)
-                    {
-                        erroresFila.Add($"El documento '{documento}' no es un numero valido para validar contra la base.");
-                    }
-                    else
-                    {
-                        try
-                        {
-                            if (dbValidacionEmpleado == null)
-                            {
-                                erroresFila.Add("No hay conexión disponible a la base para validar Empleado/Persona.");
-                            }
-                            else
-                            {
-                                var existe = dbValidacionEmpleado.TryGetEmrIdByEmpleadoCodigoYDocumento(socioNormalizado, documentoNumero, out var emrIdEncontrado);
-                                cacheValue = (existe, emrIdEncontrado);
-                                empleadoPorSocioDocumento[cacheKey] = cacheValue;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            erroresFila.Add($"No se pudo validar contra la base el socio '{nroSocio}' y documento '{documento}': {ex.Message}");
-                        }
-                    }
+                    erroresFila.Add($"El documento '{documento}' no es un numero valido para validar contra la base.");
                 }
-
-                if (empleadoPorSocioDocumento.TryGetValue(cacheKey, out var value) && !value.Existe)
+                else if (!lookupDisponible)
                 {
-                    erroresFila.Add($"No existe empleado en la base para Nro Socio '{nroSocio}' y Documento '{documento}'.");
+                    erroresFila.Add("No hay conexión disponible a la base para validar Empleado/Persona.");
+                }
+                else
+                {
+                    if (!empleadoPorSocioDocumento.TryGetValue(cacheKey, out var value) || !value.Existe)
+                    {
+                        erroresFila.Add($"No existe empleado en la base para Nro Socio '{nroSocio}' y Documento '{documento}'.");
+                    }
                 }
             }
 
-            if (erroresFila.Count == 0)
-            {
-                padronFiltrado.Add(row);
-            }
-            else
-            {
-                rechazadas++;
-                log.Warn($"Padron row {rowNumber}: {string.Join(" | ", erroresFila)}");
-            }
-        }
+            return erroresFila;
+            },
+            out var rechazadas);
 
         if (rechazadas > 0)
         {
             log.Info($"Resumen validacion Padron socios: aceptadas={padronFiltrado.Count}, rechazadas={rechazadas}.");
         }
 
-        dbValidacionEmpleado?.Dispose();
         result.DatosPadronValidados = padronFiltrado;
+    }
+
+    private Dictionary<string, (bool Existe, int EmrId)> LoadEmpleadoLookup(
+        IReadOnlyList<Dictionary<string, string>> rows,
+        IAppLogger log,
+        out bool lookupDisponible,
+        DbErrorPolicy dbErrorPolicy)
+    {
+        lookupDisponible = false;
+        var pares = new List<(string EmpleadoCodigo, long Documento)>();
+        foreach (var row in rows)
+        {
+            var nroSocio = RowValueReader.GetFirstValue(row, "Nro Socio")?.Trim();
+            var documento = RowValueReader.GetFirstValue(row, "Documento")?.Trim();
+            if (string.IsNullOrWhiteSpace(nroSocio) || string.IsNullOrWhiteSpace(documento))
+            {
+                continue;
+            }
+
+            if (!long.TryParse(documento, NumberStyles.None, CultureInfo.InvariantCulture, out var docNumero) || docNumero <= 0)
+            {
+                continue;
+            }
+
+            pares.Add((nroSocio, docNumero));
+        }
+
+        try
+        {
+            using var db = _dbContextFactory.Create();
+            var lookup = db.GetEmrIdByEmpleadoCodigoYDocumentoBatch(pares);
+            lookupDisponible = true;
+            return lookup;
+        }
+        catch (Exception ex)
+        {
+            if (dbErrorPolicy == DbErrorPolicy.AbortValidation)
+            {
+                throw new DbValidationException(
+                    "No se pudo consultar Empleado/Persona para validación de padrón.",
+                    ex);
+            }
+
+            log.Error($"Padron socios: no se pudo abrir conexión a la base para validar Empleado/Persona. {ex.Message}");
+            return new Dictionary<string, (bool Existe, int EmrId)>(StringComparer.OrdinalIgnoreCase);
+        }
     }
 
     private static bool IsCategoriaValida( string? codigoCategoria, string? nombreCategoriaPadron, HashSet<string> categoriasValidasCodigo, HashSet<string> categoriasValidasNombre)

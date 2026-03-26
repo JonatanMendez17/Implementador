@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using System.IO;
 using ImplementadorCUAD.Models;
 
 namespace ImplementadorCUAD.Services
@@ -7,11 +8,15 @@ namespace ImplementadorCUAD.Services
     public class ConfigurationService
     {
         private readonly string _rutaXml = ConnectionsConfigService.RutaConfiguracionXml;
+    private static readonly object CacheLock = new();
+    private static string? _cachedPath;
+    private static DateTime _cachedLastWriteUtc;
+    private static XDocument? _cachedDocument;
 
         /// Obtiene la lista de columnas configuradas para un archivo lógico.
         public List<ColumnConfiguration> GetColumns(string fileName)
         {
-            var document = XDocument.Load(_rutaXml);
+        var document = GetCachedDocument();
 
             var columnas = document
                 .Descendants("Archivo")
@@ -48,6 +53,25 @@ namespace ImplementadorCUAD.Services
                 .ToList();
 
             return columnas;
+        }
+
+        private XDocument GetCachedDocument()
+        {
+            var lastWriteUtc = File.GetLastWriteTimeUtc(_rutaXml);
+            lock (CacheLock)
+            {
+                if (_cachedDocument != null &&
+                    string.Equals(_cachedPath, _rutaXml, StringComparison.OrdinalIgnoreCase) &&
+                    _cachedLastWriteUtc == lastWriteUtc)
+                {
+                    return _cachedDocument;
+                }
+
+                _cachedDocument = XDocument.Load(_rutaXml);
+                _cachedPath = _rutaXml;
+                _cachedLastWriteUtc = lastWriteUtc;
+                return _cachedDocument;
+            }
         }
     }
 }

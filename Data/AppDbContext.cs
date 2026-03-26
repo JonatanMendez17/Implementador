@@ -206,6 +206,68 @@ namespace ImplementadorCUAD.Data
             return true;
         }
 
+        public Dictionary<string, (bool Existe, int EmrId)> GetEmrIdByEmpleadoCodigoYDocumentoBatch(
+            IEnumerable<(string EmpleadoCodigo, long Documento)> pares)
+        {
+            var resultado = new Dictionary<string, (bool Existe, int EmrId)>(StringComparer.OrdinalIgnoreCase);
+
+            var paresNormalizados = pares
+                .Where(p => !string.IsNullOrWhiteSpace(p.EmpleadoCodigo) && p.Documento > 0)
+                .Select(p => (EmpleadoCodigo: p.EmpleadoCodigo.Trim(), p.Documento))
+                .Distinct()
+                .ToList();
+
+            if (paresNormalizados.Count == 0)
+            {
+                return resultado;
+            }
+
+            using var connection = CreateOpenConnection();
+            const int chunkSize = 200;
+            for (int offset = 0; offset < paresNormalizados.Count; offset += chunkSize)
+            {
+                var chunk = paresNormalizados.Skip(offset).Take(chunkSize).ToList();
+                using var command = new SqlCommand(BuildEmpleadoLookupBatchSql(chunk.Count), connection);
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    command.Parameters.AddWithValue($"@EmpCod{i}", chunk[i].EmpleadoCodigo);
+                    command.Parameters.AddWithValue($"@PerNroDoc{i}", chunk[i].Documento);
+                }
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var empleadoCodigo = reader.GetString(0);
+                    var documento = reader.GetInt64(1);
+                    var emrId = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+                    var key = $"{empleadoCodigo}|{documento}";
+                    resultado[key] = (emrId > 0, emrId);
+                }
+            }
+
+            return resultado;
+        }
+
+        private static string BuildEmpleadoLookupBatchSql(int count)
+        {
+            var values = string.Join(", ", Enumerable.Range(0, count).Select(i => $"(@EmpCod{i}, @PerNroDoc{i})"));
+            return $@"
+                WITH src (EmpCod, PerNroDoc) AS (
+                    VALUES {values}
+                )
+                SELECT
+                    src.EmpCod,
+                    src.PerNroDoc,
+                    (
+                        SELECT TOP 1 e.Emr_Id
+                        FROM Empleado e
+                        INNER JOIN Persona p ON p.Per_Id = e.Per_Id
+                        WHERE e.Emp_Cod = src.EmpCod
+                          AND p.Per_NroDoc = src.PerNroDoc
+                    ) AS EmrId
+                FROM src;";
+        }
+
         public List<CatalogoServicioCuadRef> GetCatalogoServiciosCuad()
         {
             var resultado = new List<CatalogoServicioCuadRef>();
