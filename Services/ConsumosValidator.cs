@@ -1,6 +1,7 @@
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using System.Globalization;
+using ImplementadorCUAD.Services.Common;
 
 namespace ImplementadorCUAD.Services;
 
@@ -46,8 +47,8 @@ public sealed class ConsumosValidator
         }
 
         var padronPorSocio = result.DatosPadronValidados
-            .Where(f => TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
-            .GroupBy(f => GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
+            .Where(f => RowValueReader.TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
+            .GroupBy(f => RowValueReader.GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
         var consumosFiltrados = new List<Dictionary<string, string>>();
@@ -60,12 +61,12 @@ public sealed class ConsumosValidator
             var rowNumber = i + 2;
             var erroresFila = new List<string>();
 
-            var entidad = GetFirstValue(row, "Entidad");
-            var nroSocio = GetFirstValue(row, "Nro Socio");
-            var cuitConsumo = GetFirstValue(row, "CUIT");
-            var beneficioConsumo = GetFirstValue(row, "Beneficio");
-            var codigoConsumo = GetFirstValue(row, "Codigo Consumo", "Código Consumo");
-            var conceptoDescuentoText = GetFirstValue(row, "Concepto Descuento");
+            var entidad = RowValueReader.GetFirstValue(row, "Entidad");
+            var nroSocio = RowValueReader.GetFirstValue(row, "Nro Socio");
+            var cuitConsumo = RowValueReader.GetFirstValue(row, "CUIT");
+            var beneficioConsumo = RowValueReader.GetFirstValue(row, "Beneficio");
+            var codigoConsumo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo");
+            var conceptoDescuentoText = RowValueReader.GetFirstValue(row, "Concepto Descuento");
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
@@ -78,15 +79,15 @@ public sealed class ConsumosValidator
             }
             else
             {
-                var cuitPadron = GetFirstValue(filaPadron, "CUIT");
-                var beneficioPadron = GetFirstValue(filaPadron, "Beneficio");
+                var cuitPadron = RowValueReader.GetFirstValue(filaPadron, "CUIT");
+                var beneficioPadron = RowValueReader.GetFirstValue(filaPadron, "Beneficio");
 
-                if (!EqualsDigitsOnly(cuitConsumo, cuitPadron))
+                if (!ValueParsers.EqualsDigitsOnly(cuitConsumo, cuitPadron))
                 {
                     erroresFila.Add($"El CUIT no coincide con padron para socio '{nroSocio}'.");
                 }
 
-                if (!EqualsTrimmed(beneficioConsumo, beneficioPadron))
+                if (!ValueParsers.EqualsTrimmed(beneficioConsumo, beneficioPadron))
                 {
                     erroresFila.Add($"El Beneficio no coincide con padron para socio '{nroSocio}'.");
                 }
@@ -130,37 +131,5 @@ public sealed class ConsumosValidator
         result.DatosConsumosValidados = consumosFiltrados;
     }
 
-    private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
-    {
-        foreach (var clave in posiblesClaves)
-        {
-            if (row.TryGetValue(clave, out var encontrado))
-            {
-                value = encontrado;
-                return true;
-            }
-        }
-
-        value = string.Empty;
-        return false;
-    }
-
-    private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
-    {
-        return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
-    }
-
-    private static bool EqualsTrimmed(string? left, string? right)
-    {
-        var a = (left ?? string.Empty).Trim();
-        var b = (right ?? string.Empty).Trim();
-        return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool EqualsDigitsOnly(string? left, string? right)
-    {
-        static string Digits(string? text) => new string((text ?? string.Empty).Where(char.IsDigit).ToArray());
-        return string.Equals(Digits(left), Digits(right), StringComparison.Ordinal);
-    }
 }
 

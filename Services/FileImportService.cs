@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using ExcelDataReader;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Models;
+using ImplementadorCUAD.Services.Common;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
 
@@ -537,11 +538,6 @@ namespace ImplementadorCUAD.Services
             return builder.ToString();
         }
 
-        private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
-        {
-            return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
-        }
-
         private static bool ValidateGeneralRules(string value, ColumnConfiguration config, out string error)
         {
             error = string.Empty;
@@ -582,7 +578,7 @@ namespace ImplementadorCUAD.Services
                     return true;
 
                 case "decimal":
-                    if (!TryParseDecimalFlexible(texto, out _))
+                    if (!ValueParsers.TryParseDecimalFlexible(texto, out _))
                     {
                         error = "debe ser un value de dinero valido";
                         return false;
@@ -591,7 +587,7 @@ namespace ImplementadorCUAD.Services
                     return true;
 
                 case "date":
-                    if (!TryParseDateFlexible(texto, out _))
+                    if (!ValueParsers.TryParseDateFlexible(texto, out _))
                     {
                         error = "debe ser una date valida";
                         return false;
@@ -608,18 +604,6 @@ namespace ImplementadorCUAD.Services
             }
         }
 
-        private static bool TryParseDecimalFlexible(string texto, out decimal value)
-        {
-            return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out value) ||
-                   decimal.TryParse(texto, NumberStyles.Number, CultureInfo.GetCultureInfo("es-AR"), out value);
-        }
-
-        private static bool TryParseDateFlexible(string texto, out DateTime date)
-        {
-            return DateTime.TryParse(texto, CultureInfo.GetCultureInfo("es-AR"), DateTimeStyles.None, out date) ||
-                   DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
-        }
-
         private static bool HasWeirdCharacters(string texto)
         {
             return Regex.IsMatch(texto, @"[^\p{L}\p{N}\s\.\,\;\:\-\/\\\(\)\'\""\#\%\&\+]");
@@ -629,7 +613,7 @@ namespace ImplementadorCUAD.Services
         {
             if (logicalName.Equals("Padron", StringComparison.OrdinalIgnoreCase))
             {
-                var nroSocio = GetFirstValue(row, "Nro Socio");
+                var nroSocio = RowValueReader.GetFirstValue(row, "Nro Socio");
                 if (string.IsNullOrWhiteSpace(nroSocio))
                 {
                     log.Warn($"Padron row {rowNumber}: 'Nro Socio' vacio.");
@@ -648,7 +632,7 @@ namespace ImplementadorCUAD.Services
 
             if (logicalName.Equals("Consumos", StringComparison.OrdinalIgnoreCase))
             {
-                var nroConsumo = GetFirstValue(row, "Codigo Consumo", "Código Consumo", "Codigo", "Código", "CÃ³digo");
+                var nroConsumo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo", "Codigo", "Código", "CÃ³digo");
                 if (string.IsNullOrWhiteSpace(nroConsumo))
                 {
                     log.Warn($"Consumos row {rowNumber}: codigo (nro de consumo) vacio.");
@@ -666,21 +650,6 @@ namespace ImplementadorCUAD.Services
             }
 
             return true;
-        }
-
-        private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
-        {
-            foreach (var clave in posiblesClaves)
-            {
-                if (row.TryGetValue(clave, out var encontrado))
-                {
-                    value = encontrado;
-                    return true;
-                }
-            }
-
-            value = string.Empty;
-            return false;
         }
 
     }

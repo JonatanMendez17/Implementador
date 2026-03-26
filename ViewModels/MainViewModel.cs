@@ -27,12 +27,7 @@ namespace ImplementadorCUAD.ViewModels
 
         private Empleador? _empleadorSeleccionado;
         private Entidad? _entidadSeleccionada;
-        private string? _archivoCategorias;
-        private string? _archivoPadron;
-        private string? _archivoConsumos;
-        private readonly ObservableCollection<string> _archivosConsumosDetalle = new ObservableCollection<string>();
-        private string? _archivoServicios;
-        private string? _archivoCatalogoServicios;
+        private readonly Dictionary<string, FileInputItemViewModel> _fileItemsByKey = new(StringComparer.Ordinal);
         private int _progress;
         private bool _isProcessing;
         private bool _validationCompleted;
@@ -40,6 +35,13 @@ namespace ImplementadorCUAD.ViewModels
         private MainLogController _logController;
         private readonly MainWorkflowService _workflowService;
         private DispatcherTimer? _logFlushTimer;
+
+        private const string FileCategorias = "Categorias";
+        private const string FilePadron = "Padron";
+        private const string FileConsumos = "Consumos";
+        private const string FileConsumosDetalle = "ConsumosDetalle";
+        private const string FileServicios = "Servicios";
+        private const string FileCatalogoServicios = "CatalogoServicios";
 
         public Empleador? EmpleadorSeleccionado
         {
@@ -68,106 +70,61 @@ namespace ImplementadorCUAD.ViewModels
 
         public string? ArchivoCategorias
         {
-            get => _archivoCategorias;
-            set
-            {
-                if (SetProperty(ref _archivoCategorias, value))
-                {
-                    OnPropertyChanged(nameof(ArchivoCategoriasNombre));
-                    OnPropertyChanged(nameof(ArchivoCategoriasCargado));
-                    OnPropertyChanged(nameof(ArchivoCategoriasEstado));
-                    OnPropertyChanged(nameof(ArchivoCategoriasIcono));
-                }
-            }
+            get => GetFileItem(FileCategorias).SinglePath;
+            set => SetSingleFilePath(FileCategorias, value);
         }
 
         public string? ArchivoPadron
         {
-            get => _archivoPadron;
-            set
-            {
-                if (SetProperty(ref _archivoPadron, value))
-                {
-                    OnPropertyChanged(nameof(ArchivoPadronNombre));
-                    OnPropertyChanged(nameof(ArchivoPadronCargado));
-                    OnPropertyChanged(nameof(ArchivoPadronEstado));
-                    OnPropertyChanged(nameof(ArchivoPadronIcono));
-                }
-            }
+            get => GetFileItem(FilePadron).SinglePath;
+            set => SetSingleFilePath(FilePadron, value);
         }
 
         public string? ArchivoConsumos
         {
-            get => _archivoConsumos;
-            set
-            {
-                if (SetProperty(ref _archivoConsumos, value))
-                {
-                    OnPropertyChanged(nameof(ArchivoConsumosNombre));
-                    OnPropertyChanged(nameof(ArchivoConsumosCargado));
-                    OnPropertyChanged(nameof(ArchivoConsumosEstado));
-                    OnPropertyChanged(nameof(ArchivoConsumosIcono));
-                }
-            }
+            get => GetFileItem(FileConsumos).SinglePath;
+            set => SetSingleFilePath(FileConsumos, value);
         }
 
-        public ObservableCollection<string> ArchivosConsumosDetalle => _archivosConsumosDetalle;
+        public ObservableCollection<string> ArchivosConsumosDetalle => GetFileItem(FileConsumosDetalle).Paths;
 
         public string? ArchivoServicios
         {
-            get => _archivoServicios;
-            set
-            {
-                if (SetProperty(ref _archivoServicios, value))
-                {
-                    OnPropertyChanged(nameof(ArchivoServiciosNombre));
-                    OnPropertyChanged(nameof(ArchivoServiciosCargado));
-                    OnPropertyChanged(nameof(ArchivoServiciosEstado));
-                    OnPropertyChanged(nameof(ArchivoServiciosIcono));
-                }
-            }
+            get => GetFileItem(FileServicios).SinglePath;
+            set => SetSingleFilePath(FileServicios, value);
         }
 
         public string? ArchivoCatalogoServicios
         {
-            get => _archivoCatalogoServicios;
-            set
-            {
-                if (SetProperty(ref _archivoCatalogoServicios, value))
-                {
-                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosNombre));
-                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosCargado));
-                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosEstado));
-                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosIcono));
-                }
-            }
+            get => GetFileItem(FileCatalogoServicios).SinglePath;
+            set => SetSingleFilePath(FileCatalogoServicios, value);
         }
 
-        public string ArchivoCategoriasNombre => GetFileName(ArchivoCategorias);
-        public string ArchivoPadronNombre => GetFileName(ArchivoPadron);
-        public string ArchivoConsumosNombre => GetFileName(ArchivoConsumos);
-        public string ArchivoConsumosDetalleNombre => GetArchivosConsumosDetalleNombre();
-        public string ArchivoServiciosNombre => GetFileName(ArchivoServicios);
-        public string ArchivoCatalogoServiciosNombre => GetFileName(ArchivoCatalogoServicios);
-        public bool ArchivoCategoriasCargado => !string.IsNullOrWhiteSpace(ArchivoCategorias);
-        public bool ArchivoPadronCargado => !string.IsNullOrWhiteSpace(ArchivoPadron);
-        public bool ArchivoConsumosCargado => !string.IsNullOrWhiteSpace(ArchivoConsumos);
-        public bool ArchivoConsumosDetalleCargado => _archivosConsumosDetalle.Count > 0;
-        public bool ArchivoServiciosCargado => !string.IsNullOrWhiteSpace(ArchivoServicios);
-        public bool ArchivoCatalogoServiciosCargado => !string.IsNullOrWhiteSpace(ArchivoCatalogoServicios);
-        public string ArchivoCategoriasEstado => BuildFileStatus(ArchivoCategoriasNombre, ArchivoCategoriasCargado);
-        public string ArchivoPadronEstado => BuildFileStatus(ArchivoPadronNombre, ArchivoPadronCargado);
-        public string ArchivoConsumosEstado => BuildFileStatus(ArchivoConsumosNombre, ArchivoConsumosCargado);
-        public string ArchivoConsumosDetalleEstado => BuildFileStatus(ArchivoConsumosDetalleNombre, ArchivoConsumosDetalleCargado);
-        public string ArchivoServiciosEstado => BuildFileStatus(ArchivoServiciosNombre, ArchivoServiciosCargado);
-        public string ArchivoCatalogoServiciosEstado => BuildFileStatus(ArchivoCatalogoServiciosNombre, ArchivoCatalogoServiciosCargado);
-        public string ArchivoCategoriasIcono => ArchivoCategoriasCargado ? "✓" : "↑";
-        public string ArchivoPadronIcono => ArchivoPadronCargado ? "✓" : "↑";
-        public string ArchivoConsumosIcono => ArchivoConsumosCargado ? "✓" : "↑";
-        public string ArchivoConsumosDetalleIcono => ArchivoConsumosDetalleCargado ? "✓" : "↑";
-        public string? ArchivoConsumosDetalleToolTip => GetArchivosConsumosDetalleToolTip();
-        public string ArchivoServiciosIcono => ArchivoServiciosCargado ? "✓" : "↑";
-        public string ArchivoCatalogoServiciosIcono => ArchivoCatalogoServiciosCargado ? "✓" : "↑";
+        public string ArchivoCategoriasNombre => GetFileItem(FileCategorias).DisplayName;
+        public string ArchivoPadronNombre => GetFileItem(FilePadron).DisplayName;
+        public string ArchivoConsumosNombre => GetFileItem(FileConsumos).DisplayName;
+        public string ArchivoConsumosDetalleNombre => GetFileItem(FileConsumosDetalle).DisplayName;
+        public string ArchivoServiciosNombre => GetFileItem(FileServicios).DisplayName;
+        public string ArchivoCatalogoServiciosNombre => GetFileItem(FileCatalogoServicios).DisplayName;
+        public bool ArchivoCategoriasCargado => GetFileItem(FileCategorias).IsLoaded;
+        public bool ArchivoPadronCargado => GetFileItem(FilePadron).IsLoaded;
+        public bool ArchivoConsumosCargado => GetFileItem(FileConsumos).IsLoaded;
+        public bool ArchivoConsumosDetalleCargado => GetFileItem(FileConsumosDetalle).IsLoaded;
+        public bool ArchivoServiciosCargado => GetFileItem(FileServicios).IsLoaded;
+        public bool ArchivoCatalogoServiciosCargado => GetFileItem(FileCatalogoServicios).IsLoaded;
+        public string ArchivoCategoriasEstado => GetFileItem(FileCategorias).Status;
+        public string ArchivoPadronEstado => GetFileItem(FilePadron).Status;
+        public string ArchivoConsumosEstado => GetFileItem(FileConsumos).Status;
+        public string ArchivoConsumosDetalleEstado => GetFileItem(FileConsumosDetalle).Status;
+        public string ArchivoServiciosEstado => GetFileItem(FileServicios).Status;
+        public string ArchivoCatalogoServiciosEstado => GetFileItem(FileCatalogoServicios).Status;
+        public string ArchivoCategoriasIcono => GetFileItem(FileCategorias).Icon;
+        public string ArchivoPadronIcono => GetFileItem(FilePadron).Icon;
+        public string ArchivoConsumosIcono => GetFileItem(FileConsumos).Icon;
+        public string ArchivoConsumosDetalleIcono => GetFileItem(FileConsumosDetalle).Icon;
+        public string? ArchivoConsumosDetalleToolTip => GetFileItem(FileConsumosDetalle).ToolTip;
+        public string ArchivoServiciosIcono => GetFileItem(FileServicios).Icon;
+        public string ArchivoCatalogoServiciosIcono => GetFileItem(FileCatalogoServicios).Icon;
 
         public int Progress
         {
@@ -202,6 +159,7 @@ namespace ImplementadorCUAD.ViewModels
         public ObservableCollection<LogEntry> Logs { get; }
         public ObservableCollection<Empleador> Empleador { get; }
         public ObservableCollection<Entidad> Entidad { get; }
+        public ObservableCollection<FileInputItemViewModel> FileInputs { get; }
 
         public ICommand SeleccionarCategoriasCommand { get; }
         public ICommand SeleccionarPadronCommand { get; }
@@ -251,29 +209,30 @@ namespace ImplementadorCUAD.ViewModels
                 new Entidad { Id = 0, EntId = 0, Nombre = "Seleccionar" }
             };
 
+            FileInputs = new ObservableCollection<FileInputItemViewModel>();
+            RegisterFileItem(new FileInputItemViewModel(FileCategorias, "Categorias Socios", false));
+            RegisterFileItem(new FileInputItemViewModel(FilePadron, "Padron Socios", false));
+            RegisterFileItem(new FileInputItemViewModel(FileConsumos, "Consumos", false));
+            RegisterFileItem(new FileInputItemViewModel(FileConsumosDetalle, "Consumos Detalle", true));
+            RegisterFileItem(new FileInputItemViewModel(FileCatalogoServicios, "Catalogo Servicios", false));
+            RegisterFileItem(new FileInputItemViewModel(FileServicios, "Consumos Servicios", false));
+
             EntidadSeleccionada = Entidad.FirstOrDefault();
             EmpleadorSeleccionado = Empleador.FirstOrDefault();
 
-            _archivosConsumosDetalle.CollectionChanged += (_, _) =>
-            {
-                OnPropertyChanged(nameof(ArchivoConsumosDetalleNombre));
-                OnPropertyChanged(nameof(ArchivoConsumosDetalleCargado));
-                OnPropertyChanged(nameof(ArchivoConsumosDetalleEstado));
-                OnPropertyChanged(nameof(ArchivoConsumosDetalleIcono));
-                OnPropertyChanged(nameof(ArchivoConsumosDetalleToolTip));
-            };
-            SeleccionarCategoriasCommand = new RelayCommand(_ => SelectFile("Categorias"));
-            SeleccionarPadronCommand = new RelayCommand(_ => SelectFile("Padron"));
-            SeleccionarConsumosCommand = new RelayCommand(_ => SelectFile("Consumos"));
-            SeleccionarConsumosDetalleCommand = new RelayCommand(_ => SelectFile("ConsumosDetalle"));
-            SeleccionarServiciosCommand = new RelayCommand(_ => SelectFile("Servicios"));
-            SeleccionarCatalogoServiciosCommand = new RelayCommand(_ => SelectFile("CatalogoServicios"));
-            LimpiarCategoriasArchivoCommand = new RelayCommand(_ => ClearFile("Categorias"));
-            LimpiarPadronArchivoCommand = new RelayCommand(_ => ClearFile("Padron"));
-            LimpiarConsumosArchivoCommand = new RelayCommand(_ => ClearFile("Consumos"));
-            LimpiarConsumosDetalleArchivoCommand = new RelayCommand(_ => ClearFile("ConsumosDetalle"));
-            LimpiarServiciosArchivoCommand = new RelayCommand(_ => ClearFile("Servicios"));
-            LimpiarCatalogoServiciosArchivoCommand = new RelayCommand(_ => ClearFile("CatalogoServicios"));
+            SeleccionarCategoriasCommand = new RelayCommand(_ => SelectFile(FileCategorias));
+            SeleccionarPadronCommand = new RelayCommand(_ => SelectFile(FilePadron));
+            SeleccionarConsumosCommand = new RelayCommand(_ => SelectFile(FileConsumos));
+            SeleccionarConsumosDetalleCommand = new RelayCommand(_ => SelectFile(FileConsumosDetalle));
+            SeleccionarServiciosCommand = new RelayCommand(_ => SelectFile(FileServicios));
+            SeleccionarCatalogoServiciosCommand = new RelayCommand(_ => SelectFile(FileCatalogoServicios));
+            LimpiarCategoriasArchivoCommand = new RelayCommand(_ => ClearFile(FileCategorias));
+            LimpiarPadronArchivoCommand = new RelayCommand(_ => ClearFile(FilePadron));
+            LimpiarConsumosArchivoCommand = new RelayCommand(_ => ClearFile(FileConsumos));
+            LimpiarConsumosDetalleArchivoCommand = new RelayCommand(_ => ClearFile(FileConsumosDetalle));
+            LimpiarServiciosArchivoCommand = new RelayCommand(_ => ClearFile(FileServicios));
+            LimpiarCatalogoServiciosArchivoCommand = new RelayCommand(_ => ClearFile(FileCatalogoServicios));
+            AssignFileItemCommands();
             ValidateCommand = new SimpleAsyncCommand(ValidateFilesAsync);
             CopyCommand = new SimpleAsyncCommand(CopyToDatabaseAsync);
             ExportLogCommand = new RelayCommand(_ => ExportLog());
@@ -330,7 +289,7 @@ namespace ImplementadorCUAD.ViewModels
                 ArchivoCategorias = ArchivoCategorias,
                 ArchivoPadron = ArchivoPadron,
                 ArchivoConsumos = ArchivoConsumos,
-                ArchivosConsumosDetalle = _archivosConsumosDetalle.ToList(),
+                ArchivosConsumosDetalle = ArchivosConsumosDetalle.ToList(),
                 ArchivoServicios = ArchivoServicios,
                 ArchivoCatalogoServicios = ArchivoCatalogoServicios,
                 TargetConnectionString = EmpleadorSeleccionado?.ConnectionString
@@ -342,7 +301,7 @@ namespace ImplementadorCUAD.ViewModels
             var dialog = new OpenFileDialog
             {
                 Filter = "Archivos Excel (*.xls;*.xlsx)|*.xls;*.xlsx|Archivos CSV (*.csv)|*.csv|Archivos TXT (*.txt)|*.txt|Todos los archivos (*.*)|*.*",
-                Multiselect = type == "ConsumosDetalle"
+                Multiselect = string.Equals(type, FileConsumosDetalle, StringComparison.Ordinal)
             };
 
             if (dialog.ShowDialog() != true)
@@ -352,26 +311,23 @@ namespace ImplementadorCUAD.ViewModels
 
             switch (type)
             {
-                case "Categorias":
+                case FileCategorias:
                     ArchivoCategorias = dialog.FileName;
                     break;
-                case "Padron":
+                case FilePadron:
                     ArchivoPadron = dialog.FileName;
                     break;
-                case "Consumos":
+                case FileConsumos:
                     ArchivoConsumos = dialog.FileName;
                     break;
-                case "ConsumosDetalle":
-                    _archivosConsumosDetalle.Clear();
-                    foreach (var path in dialog.FileNames)
-                    {
-                        _archivosConsumosDetalle.Add(path);
-                    }
+                case FileConsumosDetalle:
+                    GetFileItem(FileConsumosDetalle).SetFromDialogSelection(dialog.FileNames);
+                    RaiseFileCompatibilityProperties(FileConsumosDetalle);
                     break;
-                case "Servicios":
+                case FileServicios:
                     ArchivoServicios = dialog.FileName;
                     break;
-                case "CatalogoServicios":
+                case FileCatalogoServicios:
                     ArchivoCatalogoServicios = dialog.FileName;
                     break;
             }
@@ -381,22 +337,23 @@ namespace ImplementadorCUAD.ViewModels
         {
             switch (type)
             {
-                case "Categorias":
+                case FileCategorias:
                     ArchivoCategorias = null;
                     break;
-                case "Padron":
+                case FilePadron:
                     ArchivoPadron = null;
                     break;
-                case "Consumos":
+                case FileConsumos:
                     ArchivoConsumos = null;
                     break;
-                case "ConsumosDetalle":
-                    _archivosConsumosDetalle.Clear();
+                case FileConsumosDetalle:
+                    GetFileItem(FileConsumosDetalle).Clear();
+                    RaiseFileCompatibilityProperties(FileConsumosDetalle);
                     break;
-                case "Servicios":
+                case FileServicios:
                     ArchivoServicios = null;
                     break;
-                case "CatalogoServicios":
+                case FileCatalogoServicios:
                     ArchivoCatalogoServicios = null;
                     break;
             }
@@ -714,7 +671,8 @@ namespace ImplementadorCUAD.ViewModels
             ArchivoCategorias = null;
             ArchivoPadron = null;
             ArchivoConsumos = null;
-            _archivosConsumosDetalle.Clear();
+            GetFileItem(FileConsumosDetalle).Clear();
+            RaiseFileCompatibilityProperties(FileConsumosDetalle);
             ArchivoServicios = null;
             ArchivoCatalogoServicios = null;
             ValidationCompleted = false;
@@ -906,28 +864,90 @@ namespace ImplementadorCUAD.ViewModels
             };
         }
 
-        private string GetArchivosConsumosDetalleNombre()
+        private void RegisterFileItem(FileInputItemViewModel item)
         {
-            var n = _archivosConsumosDetalle.Count;
-            if (n == 0) return string.Empty;
-            if (n == 1) return GetFileName(_archivosConsumosDetalle[0]);
-            return $"{n} archivos";
+            _fileItemsByKey[item.Key] = item;
+            FileInputs.Add(item);
+            item.Paths.CollectionChanged += (_, _) =>
+            {
+                item.RaiseDerivedProperties();
+                RaiseFileCompatibilityProperties(item.Key);
+            };
         }
 
-        private string? GetArchivosConsumosDetalleToolTip()
+        private FileInputItemViewModel GetFileItem(string key)
         {
-            if (_archivosConsumosDetalle.Count <= 1) return null;
-            return string.Join(Environment.NewLine, _archivosConsumosDetalle.Select(p => GetFileName(p)));
+            return _fileItemsByKey[key];
         }
 
-        private static string GetFileName(string? ruta)
+        private void SetSingleFilePath(string key, string? value)
         {
-            return string.IsNullOrWhiteSpace(ruta) ? string.Empty : Path.GetFileName(ruta);
+            var item = GetFileItem(key);
+            if (!item.IsMultiple)
+            {
+                item.SinglePath = value;
+                RaiseFileCompatibilityProperties(key);
+            }
         }
 
-        private static string BuildFileStatus(string fileName, bool loaded)
+        private void RaiseFileCompatibilityProperties(string key)
         {
-            return loaded ? $"{fileName} (Cargado)" : "Pendiente";
+            switch (key)
+            {
+                case FileCategorias:
+                    OnPropertyChanged(nameof(ArchivoCategoriasNombre));
+                    OnPropertyChanged(nameof(ArchivoCategoriasCargado));
+                    OnPropertyChanged(nameof(ArchivoCategoriasEstado));
+                    OnPropertyChanged(nameof(ArchivoCategoriasIcono));
+                    break;
+                case FilePadron:
+                    OnPropertyChanged(nameof(ArchivoPadronNombre));
+                    OnPropertyChanged(nameof(ArchivoPadronCargado));
+                    OnPropertyChanged(nameof(ArchivoPadronEstado));
+                    OnPropertyChanged(nameof(ArchivoPadronIcono));
+                    break;
+                case FileConsumos:
+                    OnPropertyChanged(nameof(ArchivoConsumosNombre));
+                    OnPropertyChanged(nameof(ArchivoConsumosCargado));
+                    OnPropertyChanged(nameof(ArchivoConsumosEstado));
+                    OnPropertyChanged(nameof(ArchivoConsumosIcono));
+                    break;
+                case FileConsumosDetalle:
+                    OnPropertyChanged(nameof(ArchivoConsumosDetalleNombre));
+                    OnPropertyChanged(nameof(ArchivoConsumosDetalleCargado));
+                    OnPropertyChanged(nameof(ArchivoConsumosDetalleEstado));
+                    OnPropertyChanged(nameof(ArchivoConsumosDetalleIcono));
+                    OnPropertyChanged(nameof(ArchivoConsumosDetalleToolTip));
+                    break;
+                case FileServicios:
+                    OnPropertyChanged(nameof(ArchivoServiciosNombre));
+                    OnPropertyChanged(nameof(ArchivoServiciosCargado));
+                    OnPropertyChanged(nameof(ArchivoServiciosEstado));
+                    OnPropertyChanged(nameof(ArchivoServiciosIcono));
+                    break;
+                case FileCatalogoServicios:
+                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosNombre));
+                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosCargado));
+                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosEstado));
+                    OnPropertyChanged(nameof(ArchivoCatalogoServiciosIcono));
+                    break;
+            }
+        }
+
+        private void AssignFileItemCommands()
+        {
+            GetFileItem(FileCategorias).SelectCommand = SeleccionarCategoriasCommand;
+            GetFileItem(FileCategorias).ClearCommand = LimpiarCategoriasArchivoCommand;
+            GetFileItem(FilePadron).SelectCommand = SeleccionarPadronCommand;
+            GetFileItem(FilePadron).ClearCommand = LimpiarPadronArchivoCommand;
+            GetFileItem(FileConsumos).SelectCommand = SeleccionarConsumosCommand;
+            GetFileItem(FileConsumos).ClearCommand = LimpiarConsumosArchivoCommand;
+            GetFileItem(FileConsumosDetalle).SelectCommand = SeleccionarConsumosDetalleCommand;
+            GetFileItem(FileConsumosDetalle).ClearCommand = LimpiarConsumosDetalleArchivoCommand;
+            GetFileItem(FileCatalogoServicios).SelectCommand = SeleccionarCatalogoServiciosCommand;
+            GetFileItem(FileCatalogoServicios).ClearCommand = LimpiarCatalogoServiciosArchivoCommand;
+            GetFileItem(FileServicios).SelectCommand = SeleccionarServiciosCommand;
+            GetFileItem(FileServicios).ClearCommand = LimpiarServiciosArchivoCommand;
         }
 
         private bool HasEntidadSeleccionadaReal()

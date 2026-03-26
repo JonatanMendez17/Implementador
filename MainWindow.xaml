@@ -4,6 +4,7 @@
         xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ImplementadorCUAD"
+        xmlns:controls="clr-namespace:ImplementadorCUAD.Controls"
         mc:Ignorable="av"
         Title="Implementador Base"
         Height="690"
@@ -19,21 +20,6 @@
         <SolidColorBrush x:Key="LogInfoBrush" Color="#22C55E" />
         <SolidColorBrush x:Key="LogErrorBrush" Color="#EF4444" />
         <SolidColorBrush x:Key="LogWarnBrush" Color="#EAB308" />
-        <SolidColorBrush x:Key="PanelBrush" Color="#1E293B" />
-        <SolidColorBrush x:Key="PanelBorderBrush" Color="#32455F" />
-        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F8FAFC" />
-        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#9AA8BC" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#3B82F6" />
-        <SolidColorBrush x:Key="AccentBrushLight" Color="#60A5FA" />
-        <SolidColorBrush x:Key="MutedControlBrush" Color="#233247" />
-
-        <Style x:Key="PanelCardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="16" />
-        </Style>
 
         <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#D1D9E6" />
@@ -158,92 +144,6 @@
             </Setter>
         </Style>
 
-        <Style x:Key="OutlineButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="36" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="FontSize" Value="16" />
-            <Setter Property="Foreground" Value="#E5E7EB" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderBrush" Value="#5F738D" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Root"
-                                CornerRadius="8"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                              Margin="{TemplateBinding Padding}" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="#1F3A5B" />
-                                <Setter TargetName="Root" Property="BorderBrush" Value="#7FB0FF" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Root" Property="Opacity" Value="0.88" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Root" Property="Opacity" Value="0.5" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource OutlineButtonStyle}">
-            <Setter Property="Height" Value="52" />
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrushLight}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="FontSize" Value="16" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-
-        <Style x:Key="FileRowButtonStyle" TargetType="Button" BasedOn="{StaticResource OutlineButtonStyle}">
-            <Setter Property="Height" Value="42" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Padding" Value="10,4" />
-            <Setter Property="Background" Value="#273549" />
-            <Setter Property="BorderBrush" Value="#3F536C" />
-            <Setter Property="Margin" Value="0,0,0,8" />
-        </Style>
-
-        <Style x:Key="FileStatusTextStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#A8B4C5" />
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="TextAlignment" Value="Right" />
-            <Setter Property="Margin" Value="16,0,0,0" />
-            <Style.Triggers>
-                <Trigger Property="Tag" Value="True">
-                    <Setter Property="Foreground" Value="#4ADE80" />
-                    <Setter Property="FontWeight" Value="SemiBold" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="FileIconBadgeStyle" TargetType="Border">
-            <Setter Property="Width" Value="22" />
-            <Setter Property="Height" Value="22" />
-            <Setter Property="CornerRadius" Value="11" />
-            <Setter Property="Background" Value="#334155" />
-            <Style.Triggers>
-                <Trigger Property="Tag" Value="True">
-                    <Setter Property="Background" Value="#22C55E" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
         <Style x:Key="LogTextStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#CBD5E1" />
             <Setter Property="FontSize" Value="14" />
@@ -339,188 +239,19 @@
 
                     <StackPanel Grid.Row="2">
                         <Separator Margin="0,0,0,10" Background="#3D5068" />
-                        <!-- Categorias -->
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="28" />
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarCategoriasCommand}" Margin="0,0,4,0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="28" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="230" />
-                                    </Grid.ColumnDefinitions>
-                                    <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoCategoriasCargado}">
-                                        <TextBlock Text="{Binding ArchivoCategoriasIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Text="Categorias Socios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
-                                    <TextBlock Grid.Column="2" Text="{Binding ArchivoCategoriasEstado}" Tag="{Binding ArchivoCategoriasCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
-                                </Grid>
-                            </Button>
-                            <Button Grid.Column="1"
-                                    Style="{StaticResource OutlineButtonStyle}"
-                                    Command="{Binding LimpiarCategoriasArchivoCommand}"
-                                    Content="✕"
-                                    FontSize="12"
-                                    Padding="0"
-                                    ToolTip="Limpiar archivo"
-                                    Margin="0,4,0,4" />
-                        </Grid>
-
-                        <!-- Padron -->
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="28" />
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarPadronCommand}" Margin="0,0,4,0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="28" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="230" />
-                                    </Grid.ColumnDefinitions>
-                                    <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoPadronCargado}">
-                                        <TextBlock Text="{Binding ArchivoPadronIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Text="Padron Socios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
-                                    <TextBlock Grid.Column="2" Text="{Binding ArchivoPadronEstado}" Tag="{Binding ArchivoPadronCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
-                                </Grid>
-                            </Button>
-                            <Button Grid.Column="1"
-                                    Style="{StaticResource OutlineButtonStyle}"
-                                    Command="{Binding LimpiarPadronArchivoCommand}"
-                                    Content="✕"
-                                    FontSize="12"
-                                    Padding="0"
-                                    ToolTip="Limpiar archivo"
-                                    Margin="0,4,0,4" />
-                        </Grid>
-
-                        <!-- Consumos -->
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="28" />
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarConsumosCommand}" Margin="0,0,4,0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="28" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="230" />
-                                    </Grid.ColumnDefinitions>
-                                    <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoConsumosCargado}">
-                                        <TextBlock Text="{Binding ArchivoConsumosIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Text="Consumos" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
-                                    <TextBlock Grid.Column="2" Text="{Binding ArchivoConsumosEstado}" Tag="{Binding ArchivoConsumosCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
-                                </Grid>
-                            </Button>
-                            <Button Grid.Column="1"
-                                    Style="{StaticResource OutlineButtonStyle}"
-                                    Command="{Binding LimpiarConsumosArchivoCommand}"
-                                    Content="✕"
-                                    FontSize="12"
-                                    Padding="0"
-                                    ToolTip="Limpiar archivo"
-                                    Margin="0,5,0,3" />
-                        </Grid>
-
-                        <!-- Consumos Detalle (permite varios archivos) -->
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="28" />
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarConsumosDetalleCommand}" Margin="0,0,4,0"
-                                    ToolTip="{Binding ArchivoConsumosDetalleToolTip}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="28" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="230" />
-                                    </Grid.ColumnDefinitions>
-                                    <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoConsumosDetalleCargado}">
-                                        <TextBlock Text="{Binding ArchivoConsumosDetalleIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Text="Consumos Detalle" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
-                                    <TextBlock Grid.Column="2" Text="{Binding ArchivoConsumosDetalleEstado}" Tag="{Binding ArchivoConsumosDetalleCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
-                                </Grid>
-                            </Button>
-                            <Button Grid.Column="1"
-                                    Style="{StaticResource OutlineButtonStyle}"
-                                    Command="{Binding LimpiarConsumosDetalleArchivoCommand}"
-                                    Content="✕"
-                                    FontSize="12"
-                                    Padding="0"
-                                    ToolTip="Limpiar archivo"
-                                    Margin="0,4,0,4" />
-                        </Grid>
-
-                        <TextBlock Text="Opcional" Style="{StaticResource LabelStyle}" Margin="0,4,0,4" />
-
-                        <!-- Catalogo Servicios -->
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="28" />
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarCatalogoServiciosCommand}" Margin="0,0,4,0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="28" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="230" />
-                                    </Grid.ColumnDefinitions>
-                                    <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoCatalogoServiciosCargado}">
-                                        <TextBlock Text="{Binding ArchivoCatalogoServiciosIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Text="Catalogo Servicios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
-                                    <TextBlock Grid.Column="2" Text="{Binding ArchivoCatalogoServiciosEstado}" Tag="{Binding ArchivoCatalogoServiciosCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
-                                </Grid>
-                            </Button>
-                            <Button Grid.Column="1"
-                                    Style="{StaticResource OutlineButtonStyle}"
-                                    Command="{Binding LimpiarCatalogoServiciosArchivoCommand}"
-                                    Content="✕"
-                                    FontSize="12"
-                                    Padding="0"
-                                    ToolTip="Limpiar archivo"
-                                    Margin="0,4,0,4" />
-                        </Grid>
-
-                        <!-- Consumos Servicios -->
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="28" />
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Style="{StaticResource FileRowButtonStyle}" Command="{Binding SeleccionarServiciosCommand}" Margin="0,0,4,0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="28" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="230" />
-                                    </Grid.ColumnDefinitions>
-                                    <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding ArchivoServiciosCargado}">
-                                        <TextBlock Text="{Binding ArchivoServiciosIcono}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Text="Consumos Servicios" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,0" />
-                                    <TextBlock Grid.Column="2" Text="{Binding ArchivoServiciosEstado}" Tag="{Binding ArchivoServiciosCargado}" Style="{StaticResource FileStatusTextStyle}" VerticalAlignment="Center" />
-                                </Grid>
-                            </Button>
-                            <Button Grid.Column="1"
-                                    Style="{StaticResource OutlineButtonStyle}"
-                                    Command="{Binding LimpiarServiciosArchivoCommand}"
-                                    Content="✕"
-                                    FontSize="12"
-                                    Padding="0"
-                                    ToolTip="Limpiar archivo"
-                                    Margin="0,6,0,2" />
-                        </Grid>
+                        <ItemsControl ItemsSource="{Binding FileInputs}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:FileUploadRowControl Title="{Binding Title}"
+                                                                    StatusText="{Binding Status}"
+                                                                    Icon="{Binding Icon}"
+                                                                    IsFileLoaded="{Binding IsLoaded}"
+                                                                    ToolTipText="{Binding ToolTip}"
+                                                                    SelectCommand="{Binding SelectCommand}"
+                                                                    ClearCommand="{Binding ClearCommand}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
 
                     <StackPanel Grid.Row="3" Margin="0,12,0,0">

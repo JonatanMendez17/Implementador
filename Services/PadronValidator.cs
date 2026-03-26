@@ -2,6 +2,7 @@ using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using ImplementadorCUAD.Data;
 using System.Globalization;
+using ImplementadorCUAD.Services.Common;
 
 namespace ImplementadorCUAD.Services;
 
@@ -21,13 +22,13 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
 
         foreach (var filaCategoria in result.DatosCategoriasValidadas)
         {
-            if (TryGetFirstValue(filaCategoria, out var codigo, "Codigo Categoria", "Código Categoría") &&
+            if (RowValueReader.TryGetFirstValue(filaCategoria, out var codigo, "Codigo Categoria", "Código Categoría") &&
                 !string.IsNullOrWhiteSpace(codigo))
             {
                 categoriasValidasCodigo.Add(codigo.Trim());
             }
 
-            if (TryGetFirstValue(filaCategoria, out var nombre, "Categoria", "Categoría") &&
+            if (RowValueReader.TryGetFirstValue(filaCategoria, out var nombre, "Categoria", "Categoría") &&
                 !string.IsNullOrWhiteSpace(nombre))
             {
                 categoriasValidasNombre.Add(nombre.Trim());
@@ -85,12 +86,12 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
             var rowNumber = i + 2;
             var erroresFila = new List<string>();
 
-            var entidad = GetFirstValue(row, "Entidad");
-            var nroSocio = GetFirstValue(row, "Nro Socio");
-            var codigoCategoria = GetFirstValue(row, "Codigo Categoria", "Código Categoría");
-            var nombreCategoriaPadron = GetFirstValue(row, "Categoria", "Categoría");
-            var documento = GetFirstValue(row, "Documento");
-            var beneficio = GetFirstValue(row, "Beneficio");
+            var entidad = RowValueReader.GetFirstValue(row, "Entidad");
+            var nroSocio = RowValueReader.GetFirstValue(row, "Nro Socio");
+            var codigoCategoria = RowValueReader.GetFirstValue(row, "Codigo Categoria", "Código Categoría");
+            var nombreCategoriaPadron = RowValueReader.GetFirstValue(row, "Categoria", "Categoría");
+            var documento = RowValueReader.GetFirstValue(row, "Documento");
+            var beneficio = RowValueReader.GetFirstValue(row, "Beneficio");
 
             if (string.IsNullOrWhiteSpace(nroSocio))
             {
@@ -240,24 +241,5 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory)
         return false;
     }
 
-    private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
-    {
-        foreach (var clave in posiblesClaves)
-        {
-            if (row.TryGetValue(clave, out var encontrado))
-            {
-                value = encontrado;
-                return true;
-            }
-        }
-
-        value = string.Empty;
-        return false;
-    }
-
-    private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
-    {
-        return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
-    }
 }
 

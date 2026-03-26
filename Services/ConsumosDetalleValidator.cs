@@ -1,6 +1,7 @@
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using System.Globalization;
+using ImplementadorCUAD.Services.Common;
 
 namespace ImplementadorCUAD.Services;
 
@@ -37,8 +38,8 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
         }
 
         var consumosPorCodigo = result.DatosConsumosValidados
-            .Where(f => !string.IsNullOrWhiteSpace(GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
-            .GroupBy(f => GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
+            .Where(f => !string.IsNullOrWhiteSpace(RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
+            .GroupBy(f => RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
         var detalleFiltrado = new List<Dictionary<string, string>>();
@@ -50,9 +51,9 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             var rowNumber = i + 2;
             var erroresFila = new List<string>();
 
-            var entidad = GetFirstValue(row, "Entidad");
-            var codigoConsumo = GetFirstValue(row, "Codigo Consumo", "Código Consumo");
-            var fechaVencimientoText = GetFirstValue(row, "Fecha Vencimiento");
+            var entidad = RowValueReader.GetFirstValue(row, "Entidad");
+            var codigoConsumo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo");
+            var fechaVencimientoText = RowValueReader.GetFirstValue(row, "Fecha Vencimiento");
 
             if (string.IsNullOrWhiteSpace(entidad) || !entidadesCuad.Contains(entidad.Trim()))
             {
@@ -64,7 +65,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
                 erroresFila.Add($"El codigo de consumo '{codigoConsumo}' no existe en archivo de Consumos detalle.");
             }
 
-            if (!TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
+            if (!ValueParsers.TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
             {
                 erroresFila.Add("La date de vencimiento es invalida.");
             }
@@ -85,8 +86,8 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
         }
 
         var detallePorCodigo = detalleFiltrado
-            .Where(f => !string.IsNullOrWhiteSpace(GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
-            .GroupBy(f => GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
+            .Where(f => !string.IsNullOrWhiteSpace(RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
+            .GroupBy(f => RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
 
         var codigosInvalidosPorTotales = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -101,8 +102,8 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
                 continue;
             }
 
-            var cuotasPendientesText = GetFirstValue(consumoFila, "Cuotas Pendientes");
-            var montoDeudaText = GetFirstValue(consumoFila, "Monto Deuda");
+            var cuotasPendientesText = RowValueReader.GetFirstValue(consumoFila, "Cuotas Pendientes");
+            var montoDeudaText = RowValueReader.GetFirstValue(consumoFila, "Monto Deuda");
 
             if (!int.TryParse(cuotasPendientesText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cuotasEsperadas))
             {
@@ -111,7 +112,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
                 continue;
             }
 
-            if (!TryParseDecimalFlexible(montoDeudaText, out var montoEsperado))
+            if (!ValueParsers.TryParseDecimalFlexible(montoDeudaText, out var montoEsperado))
             {
                 codigosInvalidosPorTotales.Add(codigo);
                 log.Warn($"Consumos Detalle: No se pudo leer el 'Monto Deuda' para el codigo de consumo '{codigo}'.");
@@ -124,14 +125,14 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             var numerosCuota = new List<int>(cuotasDetalle);
             foreach (var filaDetalle in filasDetalle)
             {
-                var montoText = GetFirstValue(filaDetalle, "Monto");
-                if (!TryParseDecimalFlexible(montoText, out var montoCuota))
+                var montoText = RowValueReader.GetFirstValue(filaDetalle, "Monto");
+                if (!ValueParsers.TryParseDecimalFlexible(montoText, out var montoCuota))
                 {
                     parseOk = false;
                     break;
                 }
 
-                var nroCuotaText = GetFirstValue(filaDetalle, "Nro Cuota");
+                var nroCuotaText = RowValueReader.GetFirstValue(filaDetalle, "Nro Cuota");
                 if (!int.TryParse(nroCuotaText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var nroCuota))
                 {
                     parseOk = false;
@@ -180,7 +181,7 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
             var depurado = new List<Dictionary<string, string>>();
             foreach (var row in detalleFiltrado)
             {
-                var codigo = GetFirstValue(row, "Codigo Consumo", "Código Consumo").Trim();
+                var codigo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo").Trim();
                 if (codigosInvalidosPorTotales.Contains(codigo))
                 {
                     rechazadas++;
@@ -199,38 +200,6 @@ public sealed class ConsumosDetalleValidator(IAppDbContextFactory dbContextFacto
         }
 
         result.DatosConsumosDetalleValidados = detalleFiltrado;
-    }
-
-    private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
-    {
-        return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
-    }
-
-    private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
-    {
-        foreach (var clave in posiblesClaves)
-        {
-            if (row.TryGetValue(clave, out var encontrado))
-            {
-                value = encontrado;
-                return true;
-            }
-        }
-
-        value = string.Empty;
-        return false;
-    }
-
-    private static bool TryParseDecimalFlexible(string texto, out decimal value)
-    {
-        return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out value) ||
-               decimal.TryParse(texto, NumberStyles.Number, CultureInfo.GetCultureInfo("es-AR"), out value);
-    }
-
-    private static bool TryParseDateFlexible(string texto, out DateTime date)
-    {
-        return DateTime.TryParse(texto, CultureInfo.GetCultureInfo("es-AR"), DateTimeStyles.None, out date) ||
-               DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
     }
 
 }

@@ -1,10 +1,12 @@
 using ImplementadorCUAD.Models;
 using ImplementadorCUAD.Infrastructure;
 using System.Globalization;
+using ImplementadorCUAD.Services.Common;
+using ImplementadorCUAD.Services.Validation;
 
 namespace ImplementadorCUAD.Services;
 
-public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFactory)
+public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFactory) : RowValidatorBase
 {
     private readonly IAppDbContextFactory _dbContextFactory = dbContextFactory;
 
@@ -34,60 +36,45 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
                 c => c,
                 StringComparer.OrdinalIgnoreCase);
 
-        var filtrado = new List<Dictionary<string, string>>();
-        var rechazadas = 0;
-
-        for (int i = 0; i < result.DatosCatalogoServiciosValidados.Count; i++)
-        {
-            var row = result.DatosCatalogoServiciosValidados[i];
-            var rowNumber = i + 2;
-            var filaValida = true;
-
-            var entidad = GetFirstValue(row, "Entidad");
-            var servicio = GetFirstValue(row, "Servicio");
-            var importeTexto = GetFirstValue(row, "Importe");
-
-            if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
+        var filtrado = FilterValidRows(
+            "Catalogo Servicios",
+            result.DatosCatalogoServiciosValidados,
+            log,
+            (row, rowNumber) =>
             {
-                log.Warn($"Catalogo Servicios row {rowNumber}: La entidad se encuentra vacia.");
-                filaValida = false;
-            }
-            else
-            {
+                var erroresFila = new List<string>();
+                var entidad = RowValueReader.GetFirstValue(row, "Entidad");
+                var servicio = RowValueReader.GetFirstValue(row, "Servicio");
+                var importeTexto = RowValueReader.GetFirstValue(row, "Importe");
+
+                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
+                {
+                    erroresFila.Add("La entidad se encuentra vacia.");
+                    return erroresFila;
+                }
+
                 var clave = $"{entidad.Trim()}|{servicio.Trim()}";
                 if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCuad))
                 {
-                    log.Warn($" Catalogo Servicios row {rowNumber}: servicio '{servicio}' no existe en la base para la entidad '{entidad}'.");
-                    filaValida = false;
+                    erroresFila.Add($"servicio '{servicio}' no existe en la base para la entidad '{entidad}'.");
+                    return erroresFila;
                 }
-                else
-                {
-                    if (!TryParseDecimalFlexible(importeTexto, out var importeArchivo))
-                    {
-                        log.Warn($"Catalogo Servicios row {rowNumber}: El importe '{importeTexto}' es invalido.");
-                        filaValida = false;
-                    }
-                    else
-                    {
-                        var diferencia = Math.Abs(importeArchivo - refCuad.Importe);
-                        if (diferencia > 0.01m)
-                        {
-                            log.Warn($"Catalogo Servicios row {rowNumber}: El importe '{importeArchivo}' no coincide con la base ({refCuad.Importe}).");
-                            filaValida = false;
-                        }
-                    }
-                }
-            }
 
-            if (filaValida)
-            {
-                filtrado.Add(row);
-            }
-            else
-            {
-                rechazadas++;
-            }
-        }
+                if (!ValueParsers.TryParseDecimalFlexible(importeTexto, out var importeArchivo))
+                {
+                    erroresFila.Add($"El importe '{importeTexto}' es invalido.");
+                    return erroresFila;
+                }
+
+                var diferencia = Math.Abs(importeArchivo - refCuad.Importe);
+                if (diferencia > 0.01m)
+                {
+                    erroresFila.Add($"El importe '{importeArchivo}' no coincide con la base ({refCuad.Importe}).");
+                }
+
+                return erroresFila;
+            },
+            out var rechazadas);
 
         if (rechazadas > 0)
         {
@@ -97,30 +84,5 @@ public sealed class CatalogoServiciosValidator(IAppDbContextFactory dbContextFac
         result.DatosCatalogoServiciosValidados = filtrado;
     }
 
-    private static string GetFirstValue(Dictionary<string, string> row, params string[] posiblesClaves)
-    {
-        return TryGetFirstValue(row, out var value, posiblesClaves) ? value : string.Empty;
-    }
-
-    private static bool TryGetFirstValue(Dictionary<string, string> row, out string value, params string[] posiblesClaves)
-    {
-        foreach (var clave in posiblesClaves)
-        {
-            if (row.TryGetValue(clave, out var encontrado))
-            {
-                value = encontrado;
-                return true;
-            }
-        }
-
-        value = string.Empty;
-        return false;
-    }
-
-    private static bool TryParseDecimalFlexible(string texto, out decimal value)
-    {
-        return decimal.TryParse(texto, NumberStyles.Number, CultureInfo.InvariantCulture, out value) ||
-               decimal.TryParse(texto, NumberStyles.Number, CultureInfo.GetCultureInfo("es-AR"), out value);
-    }
 }
 
