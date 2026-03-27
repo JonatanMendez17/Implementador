@@ -23,6 +23,12 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
             .GroupBy(f => RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
+        var consumosDisponible = consumosPorCodigo.Count > 0;
+        if (!consumosDisponible)
+        {
+            log.Warn("Consumos Detalle: no se cargó archivo de Consumos. No se puede verificar que el Codigo Consumo exista en el archivo de Consumos.");
+        }
+
         var detalleFiltrado = FilterValidRows(
             "Consumos Detalle",
             result.DatosConsumosDetalleValidados,
@@ -40,7 +46,7 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
                 erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
             }
 
-            if (!consumosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
+            if (consumosDisponible && !consumosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
             {
                 erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' no existe en archivo de Consumos.");
             }

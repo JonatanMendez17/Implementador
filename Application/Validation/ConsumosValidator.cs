@@ -26,6 +26,12 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             .GroupBy(f => RowValueReader.GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
+        var padronDisponible = padronPorSocio.Count > 0;
+        if (!padronDisponible)
+        {
+            log.Warn("Consumos: no se cargó archivo de Padrón de Socios. No se puede verificar que el Nro Socio corresponda al padrón.");
+        }
+
         var entidad = entidadesRef.FirstOrDefault() ?? string.Empty;
         var dbChecker = new DbDuplicateChecker.Builder(_dbContextFactory, targetConnectionString, log)
             .Add("Codigo Consumo", db => db.GetCodigosConsumoExistentes(entidad))
@@ -52,23 +58,26 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                 erroresFila.Add($"El campo (Entidad) '{entidadFila}' no existe en la base.");
             }
 
-            if (!padronPorSocio.TryGetValue(nroSocio!.Trim(), out var filaPadron))
+            if (padronDisponible)
             {
-                erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe o no corresponde al padron.");
-            }
-            else
-            {
-                var cuitPadron = RowValueReader.GetFirstValue(filaPadron, "CUIT");
-                var beneficioPadron = RowValueReader.GetFirstValue(filaPadron, "Beneficio");
-
-                if (!ValueParsers.EqualsDigitsOnly(cuitConsumo, cuitPadron))
+                if (!padronPorSocio.TryGetValue(nroSocio!.Trim(), out var filaPadron))
                 {
-                    erroresFila.Add($"El campo (CUIT) no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe o no corresponde al padron.");
                 }
-
-                if (!ValueParsers.EqualsTrimmed(beneficioConsumo, beneficioPadron))
+                else
                 {
-                    erroresFila.Add($"El campo (Beneficio) no coincide con padron para socio '{nroSocio}'.");
+                    var cuitPadron = RowValueReader.GetFirstValue(filaPadron, "CUIT");
+                    var beneficioPadron = RowValueReader.GetFirstValue(filaPadron, "Beneficio");
+
+                    if (!ValueParsers.EqualsDigitsOnly(cuitConsumo, cuitPadron))
+                    {
+                        erroresFila.Add($"El campo (CUIT) no coincide con padron para socio '{nroSocio}'.");
+                    }
+
+                    if (!ValueParsers.EqualsTrimmed(beneficioConsumo, beneficioPadron))
+                    {
+                        erroresFila.Add($"El campo (Beneficio) no coincide con padron para socio '{nroSocio}'.");
+                    }
                 }
             }
 
