@@ -239,7 +239,25 @@
 
                     <StackPanel Grid.Row="2">
                         <Separator Margin="0,0,0,10" Background="#3D5068" />
-                        <ItemsControl ItemsSource="{Binding FileInputs}">
+                        <ItemsControl ItemsSource="{Binding RequiredFileInputs}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:FileUploadRowControl Title="{Binding Title}"
+                                                                    StatusText="{Binding Status}"
+                                                                    Icon="{Binding Icon}"
+                                                                    IsFileLoaded="{Binding IsLoaded}"
+                                                                    ToolTipText="{Binding ToolTip}"
+                                                                    SelectCommand="{Binding SelectCommand}"
+                                                                    ClearCommand="{Binding ClearCommand}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="Opcional"
+                                   Style="{StaticResource LabelStyle}"
+                                   Margin="0,6,0,4" />
+
+                        <ItemsControl ItemsSource="{Binding OptionalFileInputs}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <controls:FileUploadRowControl Title="{Binding Title}"

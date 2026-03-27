@@ -32,6 +32,29 @@ namespace Implementador.Data
             command.ExecuteScalar();
         }
 
+        public bool TableExists(string tableName)
+        {
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
+                return false;
+            }
+
+            using var connection = CreateOpenConnection();
+            using var command = new SqlCommand(
+                @"SELECT CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM sys.tables t
+                        WHERE t.name = @TableName
+                    )
+                    THEN 1 ELSE 0 END;",
+                connection);
+            command.Parameters.AddWithValue("@TableName", tableName.Trim());
+
+            var result = Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+            return result == 1;
+        }
+
         public List<Entidad> GetEntidad()
         {
             var resultado = new List<Entidad>();

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -120,6 +121,14 @@ namespace Implementador.ViewModels
         public ObservableCollection<Empleador> Empleador { get; }
         public ObservableCollection<Entidad> Entidad { get; }
         public ObservableCollection<FileInputItemViewModel> FileInputs { get; }
+        public IEnumerable<FileInputItemViewModel> RequiredFileInputs =>
+            FileInputs.Where(i =>
+                !string.Equals(i.Key, FileCatalogoServicios, StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(i.Key, FileServicios, StringComparison.OrdinalIgnoreCase));
+        public IEnumerable<FileInputItemViewModel> OptionalFileInputs =>
+            FileInputs.Where(i =>
+                string.Equals(i.Key, FileCatalogoServicios, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(i.Key, FileServicios, StringComparison.OrdinalIgnoreCase));
 
         public ICommand SelectFileCommand { get; }
         public ICommand ClearFileCommand { get; }

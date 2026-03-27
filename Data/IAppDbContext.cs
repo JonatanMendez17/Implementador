@@ -12,6 +12,8 @@ public interface IAppDbContext : IDisposable
 
     List<CatalogoServicioRef> GetCatalogoServiciosRef();
 
+    bool TableExists(string tableName);
+
     HashSet<string> GetCategoriasConCuotaSocialVigente();
 
     HashSet<string> GetConceptosDescuentoVigentesParaConsumos();

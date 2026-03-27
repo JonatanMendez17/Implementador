@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using ExcelDataReader;
 using Implementador.Infrastructure;
 using Implementador.Models;
+using Implementador.Data;
 using Implementador.Application.Configuration;
 using Implementador.Application.Validation;
 using Implementador.Application.Validation.Common;
@@ -102,7 +103,9 @@ namespace Implementador.Application.Import
                 result.HasLoadedData = true;
             }
 
-            var snapshot = LoadReferenceData(log, out var snapshotLoaded);
+            ValidateOptionalServiceFilesAgainstSchema(result, log);
+            var includeCatalogoServiciosRef = result.DatosCatalogoServiciosValidados.Count > 0;
+            var snapshot = LoadReferenceData(log, includeCatalogoServiciosRef, out var snapshotLoaded);
             if (!snapshotLoaded && ValidationDbErrorPolicy == DbErrorPolicy.AbortValidation)
             {
                 log.Error("Validación detenida: no se pudieron cargar datos de referencia de base.");
@@ -144,13 +147,52 @@ namespace Implementador.Application.Import
             return result;
         }
 
-        private ValidationReferenceData LoadReferenceData(IAppLogger log, out bool loaded)
+        private void ValidateOptionalServiceFilesAgainstSchema(ImplementationValidationResult result, IAppLogger log)
+        {
+            if (result.DatosCatalogoServiciosValidados.Count == 0 && result.DatosServiciosValidados.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                using var db = _dbContextFactory.Create();
+                var faltaMutualCatalogo = !db.TableExists("Mutual_Catalogo");
+
+                if (faltaMutualCatalogo && result.DatosCatalogoServiciosValidados.Count > 0)
+                {
+                    result.DatosCatalogoServiciosValidados = [];
+                    log.Error("Catalogo Servicios: la base conectada no trabaja con este archivo. Falta la tabla Mutual_Catalogo.");
+                }
+
+                if (faltaMutualCatalogo && result.DatosServiciosValidados.Count > 0)
+                {
+                    result.DatosServiciosValidados = [];
+                    log.Error("Consumos Servicios: la base conectada no trabaja con este archivo. Falta la tabla Mutual_Catalogo.");
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error($"No se pudo validar estructura de tablas para archivos opcionales. {ex.Message}");
+                _logger?.LogError(ex, "No se pudo validar estructura de tablas para archivos opcionales.");
+            }
+
+            result.HasLoadedData =
+                result.DatosPadronValidados.Count > 0 ||
+                result.DatosCategoriasValidadas.Count > 0 ||
+                result.DatosConsumosValidados.Count > 0 ||
+                result.DatosConsumosDetalleValidados.Count > 0 ||
+                result.DatosCatalogoServiciosValidados.Count > 0 ||
+                result.DatosServiciosValidados.Count > 0;
+        }
+
+        private ValidationReferenceData LoadReferenceData(IAppLogger log, bool includeCatalogoServiciosRef, out bool loaded)
         {
             try
             {
                 var loader = new ValidationReferenceDataLoader(_dbContextFactory);
                 loaded = true;
-                return loader.Load();
+                return loader.Load(includeCatalogoServiciosRef);
             }
             catch (Exception ex)
             {
