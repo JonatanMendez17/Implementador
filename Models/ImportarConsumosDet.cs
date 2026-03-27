@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Models
+namespace Implementador.Models
 {
     public class ImportarConsumosDet
     {
@@ -9,4 +9,5 @@ namespace ImplementadorCUAD.Models
         public decimal Monto { get; set; }
     }
 }
+
 

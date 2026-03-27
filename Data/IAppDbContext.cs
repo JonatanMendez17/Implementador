@@ -1,6 +1,6 @@
-using ImplementadorCUAD.Models;
+using Implementador.Models;
 
-namespace ImplementadorCUAD.Data;
+namespace Implementador.Data;
 
 public interface IAppDbContext : IDisposable
 {
@@ -8,15 +8,20 @@ public interface IAppDbContext : IDisposable
 
     List<Entidad> GetEntidad();
 
-    List<CategoriaCuadRef> GetCategoriasCuad();
+    List<CategoriaRef> GetCategoriasRef();
 
-    List<CatalogoServicioCuadRef> GetCatalogoServiciosCuad();
+    List<CatalogoServicioRef> GetCatalogoServiciosRef();
+
+    bool TableExists(string tableName);
 
     HashSet<string> GetCategoriasConCuotaSocialVigente();
 
     HashSet<string> GetConceptosDescuentoVigentesParaConsumos();
 
     bool TryGetEmrIdByEmpleadoCodigoYDocumento(string empleadoCodigo, long documento, out int emrId);
+
+    Dictionary<string, (bool Existe, int EmrId)> GetEmrIdByEmpleadoCodigoYDocumentoBatch(
+        IEnumerable<(string EmpleadoCodigo, long Documento)> pares);
 
     Task<int> InsertPadronSocioAsync(IReadOnlyList<ImportarPadronSocio> registros, IProgress<int>? progress = null);
 
@@ -28,4 +33,5 @@ public interface IAppDbContext : IDisposable
 
     (int Padron, int ConsumoCab, int ConsumoDet) DeleteImportedDataForEntidad(string entidadNombre, int entidadId);
 }
+
 

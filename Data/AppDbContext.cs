@@ -1,9 +1,9 @@
 using Microsoft.Data.SqlClient;
-using ImplementadorCUAD.Infrastructure;
-using ImplementadorCUAD.Models;
+using Implementador.Infrastructure;
+using Implementador.Models;
 using System.Globalization;
 
-namespace ImplementadorCUAD.Data
+namespace Implementador.Data
 {
     public class AppDbContext : IAppDbContext
     {
@@ -11,7 +11,7 @@ namespace ImplementadorCUAD.Data
 
         public AppDbContext()
         {
-            _connectionString = ConnectionSettings.CuadConnectionString;
+            _connectionString = ConnectionSettings.BaseConnectionString;
         }
 
         public AppDbContext(string connectionString)
@@ -30,6 +30,29 @@ namespace ImplementadorCUAD.Data
             using var connection = CreateOpenConnection();
             using var command = new SqlCommand("SELECT 1;", connection);
             command.ExecuteScalar();
+        }
+
+        public bool TableExists(string tableName)
+        {
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
+                return false;
+            }
+
+            using var connection = CreateOpenConnection();
+            using var command = new SqlCommand(
+                @"SELECT CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM sys.tables t
+                        WHERE t.name = @TableName
+                    )
+                    THEN 1 ELSE 0 END;",
+                connection);
+            command.Parameters.AddWithValue("@TableName", tableName.Trim());
+
+            var result = Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+            return result == 1;
         }
 
         public List<Entidad> GetEntidad()
@@ -61,12 +84,12 @@ namespace ImplementadorCUAD.Data
             return resultado;
         }
 
-        public List<CategoriaCuadRef> GetCategoriasCuad()
+        public List<CategoriaRef> GetCategoriasRef()
         {
-            var resultado = new List<CategoriaCuadRef>();
+            var resultado = new List<CategoriaRef>();
 
             using var connection = CreateOpenConnection();
-            // Las categorias de CUAD se obtienen desde las tablas físicas Mutual y Mutual_Categoria.
+            // Las categorías de la base se obtienen desde las tablas físicas Mutual y Mutual_Categoria.
             using var command = new SqlCommand(
                 @"SELECT 
                          mc.Mca_Id,
@@ -83,7 +106,7 @@ namespace ImplementadorCUAD.Data
 
             while (reader.Read())
             {
-                resultado.Add(new CategoriaCuadRef
+                resultado.Add(new CategoriaRef
                 {
                     Id = reader.GetInt32(0),
                     Entidad = reader.GetString(1),
@@ -98,7 +121,7 @@ namespace ImplementadorCUAD.Data
         }
 
         /// <summary>
-        /// Devuelve las combinaciones (Entidad, CodigoCategoria) que tienen código de cuota social vigente en CUAD.
+        /// Devuelve las combinaciones (Entidad, CodigoCategoria) que tienen código de cuota social vigente en la base.
         /// La información se obtiene desde las tablas físicas Mutual, Mutual_Categoria y Mutual_Categoria_Codigo.
         /// </summary>
         public HashSet<string> GetCategoriasConCuotaSocialVigente()
@@ -140,7 +163,7 @@ namespace ImplementadorCUAD.Data
 
         /// <summary>
         /// Devuelve las combinaciones (Entidad, ConceptoDescuento) que tienen código de descuento vigente
-        /// para consumos en CUAD. La información se obtiene desde las tablas físicas Mutual y Mutual_Servicio_Empleador.
+        /// para consumos en la base. La información se obtiene desde las tablas físicas Mutual y Mutual_Servicio_Empleador.
         /// </summary>
         public HashSet<string> GetConceptosDescuentoVigentesParaConsumos()
         {
@@ -206,33 +229,97 @@ namespace ImplementadorCUAD.Data
             return true;
         }
 
-        public List<CatalogoServicioCuadRef> GetCatalogoServiciosCuad()
+        public Dictionary<string, (bool Existe, int EmrId)> GetEmrIdByEmpleadoCodigoYDocumentoBatch(
+            IEnumerable<(string EmpleadoCodigo, long Documento)> pares)
         {
-            var resultado = new List<CatalogoServicioCuadRef>();
+            var resultado = new Dictionary<string, (bool Existe, int EmrId)>(StringComparer.OrdinalIgnoreCase);
+
+            var paresNormalizados = pares
+                .Where(p => !string.IsNullOrWhiteSpace(p.EmpleadoCodigo) && p.Documento > 0)
+                .Select(p => (EmpleadoCodigo: p.EmpleadoCodigo.Trim(), p.Documento))
+                .Distinct()
+                .ToList();
+
+            if (paresNormalizados.Count == 0)
+            {
+                return resultado;
+            }
+
+            using var connection = CreateOpenConnection();
+            const int chunkSize = 200;
+            for (int offset = 0; offset < paresNormalizados.Count; offset += chunkSize)
+            {
+                var chunk = paresNormalizados.Skip(offset).Take(chunkSize).ToList();
+                using var command = new SqlCommand(BuildEmpleadoLookupBatchSql(chunk.Count), connection);
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    command.Parameters.AddWithValue($"@EmpCod{i}", chunk[i].EmpleadoCodigo);
+                    command.Parameters.AddWithValue($"@PerNroDoc{i}", chunk[i].Documento);
+                }
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var empleadoCodigo = reader.GetString(0);
+                    var documento = reader.GetInt64(1);
+                    var emrId = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+                    var key = $"{empleadoCodigo}|{documento}";
+                    resultado[key] = (emrId > 0, emrId);
+                }
+            }
+
+            return resultado;
+        }
+
+        private static string BuildEmpleadoLookupBatchSql(int count)
+        {
+            var values = string.Join(", ", Enumerable.Range(0, count).Select(i => $"(@EmpCod{i}, @PerNroDoc{i})"));
+            return $@"
+                WITH src (EmpCod, PerNroDoc) AS (
+                    VALUES {values}
+                )
+                SELECT
+                    src.EmpCod,
+                    src.PerNroDoc,
+                    (
+                        SELECT TOP 1 e.Emr_Id
+                        FROM Empleado e
+                        INNER JOIN Persona p ON p.Per_Id = e.Per_Id
+                        WHERE e.Emp_Cod = src.EmpCod
+                          AND p.Per_NroDoc = src.PerNroDoc
+                    ) AS EmrId
+                FROM src;";
+        }
+
+        public List<CatalogoServicioRef> GetCatalogoServiciosRef()
+        {
+            var resultado = new List<CatalogoServicioRef>();
 
             using var connection = CreateOpenConnection();
             using var command = new SqlCommand(
-                @"SELECT Id,
-                         Entidad,
-                         Servicio,
-                         Importe,
-                         CodigoConceptoDescuento,
-                         Habilitado
-                  FROM CatalogoServiciosCuad
-                  WHERE Habilitado = 1;",
+                @"SELECT 
+                         m.Mut_Nombre AS Entidad,
+                         mc.Muc_Nombre AS Servicio,
+                         mc.Muc_Importe AS Importe
+                  FROM Mutual m
+                  INNER JOIN Mutual_Catalogo mc
+                      ON m.Mut_Id = mc.Mut_Id
+                  WHERE m.Mut_Alta = 'S'
+                    AND mc.Muc_Vigente = 1;",
                 connection);
             using var reader = command.ExecuteReader();
+            var idSecuencial = 1;
 
             while (reader.Read())
             {
-                resultado.Add(new CatalogoServicioCuadRef
+                resultado.Add(new CatalogoServicioRef
                 {
-                    Id = reader.GetInt32(0),
-                    Entidad = reader.GetString(1),
-                    Servicio = reader.GetString(2),
-                    Importe = reader.GetDecimal(3),
-                    CodigoConceptoDescuento = reader.IsDBNull(4) ? null : reader.GetInt32(4),
-                    Habilitado = !reader.IsDBNull(5) && reader.GetBoolean(5)
+                    Id = idSecuencial++,
+                    Entidad = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                    Servicio = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    Importe = reader.IsDBNull(2) ? 0m : reader.GetDecimal(2),
+                    CodigoConceptoDescuento = null,
+                    Habilitado = true
                 });
             }
 
@@ -466,3 +553,4 @@ namespace ImplementadorCUAD.Data
         }
     }
 }
+

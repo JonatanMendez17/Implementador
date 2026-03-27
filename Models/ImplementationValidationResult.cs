@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Models
+namespace Implementador.Models
 {
     public class ImplementationValidationResult
     {
@@ -11,3 +11,4 @@ namespace ImplementadorCUAD.Models
         public bool HasLoadedData { get; set; }
     }
 }
+

@@ -1,16 +1,36 @@
 using System.Windows;
+using WpfApplication = System.Windows.Application;
 using Microsoft.Data.SqlClient;
-using ImplementadorCUAD.Data;
-using ImplementadorCUAD.Infrastructure;
-using ImplementadorCUAD.Services;
+using Microsoft.Extensions.Logging;
+using Implementador.Data;
+using Implementador.Infrastructure;
+using Implementador.Infrastructure.Configuration;
+using Implementador.Infrastructure.Logging;
+using Implementador.Presentation;
+using Implementador.Presentation.Dialogs;
 
-namespace ImplementadorCUAD
+namespace Implementador
 {
-    public partial class App : Application
+    public partial class App : WpfApplication
     {
+        public static ILoggerFactory LoggerFactory { get; private set; } = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
+        {
+            builder.SetMinimumLevel(LogLevel.Information).AddDebug();
+        });
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
+            {
+                builder
+                    .SetMinimumLevel(LogLevel.Information)
+                    .AddDebug()
+                    .AddProvider(new UiLoggerProvider());
+            });
+            
+            ConnectionSettings.SetLoggerFactory(LoggerFactory);
 
             // Manejo global para evitar cierres abruptos sin informar al usuario.
             DispatcherUnhandledException += (_, args) =>
@@ -36,9 +56,9 @@ namespace ImplementadorCUAD
                 try
                 {
                     // Best-effort: si la app está por terminar no hay garantía de que el UI llegue.
-                    if (Application.Current != null)
+                    if (WpfApplication.Current != null)
                     {
-                        Application.Current.Dispatcher.Invoke(() =>
+                        WpfApplication.Current.Dispatcher.Invoke(() =>
                         {
                             DialogService.Show(
                                 $"Se produjo un error inesperado en la aplicación.\n\n{ex?.Message ?? ex?.ToString()}",
@@ -54,18 +74,18 @@ namespace ImplementadorCUAD
                 }
             };
 
-            var mainWindow = new MainWindow();
+            var mainWindow = new MainWindow(new ViewModels.MainViewModel(LoggerFactory.CreateLogger("Implementador")));
             MainWindow = mainWindow;
             mainWindow.Show();
 
-            var initialCuadConnection = ConnectionSettings.CuadConnectionString;
-            var hasInitialConfig = !string.IsNullOrWhiteSpace(initialCuadConnection);
+            var initialBaseConnection = ConnectionSettings.BaseConnectionString;
+            var hasInitialConfig = !string.IsNullOrWhiteSpace(initialBaseConnection);
 
             if (hasInitialConfig)
             {
                 try
                 {
-                    var testConnectionString = WithShortTimeout(initialCuadConnection, 3);
+                    var testConnectionString = WithShortTimeout(initialBaseConnection, 3);
                     using (var db = new AppDbContext(testConnectionString))
                     {
                         db.EnsureConnection();
@@ -82,8 +102,8 @@ namespace ImplementadorCUAD
                     {
                         DialogService.Show(
                             $"No se pudo inicializar la aplicación con la base seleccionada.\n" +
-                            $"Verifique que la base CUAD tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
-                            "Error al leer CUAD",
+                            $"Verifique que la base tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
+                            "Error al leer base",
                             MessageBoxButton.OK,
                             MessageBoxImage.Error);
                         return;
@@ -106,7 +126,7 @@ namespace ImplementadorCUAD
                 }
             }
 
-            // No hay configuración válida de CUAD o la conexión falló: pedir al usuario el connection string.
+            // No hay configuración válida de la base o la conexión falló: pedir al usuario el connection string.
             var configWindow = new ConnectionWindow
             {
                 Owner = mainWindow
@@ -123,7 +143,7 @@ namespace ImplementadorCUAD
             var userConnectionString = configWindow.SelectedConnection;
             try
             {
-                new ConnectionsConfigService().SetCuadConnectionString(userConnectionString);
+                new ConnectionsConfigService().SetConexionBaseConnectionString(userConnectionString);
                 ConnectionSettings.InvalidateCache();
             }
             catch (Exception ex)
@@ -147,8 +167,8 @@ namespace ImplementadorCUAD
             {
                 DialogService.Show(
                     $"No se pudo inicializar la aplicación con la base seleccionada.\n" +
-                    $"Verifique que la base CUAD tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
-                    "Error al leer CUAD",
+                    $"Verifique que la base tenga todas las tablas y vistas requeridas.\n\nDetalle técnico:\n{ex.Message}",
+                    "Error al leer base",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 return;
@@ -180,3 +200,4 @@ namespace ImplementadorCUAD
         }
     }
 }
+

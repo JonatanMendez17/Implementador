@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Models
+namespace Implementador.Models
 {
     public class ColumnConfiguration
     {
@@ -10,4 +10,5 @@ namespace ImplementadorCUAD.Models
         public int LargoMaximo { get; set; }
     }
 }
+
 

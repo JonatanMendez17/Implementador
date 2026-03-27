@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Models
+namespace Implementador.Models
 {
     public class ImplementationFileSelection
     {
@@ -14,3 +14,4 @@ namespace ImplementadorCUAD.Models
         public string? TargetConnectionString { get; set; }
     }
 }
+

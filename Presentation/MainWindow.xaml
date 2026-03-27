@@ -1,0 +1,413 @@
+<Window x:Class="Implementador.Presentation.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Implementador"
+        xmlns:controls="clr-namespace:Implementador.Presentation.Controls"
+        mc:Ignorable="av"
+        Title="Implementador"
+        Height="690"
+        Width="1120"
+        MinHeight="690"
+        MinWidth="1060"
+        WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/Resources/icono.ico"
+        Background="#10141D">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <SolidColorBrush x:Key="LogInfoBrush" Color="#22C55E" />
+        <SolidColorBrush x:Key="LogErrorBrush" Color="#EF4444" />
+        <SolidColorBrush x:Key="LogWarnBrush" Color="#EAB308" />
+
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#D1D9E6" />
+            <Setter Property="FontSize" Value="19" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+
+        <Style x:Key="SubsectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#E2E8F0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,8,0,6" />
+        </Style>
+
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Foreground" Value="#E5E7EB" />
+            <Setter Property="Background" Value="#243142" />
+            <Setter Property="BorderBrush" Value="#475569" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="ComboBorder"
+                                    CornerRadius="8"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}" />
+                            <Grid Margin="10,0,10,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter x:Name="ContentSite"
+                                                  VerticalAlignment="Center"
+                                                  Content="{TemplateBinding SelectionBoxItem}" />
+                                <TextBlock x:Name="PlaceholderText"
+                                           VerticalAlignment="Center"
+                                           Foreground="#9CA3AF"
+                                           Text="Seleccionar"
+                                           Visibility="Hidden" />
+                                <Path Grid.Column="1"
+                                      Width="10"
+                                      Height="6"
+                                      Margin="6,0,0,0"
+                                      VerticalAlignment="Center"
+                                      Fill="#B6C2D2"
+                                      Data="M 0 0 L 5 6 L 10 0 Z" />
+                            </Grid>
+                            <ToggleButton Focusable="False"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          OverridesDefaultStyle="True"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="Transparent" />
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}">
+                                <Border Margin="0,6,0,0"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="260"
+                                        CornerRadius="8"
+                                        Background="#243142"
+                                        BorderBrush="#475569"
+                                        BorderThickness="1">
+                                    <ScrollViewer Margin="4" VerticalScrollBarVisibility="Auto">
+                                        <StackPanel IsItemsHost="True" />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="SelectedIndex" Value="-1">
+                                <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden" />
+                                <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#60A5FA" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="#E5E7EB" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder" CornerRadius="8" Background="{TemplateBinding Background}">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#334155" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#1D4ED8" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LogTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#CBD5E1" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+        </Style>
+
+        <Style TargetType="ProgressBar">
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Foreground" Value="#3B82F6" />
+            <Setter Property="Background" Value="#1B2532" />
+            <Setter Property="BorderBrush" Value="#33506E" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="1">
+                            <Grid ClipToBounds="True">
+                                <Rectangle x:Name="PART_Track"
+                                           Fill="Transparent" />
+                                <Border x:Name="PART_Indicator"
+                                        HorizontalAlignment="Left"
+                                        Background="{TemplateBinding Foreground}"
+                                        CornerRadius="7" />
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Text="Panel de Implementacion de Datos"
+                       Foreground="White"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1"
+                       Text="{x:Static local:VersionInfo.DisplayVersion}"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       FontSize="14"
+                       VerticalAlignment="Center" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource PanelCardStyle}" Margin="0,0,10,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" ><Run Text="Configuracion "/><Run Language="es-es" Text="y carga de"/><Run Text=" "/><Run Language="es-es" Text="a"/><Run Text="rchivos"/></TextBlock>
+
+                    <Grid Grid.Row="1" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="Empleador" Style="{StaticResource LabelStyle}" />
+                            <ComboBox ItemsSource="{Binding Empleador}" SelectedItem="{Binding EmpleadorSeleccionado}" DisplayMemberPath="Nombre" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                            <TextBlock Text="Entidad" Style="{StaticResource LabelStyle}" />
+                            <ComboBox ItemsSource="{Binding Entidad}" SelectedItem="{Binding EntidadSeleccionada}" DisplayMemberPath="Nombre" />
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Grid.Row="2">
+                        <Separator Margin="0,0,0,10" Background="#3D5068" />
+                        <ItemsControl ItemsSource="{Binding RequiredFileInputs}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:FileUploadRowControl Title="{Binding Title}"
+                                                                    StatusText="{Binding Status}"
+                                                                    Icon="{Binding Icon}"
+                                                                    IsFileLoaded="{Binding IsLoaded}"
+                                                                    ToolTipText="{Binding ToolTip}"
+                                                                    SelectCommand="{Binding SelectCommand}"
+                                                                    ClearCommand="{Binding ClearCommand}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="Opcional"
+                                   Style="{StaticResource LabelStyle}"
+                                   Margin="0,6,0,4" />
+
+                        <ItemsControl ItemsSource="{Binding OptionalFileInputs}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:FileUploadRowControl Title="{Binding Title}"
+                                                                    StatusText="{Binding Status}"
+                                                                    Icon="{Binding Icon}"
+                                                                    IsFileLoaded="{Binding IsLoaded}"
+                                                                    ToolTipText="{Binding ToolTip}"
+                                                                    SelectCommand="{Binding SelectCommand}"
+                                                                    ClearCommand="{Binding ClearCommand}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="121*" />
+                                <ColumnDefinition Width="4*"/>
+                                <ColumnDefinition Width="125*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Style="{StaticResource OutlineButtonStyle}" Content="Validar Archivos" Command="{Binding ValidateCommand}" />
+                            <Button Grid.Column="2" Style="{StaticResource OutlineButtonStyle}" Content="Limpiar Entidad" Command="{Binding ClearDataCommand}" Margin="8,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Style="{StaticResource PanelCardStyle}" Margin="10,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Procesamiento" Style="{StaticResource SectionTitleStyle}" />
+
+                    <Button Grid.Row="1"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Content="IMPLEMENTAR DATOS"
+                            Command="{Binding CopyCommand}"
+                            Margin="0,0,0,12" Height="40" />
+
+                    <TextBlock Grid.Row="2" Text="Log de validacion" Style="{StaticResource SubsectionTitleStyle}" />
+
+                    <Border Grid.Row="3"
+                            Background="#020817"
+                            BorderBrush="#334155"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="8"
+                            Margin="0,0,0,10">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Logs}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                            <TextBlock FontSize="14" FontFamily="Consolas" TextWrapping="NoWrap" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding Prefix}" />
+                                                        <Setter Property="Foreground" Value="{StaticResource LogInfoBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Error">
+                                                                <Setter Property="Foreground" Value="{StaticResource LogErrorBrush}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Severity}" Value="Warning">
+                                                                <Setter Property="Foreground" Value="{StaticResource LogWarnBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBox Text="{Binding MessageBody, Mode=OneWay}"
+                                                     Foreground="#CBD5E1"
+                                                     FontSize="14"
+                                                     FontFamily="Consolas"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     IsReadOnly="True"
+                                                     IsReadOnlyCaretVisible="False"
+                                                     Padding="4,0,0,0"
+                                                     VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
+                    <Grid Grid.Row="4" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0"
+                                Style="{StaticResource OutlineButtonStyle}"
+                                Content="Exportar Logs"
+                                Command="{Binding ExportLogCommand}"
+                                Margin="0,0,8,0" />
+                        <Button Grid.Column="1"
+                                Style="{StaticResource OutlineButtonStyle}"
+                                Content="Reiniciar&#xD;&#xA;"
+                                Command="{Binding ClearUiCommand}"
+                                Margin="8,0,0,0" />
+                    </Grid>
+
+                    <TextBlock Grid.Row="2"
+                               Text="Procesando..."
+                               Foreground="{StaticResource AccentBrushLight}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Margin="408,11,4,3"
+                               Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVis}}" />
+
+                    <Grid Grid.Row="6" Height="18" Margin="0,0,0,6">
+                        <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress}" />
+                    </Grid>
+
+                    <Grid Grid.Row="7">
+                        <TextBlock Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="12"
+                                   HorizontalAlignment="Left"
+                                   Text="{Binding Progress, StringFormat=Progress de implementacion: {0}%}" />
+                        <TextBlock FontSize="12"
+                                   HorizontalAlignment="Right"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="{Binding ImplementationTime, StringFormat=Tiempo: {0}}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ImplementationTime}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
+

@@ -1,39 +1,41 @@
-using ImplementadorCUAD.Services;
+using Implementador.Infrastructure.Configuration;
+using Microsoft.Extensions.Logging;
 
-namespace ImplementadorCUAD.Infrastructure
+namespace Implementador.Infrastructure
 {
     public static class ConnectionSettings
     {
-        private static string? _cachedCuadConnectionString;
+        private static string? _cachedBaseConnectionString;
+        private static ILoggerFactory? _loggerFactory;
 
-        /// Connection string de la base CUAD.
-        /// Prioridad: Configuracion.xml > variable de entorno IMPLEMENTADORCUAD_CONNECTIONSTRING.
+        public static void SetLoggerFactory(ILoggerFactory loggerFactory)
+        {
+            _loggerFactory = loggerFactory;
+        }
+
+        /// Connection string de la base (`ConexionBase` en `Configuration.xml`).
         /// El value se cachea tras la primera lectura; llamar InvalidateCache() si se modifica el XML en runtime.
-        public static string CuadConnectionString
+        public static string BaseConnectionString
         {
             get
             {
-                if (_cachedCuadConnectionString != null)
-                    return _cachedCuadConnectionString;
+                if (_cachedBaseConnectionString != null)
+                    return _cachedBaseConnectionString;
 
-                var fromXml = new ConnectionsConfigService().GetCuadConnectionString();
+                var logger = _loggerFactory?.CreateLogger<ConnectionsConfigService>();
+                var fromXml = new ConnectionsConfigService(logger).GetConexionBaseConnectionString();
                 if (!string.IsNullOrWhiteSpace(fromXml))
                 {
-                    _cachedCuadConnectionString = fromXml;
-                    return _cachedCuadConnectionString;
-                }
-
-                var fromEnv = Environment.GetEnvironmentVariable("IMPLEMENTADORCUAD_CONNECTIONSTRING");
-                if (!string.IsNullOrWhiteSpace(fromEnv))
-                {
-                    _cachedCuadConnectionString = fromEnv;
-                    return _cachedCuadConnectionString;
+                    _cachedBaseConnectionString = fromXml;
+                    return _cachedBaseConnectionString;
                 }
 
                 return string.Empty;
             }
         }
 
-        public static void InvalidateCache() => _cachedCuadConnectionString = null;
+        public static void InvalidateCache() => _cachedBaseConnectionString = null;
     }
 }
+
+
