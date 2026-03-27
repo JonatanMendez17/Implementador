@@ -1,14 +1,14 @@
-# Implementador CUAD
+# Implementador
 
-Aplicación de escritorio WPF (.NET 8) orientada a la importación, validación e implementación de información CUAD en SQL Server.
+Aplicación de escritorio WPF (.NET 8) orientada a la importación, validación e implementación de información en SQL Server.
 
 ## Que es la aplicacion y cual es su proposito
 
-Implementador CUAD centraliza el proceso operativo de carga de archivos para cada empleador, reduciendo errores manuales y asegurando consistencia antes de persistir datos.
+Implementador centraliza el proceso operativo de carga de archivos para cada empleador, reduciendo errores manuales y asegurando consistencia antes de persistir datos.
 
 La app trabaja con dos tipos de origen/destino:
 
-- **Base de referencia (solo lectura):** provee catálogos y entidades maestras.
+- **Base de referencia (solo lectura):** verificacion a catálogos y entidades maestras.
 - **Base por empleador (escritura):** recibe los datos importados luego de validar.
 
 Su objetivo principal es garantizar que los archivos cumplan reglas de estructura y negocio antes de insertar datos productivos.
@@ -29,7 +29,7 @@ Esta separacion permite evolucionar reglas de negocio sin acoplarlas a la UI o a
 
 ## Cosas mas destacadas de la aplicacion
 
-- Importa y procesa 6 tipos de archivo CUAD: categorias, padron, consumos, consumos detalle, servicios y catalogo de servicios.
+- Importa y procesa 6 tipos de archivo: categorias, padron, consumos, consumos detalle, servicios y catalogo de servicios.
 - Aplica validaciones previas de estructura y reglas de negocio antes de implementar datos.
 - Soporta multiples empleadores con configuracion centralizada en `Configuration.xml`.
 - Permite limpiar datos por entidad en la base destino cuando se requiere reprocesar.
