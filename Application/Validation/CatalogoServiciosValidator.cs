@@ -28,13 +28,7 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
                 var servicio = RowValueReader.GetFirstValue(row, "Servicio");
                 var importeTexto = RowValueReader.GetFirstValue(row, "Importe");
 
-                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(servicio))
-                {
-                    erroresFila.Add("El campo (Entidad) se encuentra vacio.");
-                    return erroresFila;
-                }
-
-                var clave = $"{entidad.Trim()}|{servicio.Trim()}";
+                var clave = $"{entidad!.Trim()}|{servicio!.Trim()}";
                 if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCatalogo))
                 {
                     erroresFila.Add($"El campo (Servicio) '{servicio}' no existe en la base para la entidad '{entidad}'.");

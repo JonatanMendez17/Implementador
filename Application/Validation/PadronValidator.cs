@@ -78,28 +78,21 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
             var documento = RowValueReader.GetFirstValue(row, "Documento");
             var beneficio = RowValueReader.GetFirstValue(row, "Beneficio");
 
-            if (string.IsNullOrWhiteSpace(nroSocio))
+            var nroSocioNormalizado = nroSocio!.Trim();
+            if (!sociosVistos.Add(nroSocioNormalizado))
             {
-                erroresFila.Add("El campo (Nro Socio) se encuentra vacio.");
+                erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' se encuentra duplicado en el archivo.");
+            }
+
+            var categoriaNormalizada = (codigoCategoria ?? string.Empty).Trim();
+            if (socioCategoria.TryGetValue(nroSocioNormalizado, out var categoriaExistente) &&
+                !string.Equals(categoriaExistente, categoriaNormalizada, StringComparison.OrdinalIgnoreCase))
+            {
+                erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' esta afiliado a mas de una categoria.");
             }
             else
             {
-                var nroSocioNormalizado = nroSocio.Trim();
-                if (!sociosVistos.Add(nroSocioNormalizado))
-                {
-                    erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' se encuentra duplicado en el archivo.");
-                }
-
-                var categoriaNormalizada = (codigoCategoria ?? string.Empty).Trim();
-                if (socioCategoria.TryGetValue(nroSocioNormalizado, out var categoriaExistente) &&
-                    !string.Equals(categoriaExistente, categoriaNormalizada, StringComparison.OrdinalIgnoreCase))
-                {
-                    erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' esta afiliado a mas de una categoria.");
-                }
-                else
-                {
-                    socioCategoria[nroSocioNormalizado] = categoriaNormalizada;
-                }
+                socioCategoria[nroSocioNormalizado] = categoriaNormalizada;
             }
 
             if (!IsCategoriaValida(codigoCategoria, nombreCategoriaPadron, categoriasValidasCodigo, categoriasValidasNombre))

@@ -118,7 +118,7 @@ namespace Implementador.Application.Import
                 return result;
             }
             var padronValidator = new PadronValidator(_dbContextFactory);
-            var consumosValidator = new ConsumosValidator();
+            var consumosValidator = new ConsumosValidator(_dbContextFactory);
             var consumosDetalleValidator = new ConsumosDetalleValidator();
             var serviciosValidator = new ServiciosValidator();
             var catalogoServiciosValidator = new CatalogoServiciosValidator();
@@ -133,7 +133,7 @@ namespace Implementador.Application.Import
                 result.HasLoadedData = false;
                 return result;
             }
-            consumosValidator.Apply(result, log, snapshot);
+            consumosValidator.Apply(result, log, snapshot, selection.TargetConnectionString);
             consumosDetalleValidator.Apply(result, log, snapshot);
             serviciosValidator.Apply(result, log, snapshot);
             catalogoServiciosValidator.Apply(result, log, snapshot);
@@ -472,7 +472,6 @@ namespace Implementador.Application.Import
             IProgress<int>? progress)
         {
             var registros = new List<Dictionary<string, string>>();
-            var uniqueKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var filasAceptadas = 0;
             var filasRechazadas = 0;
             var totalFilasDatos = 0;
@@ -507,19 +506,10 @@ namespace Implementador.Application.Import
                     row[config.Clave] = value;
                 }
 
-                var filaEsValida = erroresFila.Count == 0;
-
-                if (filaEsValida)
+                if (erroresFila.Count == 0)
                 {
-                    if (ValidateSpecificUniqueness(logicalName, filaNumero, row, uniqueKeys, log))
-                    {
-                        registros.Add(row);
-                        filasAceptadas++;
-                    }
-                    else
-                    {
-                        filasRechazadas++;
-                    }
+                    registros.Add(row);
+                    filasAceptadas++;
                 }
                 else
                 {
@@ -691,48 +681,6 @@ namespace Implementador.Application.Import
             return Regex.IsMatch(texto, @"[^\p{L}\p{N}\s\.\,\;\:\-\/\\\(\)\'\""\#\%\&\+]");
         }
 
-        private static bool ValidateSpecificUniqueness(string logicalName, int rowNumber, Dictionary<string, string> row, HashSet<string> uniqueKeys, IAppLogger log)
-        {
-            if (logicalName.Equals("Padron", StringComparison.OrdinalIgnoreCase))
-            {
-                var nroSocio = RowValueReader.GetFirstValue(row, "Nro Socio");
-                if (string.IsNullOrWhiteSpace(nroSocio))
-                {
-                    log.Warn($"Padron row {rowNumber}: 'Nro Socio' vacio.");
-                    return false;
-                }
-
-                var clave = $"PADRON::{nroSocio.Trim()}";
-                if (!uniqueKeys.Add(clave))
-                {
-                    log.Warn($"Padron row {rowNumber}: numero de socio '{nroSocio}' repetido.");
-                    return false;
-                }
-
-                return true;
-            }
-
-            if (logicalName.Equals("Consumos", StringComparison.OrdinalIgnoreCase))
-            {
-                var nroConsumo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo", "Codigo", "Código", "CÃ³digo");
-                if (string.IsNullOrWhiteSpace(nroConsumo))
-                {
-                    log.Warn($"Consumos row {rowNumber}: codigo (nro de consumo) vacio.");
-                    return false;
-                }
-
-                var clave = $"CONSUMOS::{nroConsumo.Trim()}";
-                if (!uniqueKeys.Add(clave))
-                {
-                    log.Warn($"Consumos row {rowNumber}: nro de consumo '{nroConsumo}' repetido.");
-                    return false;
-                }
-
-                return true;
-            }
-
-            return true;
-        }
 
     }
 }

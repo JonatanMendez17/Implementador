@@ -473,6 +473,24 @@ namespace Implementador.Data
         }
 
 
+        public HashSet<long> GetCodigosConsumoExistentes(string entidad)
+        {
+            var resultado = new HashSet<long>();
+            using var connection = CreateOpenConnection();
+            using var command = new SqlCommand(
+                @"SELECT Icc_Codigo_Consumo
+                  FROM Importar_Consumo_Cab
+                  WHERE Icc_Entidad = @Entidad;",
+                connection);
+            command.Parameters.AddWithValue("@Entidad", entidad);
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                resultado.Add(reader.GetInt64(0));
+            }
+            return resultado;
+        }
+
         public bool ExistsImportedDataForEntidad(string entidad)
         {
             using var connection = CreateOpenConnection();

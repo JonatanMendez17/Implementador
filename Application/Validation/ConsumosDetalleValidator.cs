@@ -35,12 +35,12 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
             var codigoConsumo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo");
             var fechaVencimientoText = RowValueReader.GetFirstValue(row, "Fecha Vencimiento");
 
-            if (string.IsNullOrWhiteSpace(entidad) || !entidadesRef.Contains(entidad.Trim()))
+            if (!entidadesRef.Contains(entidad!.Trim()))
             {
                 erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
             }
 
-            if (string.IsNullOrWhiteSpace(codigoConsumo) || !consumosPorCodigo.ContainsKey(codigoConsumo.Trim()))
+            if (!consumosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
             {
                 erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' no existe en archivo de Consumos.");
             }

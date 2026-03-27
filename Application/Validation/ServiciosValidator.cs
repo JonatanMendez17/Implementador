@@ -43,12 +43,12 @@ public sealed class ServiciosValidator : RowValidatorBase
             var beneficioServicio = RowValueReader.GetFirstValue(row, "Nro Beneficio", "Beneficio");
             var codigoConsumo = RowValueReader.GetFirstValue(row, "Codigo Consumo", "Código Consumo");
 
-            if (string.IsNullOrWhiteSpace(entidad) || !entidadesRef.Contains(entidad.Trim()))
+            if (!entidadesRef.Contains(entidad!.Trim()))
             {
                 erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
             }
 
-            if (string.IsNullOrWhiteSpace(nroSocio) || !padronPorSocio.TryGetValue(nroSocio.Trim(), out var filaPadron))
+            if (!padronPorSocio.TryGetValue(nroSocio!.Trim(), out var filaPadron))
             {
                 erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe o no corresponde al padron.");
             }
@@ -68,22 +68,15 @@ public sealed class ServiciosValidator : RowValidatorBase
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(codigoConsumo))
+            var codigoNormalizado = codigoConsumo!.Trim();
+            if (!codigosServiciosVistos.Add(codigoNormalizado))
             {
-                erroresFila.Add("El campo (Codigo Consumo) se encuentra vacio.");
+                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' se encuentra duplicado en el archivo.");
             }
-            else
-            {
-                var codigoNormalizado = codigoConsumo.Trim();
-                if (!codigosServiciosVistos.Add(codigoNormalizado))
-                {
-                    erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' se encuentra duplicado en el archivo.");
-                }
 
-                if (codigosConsumos.Contains(codigoNormalizado))
-                {
-                    erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' ya existe en archivo Consumos.");
-                }
+            if (codigosConsumos.Contains(codigoNormalizado))
+            {
+                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' ya existe en archivo Consumos.");
             }
 
             return erroresFila;
