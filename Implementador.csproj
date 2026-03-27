@@ -20,6 +20,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Implementador.Tests\**" />
+    <EmbeddedResource Remove="Implementador.Tests\**" />
+    <None Remove="Implementador.Tests\**" />
+    <Page Remove="Implementador.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
     <PackageReference Include="ExcelDataReader" Version="3.8.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.5" />
