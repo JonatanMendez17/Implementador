@@ -1,7 +1,7 @@
-using ImplementadorCUAD.Services;
+using Implementador.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace ImplementadorCUAD.Infrastructure
+namespace Implementador.Infrastructure
 {
     public static class ConnectionSettings
     {
@@ -37,3 +37,5 @@ namespace ImplementadorCUAD.Infrastructure
         public static void InvalidateCache() => _cachedBaseConnectionString = null;
     }
 }
+
+

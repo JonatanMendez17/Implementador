@@ -1,14 +1,18 @@
 using System;
 using System.Windows;
+using WpfApplication = System.Windows.Application;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
-using ImplementadorCUAD.Data;
-using ImplementadorCUAD.Infrastructure;
-using ImplementadorCUAD.Services;
+using Implementador.Data;
+using Implementador.Infrastructure;
+using Implementador.Infrastructure.Configuration;
+using Implementador.Infrastructure.Logging;
+using Implementador.Presentation;
+using Implementador.Presentation.Dialogs;
 
-namespace ImplementadorCUAD
+namespace Implementador
 {
-    public partial class App : Application
+    public partial class App : WpfApplication
     {
         public static ILoggerFactory LoggerFactory { get; private set; } = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
         {
@@ -53,9 +57,9 @@ namespace ImplementadorCUAD
                 try
                 {
                     // Best-effort: si la app está por terminar no hay garantía de que el UI llegue.
-                    if (Application.Current != null)
+                    if (WpfApplication.Current != null)
                     {
-                        Application.Current.Dispatcher.Invoke(() =>
+                        WpfApplication.Current.Dispatcher.Invoke(() =>
                         {
                             DialogService.Show(
                                 $"Se produjo un error inesperado en la aplicación.\n\n{ex?.Message ?? ex?.ToString()}",
@@ -71,7 +75,7 @@ namespace ImplementadorCUAD
                 }
             };
 
-            var mainWindow = new MainWindow(new ViewModels.MainViewModel(LoggerFactory.CreateLogger("ImplementadorCUAD")));
+            var mainWindow = new MainWindow(new ViewModels.MainViewModel(LoggerFactory.CreateLogger("Implementador")));
             MainWindow = mainWindow;
             mainWindow.Show();
 
@@ -197,3 +201,4 @@ namespace ImplementadorCUAD
         }
     }
 }
+

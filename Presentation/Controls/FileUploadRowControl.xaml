@@ -1,0 +1,54 @@
+<UserControl x:Class="Implementador.Presentation.Controls.FileUploadRowControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+    <Grid Margin="0,0,0,8">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="28" />
+        </Grid.ColumnDefinitions>
+
+        <Button Grid.Column="0"
+                Style="{StaticResource FileRowButtonStyle}"
+                Command="{Binding SelectCommand, ElementName=Root}"
+                CommandParameter="{Binding SelectCommandParameter}"
+                Margin="0,0,4,0"
+                ToolTip="{Binding ToolTipText, ElementName=Root}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="230" />
+                </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource FileIconBadgeStyle}" Tag="{Binding IsFileLoaded, ElementName=Root}">
+                    <TextBlock Text="{Binding Icon, ElementName=Root}"
+                               Foreground="White"
+                               FontWeight="Bold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Title, ElementName=Root}"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Margin="10,0,0,0" />
+                <TextBlock Grid.Column="2"
+                           Text="{Binding StatusText, ElementName=Root}"
+                           Tag="{Binding IsFileLoaded, ElementName=Root}"
+                           Style="{StaticResource FileStatusTextStyle}"
+                           VerticalAlignment="Center" />
+            </Grid>
+        </Button>
+
+        <Button Grid.Column="1"
+                Style="{StaticResource OutlineButtonStyle}"
+                Command="{Binding ClearCommand, ElementName=Root}"
+                CommandParameter="{Binding ClearCommandParameter}"
+                Content="✕"
+                FontSize="12"
+                Padding="0"
+                ToolTip="Limpiar archivo"
+                Margin="0,4,0,4" />
+    </Grid>
+</UserControl>

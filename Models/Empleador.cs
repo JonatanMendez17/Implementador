@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Models
+namespace Implementador.Models
 {
     public class Empleador
     {
@@ -15,3 +15,4 @@ namespace ImplementadorCUAD.Models
         }
     }
 }
+

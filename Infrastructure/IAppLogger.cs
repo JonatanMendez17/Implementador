@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Infrastructure
+namespace Implementador.Infrastructure
 {
     public interface IAppLogger
     {
@@ -8,3 +8,5 @@ namespace ImplementadorCUAD.Infrastructure
         void Error(Exception ex, string message);
     }
 }
+
+

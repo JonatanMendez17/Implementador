@@ -1,4 +1,4 @@
-namespace ImplementadorCUAD.Models
+namespace Implementador.Models
 {
     public enum LogSeverity
     {
@@ -7,3 +7,4 @@ namespace ImplementadorCUAD.Models
         Error = 2
     }
 }
+

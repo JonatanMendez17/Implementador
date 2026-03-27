@@ -1,49 +1,87 @@
-# Implementador CUAD
+# Implementador
 
-Aplicación de escritorio WPF (.NET 8) para importar y validar archivos de CUAD (categorías, padrón, consumos, consumos detalle, servicios, catálogo de servicios) y cargarlos en SQL Server. La aplicación trabaja con una **base** (solo lectura) y una **base por empleador** (donde se importan los 6 archivos).
+Aplicación de escritorio WPF (.NET 8) orientada a la importación, validación e implementación de información en SQL Server.
+
+## Que es la aplicacion y cual es su proposito
+
+Implementador centraliza el proceso operativo de carga de archivos para cada empleador, reduciendo errores manuales y asegurando consistencia antes de persistir datos.
+
+La app trabaja con dos tipos de origen/destino:
+
+- **Base de referencia (solo lectura):** verificacion a catálogos y entidades maestras.
+- **Base por empleador (escritura):** recibe los datos importados luego de validar.
+
+Su objetivo principal es garantizar que los archivos cumplan reglas de estructura y negocio antes de insertar datos productivos.
+
+## Cual es su arquitectura
+
+La solucion sigue una arquitectura por capas para separar responsabilidades:
+
+- **`Presentation/`**: vistas WPF (`MainWindow`) y componentes visuales.
+- **`ViewModels/`**: coordinacion de flujo de UI y comandos (patron MVVM).
+- **`Application/`**: logica de negocio, importacion, validaciones y orquestacion de implementacion.
+- **`Data/`**: acceso a datos con `DbContext`, contratos y persistencia.
+- **`Infrastructure/`**: fabricas, servicios de soporte y detalles tecnicos transversales.
+- **`Models/`**: modelos de dominio y DTOs usados entre capas.
+- **`Commands/`**: implementaciones de comandos para la capa de presentacion.
+
+Esta separacion permite evolucionar reglas de negocio sin acoplarlas a la UI o al acceso a datos.
+
+## Cosas mas destacadas de la aplicacion
+
+- Importa y procesa 6 tipos de archivo: categorias, padron, consumos, consumos detalle, servicios y catalogo de servicios.
+- Aplica validaciones previas de estructura y reglas de negocio antes de implementar datos.
+- Soporta multiples empleadores con configuracion centralizada en `Configuration.xml`.
+- Permite limpiar datos por entidad en la base destino cuando se requiere reprocesar.
+- Muestra version en pantalla para facilitar trazabilidad operativa.
 
 ## Requisitos
 
 - .NET SDK 8.0 o superior
-- SQL Server accesible desde la máquina donde corre la aplicación
-- Configuración de conexiones en `Configuration.xml` (sección `<Conexiones>`)
+- SQL Server accesible desde la maquina donde corre la aplicacion
+- Configuracion de conexiones en `Configuration.xml` (seccion `<Conexiones>`)
 
-## Ejecución
+## Ejecucion
 
-1. Abrir la solución `ImplementadorCUAD.sln` en Visual Studio.
-2. Restaurar paquetes NuGet y compilar la solución.
+1. Abrir la solucion `Implementador.sln` en Visual Studio.
+2. Restaurar paquetes NuGet y compilar la solucion.
 3. Configurar `Configuration.xml` con la base y empleadores.
-4. Ejecutar el proyecto `ImplementadorCUAD` como proyecto de inicio.
+4. Ejecutar el proyecto `Implementador` como proyecto de inicio.
 
-## Configuración
+## Configuracion
+
 ### Conexiones a bases de datos (`Configuration.xml`)
 
-En la sección `<Conexiones>` se definen:
+En la seccion `<Conexiones>` se definen:
 
-- **`<ConexionBase>`**: connection string de la base (solo lectura). De ahí se obtienen entidades, categorías y catálogo.
-- **`<ConexionEmpleadores>`**: servidor y autenticación comunes para construir las conexiones destino de cada empleador.
-- **`<Empleador>`**: cada empleador que aparece en el desplegable, con `nombre` y `baseDatos` (nombre de la base donde se importan los 6 archivos).
+- **`<ConexionBase>`**: connection string de la base de referencia (solo lectura).
+- **`<ConexionEmpleadores>`**: servidor y autenticacion comunes para las bases destino.
+- **`<Empleador>`**: empleadores disponibles en UI (`nombre` y `baseDatos`).
 
-También se puede indicar un connection string completo por empleador con el atributo `connectionString` en lugar de `baseDatos`.
-Si no existe la sección `<Conexiones>` o no hay empleadores configurados, el desplegable de empleador quedará vacío (solo "Seleccionar") y no se podrá
-implementar ni limpiar hasta configurar al menos un empleador.
+Tambien se puede indicar un connection string completo por empleador con el atributo `connectionString` en lugar de `baseDatos`.
+Si no existe la seccion `<Conexiones>` o no hay empleadores configurados, no se podra implementar ni limpiar datos.
 
 ### Columnas de los archivos (`Configuration.xml`)
 
-En el mismo archivo se definen, por tipo de archivo (Categorías, Padrón, Consumos, etc.), las columnas esperadas, alias y reglas (tipo, largo, requerida).
-Si una columna no viene en el archivo, se puede comentar en la configuración para que la aplicación no la exija.
+Para cada tipo de archivo se pueden parametrizar:
 
-## Uso de la aplicación
+- columnas esperadas
+- alias de columnas
+- tipo de dato
+- largo maximo
+- obligatoriedad
 
-1. Seleccionar **Empleador** y **Entidad** en los desplegables (entidades provienen de la base).
-2. Cargar los archivos (Categorías, Padrón, Consumos, Consumos detalle, Servicios, Catálogo de servicios) según corresponda.
-3. Pulsar **Validar** para comprobar consistencia y que no existan datos previos para esa entidad en la base del empleador.
-4. Pulsar **Implementar datos** para insertar en la base del empleador seleccionado.
-5. Opcional: **Limpiar entidad** borra los datos importados de la entidad seleccionada en la base del empleador.
+Si una columna no aplica para un flujo, puede comentarse en configuracion para dejar de exigirla.
 
-La versión de la aplicación se muestra en la esquina superior derecha del panel (por ejemplo, `v1.0.0`).
+## Uso de la aplicacion
+
+1. Seleccionar **Empleador** y **Entidad**.
+2. Cargar los archivos requeridos segun el proceso.
+3. Pulsar **Validar** para verificar consistencia y precondiciones.
+4. Pulsar **Implementar datos** para persistir en la base del empleador.
+5. Opcional: **Limpiar entidad** para borrar la informacion importada de esa entidad.
 
 ## Versionado
 
-La versión se define en `ImplementadorCUAD.csproj` (`Version`, `AssemblyVersion`, `FileVersion`). Al publicar una nueva versión, actualizar ahí (por ejemplo `1.0.0` → `1.1.0`).
-La UI la muestra leyendo el ensamblado; no hace falta tocar otro archivo.
+La version se define en `Implementador.csproj` (`Version`, `AssemblyVersion`, `FileVersion`).
+Al publicar una nueva version, actualizar esos campos (por ejemplo `1.0.0` -> `1.1.0`).
