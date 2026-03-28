@@ -554,13 +554,20 @@ namespace Implementador.ViewModels
                 if (totalEliminado == 0)
                 {
                     _logUiController.LogWarning("No se encontraron registros para eliminar con la entidad seleccionada.");
+                    DialogService.Show(
+                        $"No se encontraron registros de la entidad '{entidadNombre}' para eliminar en la base de data.",
+                        "Limpieza entidad",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
                 }
-
-                DialogService.Show(
-                    $"La entidad '{entidadNombre}' fue limpiada correctamente de la base de data",
-                    "Limpieza entidad",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                else
+                {
+                    DialogService.Show(
+                        $"La entidad '{entidadNombre}' fue limpiada correctamente de la base de data.",
+                        "Limpieza entidad",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
 
                 ValidationCompleted = false;
                 Progress = 0;
