@@ -6,10 +6,12 @@ namespace Implementador.Presentation.Dialogs
     public partial class ConnectionWindow : Window
     {
         public string? SelectedConnection { get; private set; }
+        public string? WarningMessage { get; set; }
 
         public ConnectionWindow()
         {
             InitializeComponent();
+            DataContext = this;
         }
 
         private void OnConnectClick(object sender, RoutedEventArgs e)
