@@ -70,6 +70,7 @@ namespace Implementador.ViewModels
                 if (SetProperty(ref _empleadorSeleccionado, value))
                 {
                     InvalidateValidationState("Se actualizo el empleador seleccionado. Se reinicio el estado de validacion.");
+                    RefreshCommandStates();
                 }
             }
         }
