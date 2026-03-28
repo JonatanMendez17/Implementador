@@ -509,7 +509,7 @@ namespace Implementador.Application.Import
                 }
                 else
                 {
-                    log.Warn($"{logicalName} row {filaNumero}: {string.Join(" | ", erroresFila)}");
+                    log.Warn($"{logicalName} fila {filaNumero}: {string.Join(" | ", erroresFila)}");
                     filasRechazadas++;
                 }
 
@@ -523,7 +523,7 @@ namespace Implementador.Application.Import
 
             if (totalFilasDatos == 0)
             {
-                log.Warn($"{logicalName}: el archivo no contiene filas de datos (solo encabezados). No se cargaron registros.");
+                log.Warn($"{logicalName}: el archivo se encuentra vacio. No se validaron registros.");
             }
             else
             {

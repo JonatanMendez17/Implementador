@@ -69,7 +69,7 @@ namespace Implementador.Application.Validation
                 rowNumber++;
                 if (!row.TryGetValue("Entidad", out var entidad) || string.IsNullOrWhiteSpace(entidad))
                 {
-                    log.Warn($"{fileName} row {rowNumber}: columna 'Entidad' vacia o inexistente.");
+                    log.Warn($"{fileName} fila {rowNumber}: columna 'Entidad' vacia o inexistente.");
                     continue;
                 }
 

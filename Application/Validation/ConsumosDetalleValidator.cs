@@ -125,7 +125,7 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
             if (!parseOk)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log.Warn($"Consumos Detalle: Para el código de consumo '{codigo}' hay al menos una row con 'Monto' o 'Nro Cuota' inválidos.");
+                log.Warn($"Consumos Detalle: Para el código de consumo '{codigo}' hay al menos una fila con 'Monto' o 'Nro Cuota' inválidos.");
                 continue;
             }
 

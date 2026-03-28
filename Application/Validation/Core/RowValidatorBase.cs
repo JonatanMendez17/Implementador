@@ -27,7 +27,7 @@ public abstract class RowValidatorBase
             }
 
             rejected++;
-            log.Warn($"{scope} row {rowNumber}: {string.Join(" | ", errors)}");
+            log.Warn($"{scope} fila {rowNumber}: {string.Join(" | ", errors)}");
         }
 
         return accepted;
