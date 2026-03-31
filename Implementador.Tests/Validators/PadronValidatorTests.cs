@@ -55,10 +55,6 @@ public class PadronValidatorTests
             CategoriasPorEntidadRef = new Dictionary<string, List<CategoriaRef>>(StringComparer.OrdinalIgnoreCase)
             {
                 [entidad] = [new CategoriaRef { Entidad = entidad, CodigoCategoria = codigoCategoria, Habilitada = true }]
-            },
-            CategoriasConCuotaSocial = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                $"{entidad}|{codigoCategoria}"
             }
         };
 

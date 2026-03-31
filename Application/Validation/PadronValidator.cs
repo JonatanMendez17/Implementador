@@ -48,7 +48,6 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
 
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
         var categoriasPorEntidadRef = safeSnapshot.CategoriasPorEntidadRef;
-        var categoriasConCuotaSocial = safeSnapshot.CategoriasConCuotaSocial;
         foreach (var kvp in categoriasPorEntidadRef)
         {
             var entidadRef = kvp.Key;
@@ -114,14 +113,6 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
                     if (categoriaRef == null)
                     {
                         erroresFila.Add($"El campo (Codigo Categoria) '{codigoCategoria}' no existe en la base para la entidad '{entidadClave}'.");
-                    }
-                    else if (categoriasConCuotaSocial.Count > 0)
-                    {
-                        var keyCuota = $"{entidadClave}|{codigoNorm}";
-                        if (!categoriasConCuotaSocial.Contains(keyCuota))
-                        {
-                            erroresFila.Add($"El campo (Codigo Categoria) '{codigoCategoria}' de la entidad '{entidadClave}' no tiene código de cuota social vigente en la base.");
-                        }
                     }
                 }
                 else

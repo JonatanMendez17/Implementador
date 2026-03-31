@@ -130,18 +130,18 @@ namespace Implementador.Data
 
             using var connection = CreateOpenConnection();
             using var command = new SqlCommand(
-                @"SELECT 
+                @"SELECT
                          m.Mut_Nombre,
-                         mc.Mca_Nome
+                         mc.Mca_Nome,
+                         mcc.Mcc_COD_Entidad
                   FROM Mutual m
-                  INNER JOIN Mutual_Categoria mc 
+                  INNER JOIN Mutual_Categoria mc
                       ON m.Mut_Id = mc.Mut_Id
                   INNER JOIN Mutual_Categoria_Codigo mcc
                       ON mc.Mca_Id = mcc.Mca_Id
                   WHERE m.Mut_Alta = 'S'
                     AND mc.Mca_Vigente = 1
-                    AND mcc.Mcc_Vigente = 1
-                    AND mcc.Mcc_COD_Entidad = 6619;",
+                    AND mcc.Mcc_Vigente = 1;",
                 connection);
 
             using var reader = command.ExecuteReader();
@@ -149,12 +149,13 @@ namespace Implementador.Data
             {
                 var entidad = reader.IsDBNull(0) ? null : reader.GetString(0);
                 var categoria = reader.IsDBNull(1) ? null : reader.GetString(1);
-                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(categoria))
+                var codEntidad = reader.IsDBNull(2) ? null : reader.GetValue(2)?.ToString();
+                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(categoria) || string.IsNullOrWhiteSpace(codEntidad))
                 {
                     continue;
                 }
 
-                var key = $"{entidad.Trim()}|{categoria.Trim()}";
+                var key = $"{entidad.Trim()}|{categoria.Trim()}|{codEntidad.Trim()}";
                 resultado.Add(key);
             }
 

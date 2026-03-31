@@ -65,12 +65,14 @@ namespace Implementador.Application.Import
                 result.HasLoadedData = false;
                 return result;
             }
+            var categoriaValidator = new CategoriaValidator();
             var padronValidator = new PadronValidator(_dbContextFactory);
             var consumosValidator = new ConsumosValidator(_dbContextFactory);
             var consumosDetalleValidator = new ConsumosDetalleValidator();
             var serviciosValidator = new ServiciosValidator();
             var catalogoServiciosValidator = new CatalogoServiciosValidator();
 
+            categoriaValidator.Apply(result, log, snapshot);
             padronValidator.Apply(result, log, snapshot);
             consumosValidator.Apply(result, log, snapshot, selection.TargetConnectionString);
             consumosDetalleValidator.Apply(result, log, snapshot);
