@@ -271,6 +271,38 @@ namespace Implementador.Data
             return resultado;
         }
 
+        public HashSet<long> GetDocumentosExistentesEnEmpleadoBatch(IEnumerable<long> documentos)
+        {
+            var resultado = new HashSet<long>();
+
+            var docs = documentos.Where(d => d > 0).Distinct().ToList();
+            if (docs.Count == 0)
+                return resultado;
+
+            using var connection = CreateOpenConnection();
+            const int chunkSize = 200;
+            for (int offset = 0; offset < docs.Count; offset += chunkSize)
+            {
+                var chunk = docs.Skip(offset).Take(chunkSize).ToList();
+                var parametros = string.Join(", ", Enumerable.Range(0, chunk.Count).Select(i => $"@Doc{i}"));
+                var sql = $@"
+                    SELECT DISTINCT p.Per_NroDoc
+                    FROM Empleado e
+                    JOIN Persona p ON p.Per_Id = e.Per_Id
+                    WHERE p.Per_NroDoc IN ({parametros});";
+
+                using var command = new SqlCommand(sql, connection);
+                for (int i = 0; i < chunk.Count; i++)
+                    command.Parameters.AddWithValue($"@Doc{i}", chunk[i]);
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                    resultado.Add(reader.GetInt64(0));
+            }
+
+            return resultado;
+        }
+
         private static string BuildEmpleadoLookupBatchSql(int count)
         {
             var values = string.Join(", ", Enumerable.Range(0, count).Select(i => $"(@EmpCod{i}, @PerNroDoc{i})"));

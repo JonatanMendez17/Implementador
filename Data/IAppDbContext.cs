@@ -23,6 +23,8 @@ public interface IAppDbContext : IDisposable
     Dictionary<string, (bool Existe, int EmrId)> GetEmrIdByEmpleadoCodigoYDocumentoBatch(
         IEnumerable<(string EmpleadoCodigo, long Documento)> pares);
 
+    HashSet<long> GetDocumentosExistentesEnEmpleadoBatch(IEnumerable<long> documentos);
+
     Task<int> InsertPadronSocioAsync(IReadOnlyList<ImportarPadronSocio> registros, IProgress<int>? progress = null);
 
     Task<int> InsertImportarConsumosDetAsync(IReadOnlyList<ImportarConsumosDet> registros, IProgress<int>? progress = null);

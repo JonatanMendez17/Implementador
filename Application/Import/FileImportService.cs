@@ -71,16 +71,7 @@ namespace Implementador.Application.Import
             var serviciosValidator = new ServiciosValidator();
             var catalogoServiciosValidator = new CatalogoServiciosValidator();
 
-            try
-            {
-                padronValidator.Apply(result, log, snapshot, ValidationDbErrorPolicy);
-            }
-            catch (DbValidationException ex)
-            {
-                log.Error($"Validación detenida por error de base en padrón. {ex.Message} → {ex.InnerException?.Message}");
-                result.HasLoadedData = false;
-                return result;
-            }
+            padronValidator.Apply(result, log, snapshot);
             consumosValidator.Apply(result, log, snapshot, selection.TargetConnectionString);
             consumosDetalleValidator.Apply(result, log, snapshot);
             serviciosValidator.Apply(result, log, snapshot);
