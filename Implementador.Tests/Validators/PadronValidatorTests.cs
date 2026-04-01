@@ -20,14 +20,10 @@ public class PadronValidatorTests
         _factoryMock.Setup(f => f.Create()).Returns(_dbMock.Object);
         _factoryMock.Setup(f => f.Create(It.IsAny<string>())).Returns(_dbMock.Object);
 
-        // Por defecto: todos los socios existen en DB (evita fallos por lookup vacío en tests que no testean la DB)
+        // Por defecto: todos los documentos existen en DB
         _dbMock
-            .Setup(d => d.GetEmrIdByEmpleadoCodigoYDocumentoBatch(It.IsAny<IEnumerable<(string, long)>>()))
-            .Returns((IEnumerable<(string EmpleadoCodigo, long Documento)> pares) =>
-                pares.ToDictionary(
-                    p => $"{p.EmpleadoCodigo}|{p.Documento}",
-                    _ => (Existe: true, EmrId: 1),
-                    StringComparer.OrdinalIgnoreCase));
+            .Setup(d => d.GetDocumentosExistentesEnEmpleadoBatch(It.IsAny<IEnumerable<long>>()))
+            .Returns((IEnumerable<long> docs) => new HashSet<long>(docs));
     }
 
     private PadronValidator CrearSut() => new(_factoryMock.Object);
@@ -59,10 +55,6 @@ public class PadronValidatorTests
             CategoriasPorEntidadRef = new Dictionary<string, List<CategoriaRef>>(StringComparer.OrdinalIgnoreCase)
             {
                 [entidad] = [new CategoriaRef { Entidad = entidad, CodigoCategoria = codigoCategoria, Habilitada = true }]
-            },
-            CategoriasConCuotaSocial = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                $"{entidad}|{codigoCategoria}"
             }
         };
 
@@ -148,11 +140,11 @@ public class PadronValidatorTests
     }
 
     [Fact]
-    public void Apply_ErrorEnBaseDeDatos_ConPoliticaContinuar_LoguearYContinuar()
+    public void Apply_DocumentoNoExisteEnBase_FilaSeRechaza()
     {
         _dbMock
-            .Setup(d => d.GetEmrIdByEmpleadoCodigoYDocumentoBatch(It.IsAny<IEnumerable<(string, long)>>()))
-            .Throws(new Exception("Conexión fallida"));
+            .Setup(d => d.GetDocumentosExistentesEnEmpleadoBatch(It.IsAny<IEnumerable<long>>()))
+            .Returns(new HashSet<long>()); // ningún documento existe
 
         var padron = new List<Dictionary<string, string>>
         {
@@ -166,33 +158,9 @@ public class PadronValidatorTests
             HasLoadedData = true
         };
 
-        CrearSut().Apply(result, _log, SnapshotConCategoria("BDI", "A"),
-            dbErrorPolicy: DbErrorPolicy.ContinueWithWarnings);
+        CrearSut().Apply(result, _log, SnapshotConCategoria("BDI", "A"));
 
-        Assert.True(_log.HasErrors);
-    }
-
-    [Fact]
-    public void Apply_ErrorEnBaseDeDatos_ConPoliticaAbortar_LanzaExcepcion()
-    {
-        _dbMock
-            .Setup(d => d.GetEmrIdByEmpleadoCodigoYDocumentoBatch(It.IsAny<IEnumerable<(string, long)>>()))
-            .Throws(new Exception("Conexión fallida"));
-
-        var padron = new List<Dictionary<string, string>>
-        {
-            FilaPadron("10", "12345678")
-        };
-        var categorias = new List<Dictionary<string, string>> { FilaCategoria("A") };
-        var result = new ImplementationValidationResult
-        {
-            DatosPadronValidados = padron,
-            DatosCategoriasValidadas = categorias,
-            HasLoadedData = true
-        };
-
-        Assert.Throws<DbValidationException>(() =>
-            CrearSut().Apply(result, _log, SnapshotConCategoria("BDI", "A"),
-                dbErrorPolicy: DbErrorPolicy.AbortValidation));
+        Assert.Empty(result.DatosPadronValidados);
+        Assert.True(_log.HasWarnings);
     }
 }

@@ -130,18 +130,18 @@ namespace Implementador.Data
 
             using var connection = CreateOpenConnection();
             using var command = new SqlCommand(
-                @"SELECT 
+                @"SELECT
                          m.Mut_Nombre,
-                         mc.Mca_Nome
+                         mc.Mca_Nome,
+                         mcc.Mcc_COD_Entidad
                   FROM Mutual m
-                  INNER JOIN Mutual_Categoria mc 
+                  INNER JOIN Mutual_Categoria mc
                       ON m.Mut_Id = mc.Mut_Id
                   INNER JOIN Mutual_Categoria_Codigo mcc
                       ON mc.Mca_Id = mcc.Mca_Id
                   WHERE m.Mut_Alta = 'S'
                     AND mc.Mca_Vigente = 1
-                    AND mcc.Mcc_Vigente = 1
-                    AND mcc.Mcc_COD_Entidad = 6619;",
+                    AND mcc.Mcc_Vigente = 1;",
                 connection);
 
             using var reader = command.ExecuteReader();
@@ -149,12 +149,13 @@ namespace Implementador.Data
             {
                 var entidad = reader.IsDBNull(0) ? null : reader.GetString(0);
                 var categoria = reader.IsDBNull(1) ? null : reader.GetString(1);
-                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(categoria))
+                var codEntidad = reader.IsDBNull(2) ? null : reader.GetValue(2)?.ToString();
+                if (string.IsNullOrWhiteSpace(entidad) || string.IsNullOrWhiteSpace(categoria) || string.IsNullOrWhiteSpace(codEntidad))
                 {
                     continue;
                 }
 
-                var key = $"{entidad.Trim()}|{categoria.Trim()}";
+                var key = $"{entidad.Trim()}|{categoria.Trim()}|{codEntidad.Trim()}";
                 resultado.Add(key);
             }
 
@@ -266,6 +267,38 @@ namespace Implementador.Data
                     var key = $"{empleadoCodigo}|{documento}";
                     resultado[key] = (emrId > 0, emrId);
                 }
+            }
+
+            return resultado;
+        }
+
+        public HashSet<long> GetDocumentosExistentesEnEmpleadoBatch(IEnumerable<long> documentos)
+        {
+            var resultado = new HashSet<long>();
+
+            var docs = documentos.Where(d => d > 0).Distinct().ToList();
+            if (docs.Count == 0)
+                return resultado;
+
+            using var connection = CreateOpenConnection();
+            const int chunkSize = 200;
+            for (int offset = 0; offset < docs.Count; offset += chunkSize)
+            {
+                var chunk = docs.Skip(offset).Take(chunkSize).ToList();
+                var parametros = string.Join(", ", Enumerable.Range(0, chunk.Count).Select(i => $"@Doc{i}"));
+                var sql = $@"
+                    SELECT DISTINCT p.Per_NroDoc
+                    FROM Empleado e
+                    JOIN Persona p ON p.Per_Id = e.Per_Id
+                    WHERE p.Per_NroDoc IN ({parametros});";
+
+                using var command = new SqlCommand(sql, connection);
+                for (int i = 0; i < chunk.Count; i++)
+                    command.Parameters.AddWithValue($"@Doc{i}", chunk[i]);
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                    resultado.Add((long)reader.GetInt32(0));
             }
 
             return resultado;

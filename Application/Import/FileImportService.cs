@@ -65,22 +65,15 @@ namespace Implementador.Application.Import
                 result.HasLoadedData = false;
                 return result;
             }
+            var categoriaValidator = new CategoriaValidator();
             var padronValidator = new PadronValidator(_dbContextFactory);
             var consumosValidator = new ConsumosValidator(_dbContextFactory);
             var consumosDetalleValidator = new ConsumosDetalleValidator();
             var serviciosValidator = new ServiciosValidator();
             var catalogoServiciosValidator = new CatalogoServiciosValidator();
 
-            try
-            {
-                padronValidator.Apply(result, log, snapshot, ValidationDbErrorPolicy);
-            }
-            catch (DbValidationException ex)
-            {
-                log.Error($"Validación detenida por error de base en padrón. {ex.Message} → {ex.InnerException?.Message}");
-                result.HasLoadedData = false;
-                return result;
-            }
+            categoriaValidator.Apply(result, log, snapshot);
+            padronValidator.Apply(result, log, snapshot);
             consumosValidator.Apply(result, log, snapshot, selection.TargetConnectionString);
             consumosDetalleValidator.Apply(result, log, snapshot);
             serviciosValidator.Apply(result, log, snapshot);
