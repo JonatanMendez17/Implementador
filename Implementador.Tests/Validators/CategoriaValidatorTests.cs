@@ -14,20 +14,19 @@ public class CategoriaValidatorTests
     private static CategoriaValidator CrearSut() => new();
 
     private static Dictionary<string, string> FilaCategoria(
-        string entidad, string mcaNome, string mccCodEntidad) =>
+        string entidad, string codigoCategoria) =>
         new()
         {
-            ["Entidad"]         = entidad,
-            ["Mca_Nome"]        = mcaNome,
-            ["Mcc_COD_Entidad"] = mccCodEntidad
+            ["Entidad"]           = entidad,
+            ["Código Categoría"]  = codigoCategoria,
         };
 
-    private static ValidationReferenceData SnapshotConCuota(string entidad, string categoria, string codEntidad) =>
+    private static ValidationReferenceData SnapshotConCategorias(string entidad, params string[] codigos) =>
         new()
         {
-            CategoriasConCuotaSocial = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            CategoriasPorEntidadRef = new Dictionary<string, List<CategoriaRef>>(StringComparer.OrdinalIgnoreCase)
             {
-                $"{entidad}|{categoria}|{codEntidad}"
+                [entidad] = codigos.Select(c => new CategoriaRef { Entidad = entidad, CodigoCategoria = c, Habilitada = true }).ToList()
             }
         };
 
@@ -47,56 +46,56 @@ public class CategoriaValidatorTests
     }
 
     [Fact]
-    public void Apply_ConceptoDescuentoVigente_FilaAceptada()
+    public void Apply_CodigoExisteEnBase_FilaAceptada()
     {
         var result = new ImplementationValidationResult
         {
-            DatosCategoriasValidadas = [FilaCategoria("BDI", "ADH", "6619")],
+            DatosCategoriasValidadas = [FilaCategoria("BDI", "ADH")],
             HasLoadedData = true
         };
 
-        CrearSut().Apply(result, _log, SnapshotConCuota("BDI", "ADH", "6619"));
+        CrearSut().Apply(result, _log, SnapshotConCategorias("BDI", "ADH"));
 
         Assert.Single(result.DatosCategoriasValidadas);
         Assert.False(_log.HasWarnings);
     }
 
     [Fact]
-    public void Apply_ConceptoDescuentoNoVigente_FilaSeRechaza()
+    public void Apply_CodigoNoExisteEnBase_FilaSeRechaza()
     {
         var result = new ImplementationValidationResult
         {
-            DatosCategoriasValidadas = [FilaCategoria("BDI", "ADH", "9999")],
+            DatosCategoriasValidadas = [FilaCategoria("BDI", "INVALIDA")],
             HasLoadedData = true
         };
 
-        CrearSut().Apply(result, _log, SnapshotConCuota("BDI", "ADH", "6619"));
+        CrearSut().Apply(result, _log, SnapshotConCategorias("BDI", "ADH"));
 
         Assert.Empty(result.DatosCategoriasValidadas);
         Assert.True(_log.HasWarnings);
     }
 
     [Fact]
-    public void Apply_ConceptoDescuentoVacio_FilaSeRechaza()
+    public void Apply_EntidadNoExisteEnBase_FilaSeRechaza()
     {
         var result = new ImplementationValidationResult
         {
-            DatosCategoriasValidadas = [FilaCategoria("BDI", "ADH", "")],
+            DatosCategoriasValidadas = [FilaCategoria("OTRA", "ADH")],
             HasLoadedData = true
         };
 
-        CrearSut().Apply(result, _log, SnapshotConCuota("BDI", "ADH", "6619"));
+        CrearSut().Apply(result, _log, SnapshotConCategorias("BDI", "ADH"));
 
         Assert.Empty(result.DatosCategoriasValidadas);
         Assert.True(_log.HasWarnings);
     }
 
     [Fact]
-    public void Apply_SinSnapshot_NoValidaCuota()
+    public void Apply_SinSnapshot_NoValidaCategoria()
     {
         var result = new ImplementationValidationResult
         {
-            DatosCategoriasValidadas = [FilaCategoria("BDI", "ADH", "9999")],
+            DatosCategoriasValidadas = [FilaCategoria("BDI", "INVALIDA")],
             HasLoadedData = true
         };
 

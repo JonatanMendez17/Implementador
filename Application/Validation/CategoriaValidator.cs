@@ -1,6 +1,7 @@
 using Implementador.Infrastructure;
 using Implementador.Application.Validation.Common;
 using Implementador.Application.Validation.Core;
+using Implementador.Models;
 
 namespace Implementador.Application.Validation;
 
@@ -17,7 +18,7 @@ public sealed class CategoriaValidator : RowValidatorBase
         }
 
         log.Separator();
-        var categoriasConCuotaSocial = (snapshot ?? ValidationReferenceData.Empty).CategoriasConCuotaSocial;
+        var categoriasPorEntidad = (snapshot ?? ValidationReferenceData.Empty).CategoriasPorEntidadRef;
 
         var categoriasFiltradas = FilterValidRows(
             ArchivoNombre.CategoriasSOCIOS,
@@ -28,21 +29,14 @@ public sealed class CategoriaValidator : RowValidatorBase
                 var erroresFila = new List<string>();
 
                 var entidad = RowValueReader.GetFirstValue(row, "Entidad");
-                var codigoCategoria = RowValueReader.GetFirstValue(row, "Mca_Nome");
-                var conceptoDescuento = RowValueReader.GetFirstValue(row, "Mcc_COD_Entidad");
+                var codigoCategoria = RowValueReader.GetFirstValue(row, "Código Categoría", "Codigo Categoria");
 
-                if (string.IsNullOrWhiteSpace(conceptoDescuento))
+                if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(codigoCategoria) && categoriasPorEntidad.Count > 0)
                 {
-                    erroresFila.Add("El campo (Concepto Descuento) está vacío.");
-                    return erroresFila;
-                }
-
-                if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(codigoCategoria) && categoriasConCuotaSocial.Count > 0)
-                {
-                    var key = $"{entidad.Trim()}|{codigoCategoria.Trim()}|{conceptoDescuento.Trim()}";
-                    if (!categoriasConCuotaSocial.Contains(key))
+                    if (!categoriasPorEntidad.TryGetValue(entidad.Trim(), out var categorias) ||
+                        !categorias.Any(c => string.Equals(c.CodigoCategoria.Trim(), codigoCategoria.Trim(), StringComparison.OrdinalIgnoreCase)))
                     {
-                        erroresFila.Add($"El campo (Concepto Descuento) '{conceptoDescuento}' no es un código de cuota social vigente para la categoría '{codigoCategoria}' de la entidad '{entidad.Trim()}'.");
+                        erroresFila.Add($"El campo (Código Categoría) '{codigoCategoria}' no existe en la base para la entidad '{entidad.Trim()}'.");
                     }
                 }
 
