@@ -43,7 +43,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
         var categoriasDisponible = categoriasValidasCodigo.Count > 0 || categoriasValidasNombre.Count > 0;
         if (!categoriasDisponible)
         {
-            log.Warn("Padron: no se cargó archivo de Categorías. No se puede verificar que el Codigo Categoría sea válido.");
+            log.Warn($"{ArchivoNombre.PadronSocios}: no se cargó archivo de Categorías. No se puede verificar que el Codigo Categoría sea válido.");
         }
 
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;

@@ -298,7 +298,7 @@ namespace Implementador.Data
 
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
-                    resultado.Add(reader.GetInt64(0));
+                    resultado.Add((long)reader.GetInt32(0));
             }
 
             return resultado;
