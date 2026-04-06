@@ -1,3 +1,6 @@
+using System.IO;
+using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 using Implementador.Models;
 using Microsoft.Data.SqlClient;
@@ -108,36 +111,64 @@ namespace Implementador.Infrastructure.Configuration
 
         /// Actualiza la cadena de conexión de `ConexionBase` en `Configuration.xml`,
         /// agregando o modificando el nodo <Conexiones><ConexionBase connectionString="..." /></Conexiones>.
+        /// Usa reemplazo de texto para preservar el formato original del archivo.
         public void SetConexionBaseConnectionString(string connectionString)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
                 throw new ArgumentException("La cadena de conexión no puede estar vacía.", nameof(connectionString));
 
+            var text = File.ReadAllText(_rutaXml);
+            var escaped = EscapeXmlAttr(connectionString);
+
+            // Caso 1: <ConexionBase connectionString="..."> ya existe → actualizar solo ese atributo
+            const string patternConAttr = @"(<ConexionBase\b[^>]*?\bconnectionString\s*=\s*"")[^""]*("")";
+            if (Regex.IsMatch(text, patternConAttr))
+            {
+                text = Regex.Replace(text, patternConAttr,
+                    m => m.Groups[1].Value + escaped + m.Groups[2].Value);
+                File.WriteAllText(_rutaXml, text);
+                return;
+            }
+
+            // Caso 2: <ConexionBase> existe pero sin el atributo → agregarlo
+            const string patternNodoSinAttr = @"(<ConexionBase\b)";
+            if (Regex.IsMatch(text, patternNodoSinAttr))
+            {
+                text = Regex.Replace(text, patternNodoSinAttr,
+                    m => $"{m.Groups[1].Value} connectionString=\"{escaped}\"");
+                File.WriteAllText(_rutaXml, text);
+                return;
+            }
+
+            // Caso 3: <ConexionBase> no existe → insertar dentro de <Conexiones>
+            const string patternConexiones = @"(<Conexiones\b[^>]*>)";
+            if (Regex.IsMatch(text, patternConexiones))
+            {
+                text = Regex.Replace(text, patternConexiones,
+                    m => m.Groups[1].Value + $"\n    <ConexionBase connectionString=\"{escaped}\" />");
+                File.WriteAllText(_rutaXml, text);
+                return;
+            }
+
+            // Fallback: el XML no tiene estructura esperada → reescribir con XDocument
             var document = XDocument.Load(_rutaXml);
             var root = document.Root ?? new XElement("Configuracion");
-            if (document.Root == null)
-            {
-                document.Add(root);
-            }
-
-            var conexiones = root.Element("Conexiones");
-            if (conexiones == null)
-            {
-                conexiones = new XElement("Conexiones");
-                root.Add(conexiones);
-            }
-
-            var conexionBase = conexiones.Element("ConexionBase");
-            if (conexionBase == null)
-            {
-                conexionBase = new XElement("ConexionBase");
-                conexiones.AddFirst(conexionBase);
-            }
-
+            if (document.Root == null) document.Add(root);
+            var conexiones = root.Element("Conexiones") ?? new XElement("Conexiones");
+            if (root.Element("Conexiones") == null) root.Add(conexiones);
+            var conexionBase = conexiones.Element("ConexionBase") ?? new XElement("ConexionBase");
+            if (conexiones.Element("ConexionBase") == null) conexiones.AddFirst(conexionBase);
             conexionBase.SetAttributeValue("connectionString", connectionString);
-
-            document.Save(_rutaXml);
+            var settings = new XmlWriterSettings { Indent = true, IndentChars = "  ", OmitXmlDeclaration = true };
+            using var writer = XmlWriter.Create(_rutaXml, settings);
+            document.Save(writer);
         }
+
+        private static string EscapeXmlAttr(string value) =>
+            value.Replace("&", "&amp;")
+                 .Replace("\"", "&quot;")
+                 .Replace("<", "&lt;")
+                 .Replace(">", "&gt;");
     }
 }
 
