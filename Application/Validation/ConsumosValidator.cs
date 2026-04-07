@@ -21,6 +21,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
         var entidadesRef = safeSnapshot.EntidadesRef;
         var conceptosDescuentoVigentes = safeSnapshot.ConceptosDescuentoVigentes;
 
+        var padronRechazadosPorSocio = result.PadronSociosRechazados;
         var padronPorSocio = result.DatosPadronValidados
             .Where(f => RowValueReader.TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
             .GroupBy(f => RowValueReader.GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
@@ -62,7 +63,10 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             {
                 if (!padronPorSocio.TryGetValue(nroSocio!.Trim(), out var filaPadron))
                 {
-                    erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe o no corresponde al padron.");
+                    if (padronRechazadosPorSocio.TryGetValue(nroSocio.Trim(), out var motivoRechazo))
+                        erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' existe pero fue descartado del padrón de socio dado que {motivoRechazo}");
+                    else
+                        erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe en el padron de socio.");
                 }
                 else
                 {

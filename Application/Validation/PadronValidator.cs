@@ -63,6 +63,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
         var documentosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var beneficiosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var documentosEnBase = LoadDocumentoLookup(result.DatosPadronValidados, out var lookupDisponible);
+        var padronRechazadosPorSocio = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var padronFiltrado = FilterValidRows(
             ArchivoNombre.PadronSocios,
             result.DatosPadronValidados,
@@ -156,6 +157,11 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
                 }
             }
 
+            if (erroresFila.Count > 0 && !string.IsNullOrWhiteSpace(nroSocio))
+            {
+                padronRechazadosPorSocio[nroSocio.Trim()] = string.Join(" | ", erroresFila);
+            }
+
             return erroresFila;
             },
             out var rechazadas);
@@ -165,6 +171,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
         log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.PadronSocios, padronFiltrado.Count));
 
         result.DatosPadronValidados = padronFiltrado;
+        result.PadronSociosRechazados = padronRechazadosPorSocio;
     }
 
     private HashSet<long> LoadDocumentoLookup(
