@@ -27,6 +27,8 @@ La solucion sigue una arquitectura por capas para separar responsabilidades:
 
 Esta separacion permite evolucionar reglas de negocio sin acoplarlas a la UI o al acceso a datos.
 
+![Diagrama de arquitectura](Resources/Diagrama.png)
+
 ## Cosas mas destacadas de la aplicacion
 
 - Importa y procesa 6 tipos de archivo: categorias, padron, consumos, consumos detalle, servicios y catalogo de servicios.
@@ -80,6 +82,12 @@ Si una columna no aplica para un flujo, puede comentarse en configuracion para d
 3. Pulsar **Validar** para verificar consistencia y precondiciones.
 4. Pulsar **Implementar datos** para persistir en la base del empleador.
 5. Opcional: **Limpiar entidad** para borrar la informacion importada de esa entidad.
+
+## Pruebas
+
+El proyecto cuenta con pruebas unitarias que cubren la logica de negocio principal: validaciones de archivos, reglas de importacion y comportamiento de los servicios de aplicacion.
+
+![Pruebas unitarias](Resources/Testing.png)
 
 ## Versionado
 

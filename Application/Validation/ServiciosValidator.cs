@@ -19,6 +19,7 @@ public sealed class ServiciosValidator : RowValidatorBase
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
         var entidadesRef = safeSnapshot.EntidadesRef;
 
+        var padronRechazadosPorSocio = result.PadronSociosRechazados;
         var padronPorSocio = result.DatosPadronValidados
             .Where(f => RowValueReader.TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
             .GroupBy(f => RowValueReader.GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
@@ -51,7 +52,10 @@ public sealed class ServiciosValidator : RowValidatorBase
 
             if (!padronPorSocio.TryGetValue(nroSocio!.Trim(), out var filaPadron))
             {
-                erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe o no corresponde al padron.");
+                if (padronRechazadosPorSocio.TryGetValue(nroSocio.Trim(), out var motivoRechazo))
+                    erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' existe pero fue descartado del padrón de socio dado que {motivoRechazo}");
+                else
+                    erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe en el padron de socio.");
             }
             else
             {
@@ -60,12 +64,12 @@ public sealed class ServiciosValidator : RowValidatorBase
 
                 if (!ValueParsers.EqualsDigitsOnly(cuitServicio, cuitPadron))
                 {
-                    erroresFila.Add($"El campo (CUIT) no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El campo (CUIT) '{cuitServicio}' no coincide con el valor del padron '{cuitPadron}' para socio '{nroSocio}'.");
                 }
 
                 if (!ValueParsers.EqualsTrimmed(beneficioServicio, beneficioPadron))
                 {
-                    erroresFila.Add($"El campo (Beneficio) no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El campo (Beneficio) '{beneficioServicio}' no coincide con el valor del padron '{beneficioPadron}' para socio '{nroSocio}'.");
                 }
             }
 

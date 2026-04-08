@@ -65,22 +65,15 @@ namespace Implementador.Application.Import
                 result.HasLoadedData = false;
                 return result;
             }
+            var categoriaValidator = new CategoriaValidator();
             var padronValidator = new PadronValidator(_dbContextFactory);
             var consumosValidator = new ConsumosValidator(_dbContextFactory);
             var consumosDetalleValidator = new ConsumosDetalleValidator();
             var serviciosValidator = new ServiciosValidator();
             var catalogoServiciosValidator = new CatalogoServiciosValidator();
 
-            try
-            {
-                padronValidator.Apply(result, log, snapshot, ValidationDbErrorPolicy);
-            }
-            catch (DbValidationException ex)
-            {
-                log.Error($"Validación detenida por error de base en padrón. {ex.Message} → {ex.InnerException?.Message}");
-                result.HasLoadedData = false;
-                return result;
-            }
+            categoriaValidator.Apply(result, log, snapshot);
+            padronValidator.Apply(result, log, snapshot);
             consumosValidator.Apply(result, log, snapshot, selection.TargetConnectionString);
             consumosDetalleValidator.Apply(result, log, snapshot);
             serviciosValidator.Apply(result, log, snapshot);
@@ -445,7 +438,7 @@ namespace Implementador.Application.Import
 
                 if (!indice.HasValue && config.Requerida)
                 {
-                    log.Error($"{logicalName}: Falta columna requerida para '{config.Clave}'.");
+                    log.Error($"{logicalName}: Falta columna requerida: '{config.Clave}'.");
                     return null;
                 }
             }
@@ -604,13 +597,13 @@ namespace Implementador.Application.Import
 
             if (texto.Length > config.LargoMaximo)
             {
-                error = $"excede el largo maximo permitido ({config.LargoMaximo})";
+                error = $"'{texto}' excede el largo maximo permitido ({config.LargoMaximo})";
                 return false;
             }
 
             if (HasWeirdCharacters(texto))
             {
-                error = "contiene caracteres extraños";
+                error = $"'{texto}' contiene caracteres extraños";
                 return false;
             }
 
@@ -622,17 +615,17 @@ namespace Implementador.Application.Import
                         var soloDigitos = texto.All(char.IsDigit);
                         var esNotacionCientifica = texto.IndexOf('E', StringComparison.OrdinalIgnoreCase) >= 0;
                         if (esNotacionCientifica || (soloDigitos && texto.Length > 18))
-                            error = "excede el limite de digitos permitidos";
+                            error = $"'{texto}' excede el limite de digitos permitidos";
                         else if (texto.Any(char.IsLetter))
-                            error = "no puede contener letras";
+                            error = $"'{texto}' no puede contener letras";
                         else
-                            error = "no es un numero valido";
+                            error = $"'{texto}' no es un numero valido";
                         return false;
                     }
 
                     if (numero <= 0)
                     {
-                        error = "debe ser un numero entero positivo";
+                        error = $"'{texto}' debe ser un numero entero positivo";
                         return false;
                     }
 
@@ -641,7 +634,7 @@ namespace Implementador.Application.Import
                 case "decimal":
                     if (!ValueParsers.TryParseDecimalFlexible(texto, out _))
                     {
-                        error = "no es un valor de dinero valido";
+                        error = $"'{texto}' no es un valor de dinero valido";
                         return false;
                     }
 
@@ -650,7 +643,7 @@ namespace Implementador.Application.Import
                 case "date":
                     if (!ValueParsers.TryParseDateFlexible(texto, out _))
                     {
-                        error = "no es una fecha valida";
+                        error = $"'{texto}' no es una fecha valida";
                         return false;
                     }
 
@@ -659,7 +652,7 @@ namespace Implementador.Application.Import
                 case "alpha":
                     if (texto.Any(char.IsDigit))
                     {
-                        error = "no puede contener digitos";
+                        error = $"'{texto}' no puede contener digitos";
                         return false;
                     }
 

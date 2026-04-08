@@ -1,6 +1,5 @@
 using Implementador.Models;
 using Implementador.Infrastructure;
-using Implementador.Data;
 using System.Globalization;
 using Implementador.Application.Validation.Common;
 using Implementador.Application.Validation.Core;
@@ -14,8 +13,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
     public void Apply(
         ImplementationValidationResult result,
         IAppLogger log,
-        ValidationReferenceData? snapshot = null,
-        DbErrorPolicy dbErrorPolicy = DbErrorPolicy.ContinueWithWarnings)
+        ValidationReferenceData? snapshot = null)
     {
         if (result.DatosPadronValidados.Count == 0)
         {
@@ -44,12 +42,11 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
         var categoriasDisponible = categoriasValidasCodigo.Count > 0 || categoriasValidasNombre.Count > 0;
         if (!categoriasDisponible)
         {
-            log.Warn("Padron: no se cargó archivo de Categorías. No se puede verificar que el Codigo Categoría sea válido.");
+            log.Warn($"{ArchivoNombre.PadronSocios}: no se cargó archivo de Categorías. No se puede verificar que el Codigo Categoría sea válido.");
         }
 
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
         var categoriasPorEntidadRef = safeSnapshot.CategoriasPorEntidadRef;
-        var categoriasConCuotaSocial = safeSnapshot.CategoriasConCuotaSocial;
         foreach (var kvp in categoriasPorEntidadRef)
         {
             var entidadRef = kvp.Key;
@@ -64,12 +61,8 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
         var socioCategoria = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var documentosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var beneficiosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var empleadoPorSocioDocumento = LoadEmpleadoLookup(
-            result.DatosPadronValidados,
-            log,
-            out var lookupDisponible,
-            dbErrorPolicy);
-
+        var documentosEnBase = LoadDocumentoLookup(result.DatosPadronValidados, out var lookupDisponible);
+        var padronRechazadosPorSocio = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var padronFiltrado = FilterValidRows(
             ArchivoNombre.PadronSocios,
             result.DatosPadronValidados,
@@ -104,7 +97,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
 
             if (categoriasDisponible && !IsCategoriaValida(codigoCategoria, nombreCategoriaPadron, categoriasValidasCodigo, categoriasValidasNombre))
             {
-                erroresFila.Add("El campo (Categoria) no es valida.");
+                erroresFila.Add($"El campo (Codigo Categoria) '{codigoCategoria}' no existe en el archivo de Categorias Socios cargado.");
             }
 
             if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(codigoCategoria))
@@ -120,14 +113,6 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
                     if (categoriaRef == null)
                     {
                         erroresFila.Add($"El campo (Codigo Categoria) '{codigoCategoria}' no existe en la base para la entidad '{entidadClave}'.");
-                    }
-                    else if (categoriasConCuotaSocial.Count > 0)
-                    {
-                        var keyCuota = $"{entidadClave}|{codigoNorm}";
-                        if (!categoriasConCuotaSocial.Contains(keyCuota))
-                        {
-                            erroresFila.Add($"El campo (Codigo Categoria) '{codigoCategoria}' de la entidad '{entidadClave}' no tiene código de cuota social vigente en la base.");
-                        }
                     }
                 }
                 else
@@ -146,35 +131,34 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
                 erroresFila.Add($"El campo (Beneficio) '{beneficio}' se encuentra duplicado en el archivo.");
             }
 
-            if (!string.IsNullOrWhiteSpace(nroSocio) && !string.IsNullOrWhiteSpace(documento))
+            if (!string.IsNullOrWhiteSpace(documento))
             {
-                var socioNormalizado = nroSocio.Trim();
                 var documentoNormalizado = documento.Trim();
-                var cacheKey = $"{socioNormalizado}|{documentoNormalizado}";
-
                 if (!long.TryParse(documentoNormalizado, NumberStyles.None, CultureInfo.InvariantCulture, out var documentoNumero) || documentoNumero <= 0)
                 {
                     var soloDigitos = documentoNormalizado.All(char.IsDigit);
                     var esNotacionCientifica = documentoNormalizado.IndexOf('E', StringComparison.OrdinalIgnoreCase) >= 0;
                     var contieneLetras = documentoNormalizado.Any(char.IsLetter);
                     if (esNotacionCientifica || (soloDigitos && documentoNormalizado.Length > 18))
-                        erroresFila.Add($"El campo (Documento) excede el limite de digitos permitidos.");
+                        erroresFila.Add($"El campo (Documento) '{documentoNormalizado}' excede el limite de digitos permitidos.");
                     else if (contieneLetras)
-                        erroresFila.Add($"El campo (Documento) no puede contener letras.");
+                        erroresFila.Add($"El campo (Documento) '{documentoNormalizado}' no puede contener letras.");
                     else
-                        erroresFila.Add($"El campo (Documento) no es un numero valido.");
+                        erroresFila.Add($"El campo (Documento) '{documentoNormalizado}' no es un numero valido.");
                 }
                 else if (!lookupDisponible)
                 {
-                    erroresFila.Add("No hay conexión disponible a la base para validar Empleado/Persona.");
+                    erroresFila.Add("No hay conexión disponible a la base para validar Documento.");
                 }
-                else
+                else if (!documentosEnBase.Contains(documentoNumero))
                 {
-                    if (!empleadoPorSocioDocumento.TryGetValue(cacheKey, out var value) || !value.Existe)
-                    {
-                        erroresFila.Add($"No existe empleado en la base para Nro Socio '{nroSocio}' y Documento '{documento}'.");
-                    }
+                    erroresFila.Add($"El campo (Documento) '{documento}' no corresponde a ningún empleado en la base.");
                 }
+            }
+
+            if (erroresFila.Count > 0 && !string.IsNullOrWhiteSpace(nroSocio))
+            {
+                padronRechazadosPorSocio[nroSocio.Trim()] = string.Join(" | ", erroresFila);
             }
 
             return erroresFila;
@@ -186,52 +170,28 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
         log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.PadronSocios, padronFiltrado.Count));
 
         result.DatosPadronValidados = padronFiltrado;
+        result.PadronSociosRechazados = padronRechazadosPorSocio;
     }
 
-    private Dictionary<string, (bool Existe, int EmrId)> LoadEmpleadoLookup(
+    private HashSet<long> LoadDocumentoLookup(
         IReadOnlyList<Dictionary<string, string>> rows,
-        IAppLogger log,
-        out bool lookupDisponible,
-        DbErrorPolicy dbErrorPolicy)
+        out bool lookupDisponible)
     {
         lookupDisponible = false;
-        var pares = new List<(string EmpleadoCodigo, long Documento)>();
+        var documentos = new List<long>();
         foreach (var row in rows)
         {
-            var nroSocio = RowValueReader.GetFirstValue(row, "Nro Socio")?.Trim();
             var documento = RowValueReader.GetFirstValue(row, "Documento")?.Trim();
-            if (string.IsNullOrWhiteSpace(nroSocio) || string.IsNullOrWhiteSpace(documento))
-            {
+            if (string.IsNullOrWhiteSpace(documento))
                 continue;
-            }
-
-            if (!long.TryParse(documento, NumberStyles.None, CultureInfo.InvariantCulture, out var docNumero) || docNumero <= 0)
-            {
-                continue;
-            }
-
-            pares.Add((nroSocio, docNumero));
+            if (long.TryParse(documento, NumberStyles.None, CultureInfo.InvariantCulture, out var docNumero) && docNumero > 0)
+                documentos.Add(docNumero);
         }
 
-        try
-        {
-            using var db = _dbContextFactory.Create();
-            var lookup = db.GetEmrIdByEmpleadoCodigoYDocumentoBatch(pares);
-            lookupDisponible = true;
-            return lookup;
-        }
-        catch (Exception ex)
-        {
-            if (dbErrorPolicy == DbErrorPolicy.AbortValidation)
-            {
-                throw new DbValidationException(
-                    "No se pudo consultar Empleado/Persona para validación de padrón.",
-                    ex);
-            }
-
-            log.Error($"Padron socios: no se pudo abrir conexión a la base para validar Empleado/Persona. {ex.Message}");
-            return new Dictionary<string, (bool Existe, int EmrId)>(StringComparer.OrdinalIgnoreCase);
-        }
+        using var db = _dbContextFactory.Create();
+        var resultado = db.GetDocumentosExistentesEnEmpleadoBatch(documentos);
+        lookupDisponible = true;
+        return resultado;
     }
 
     private static bool IsCategoriaValida( string? codigoCategoria, string? nombreCategoriaPadron, HashSet<string> categoriasValidasCodigo, HashSet<string> categoriasValidasNombre)
