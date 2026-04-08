@@ -54,11 +54,11 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
 
             if (!ValueParsers.TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
             {
-                erroresFila.Add("El campo (Fecha Vencimiento) no es una fecha valida.");
+                erroresFila.Add($"El campo (Fecha Vencimiento) '{fechaVencimientoText}' no es una fecha valida.");
             }
             else if (fechaVencimiento.Date <= DateTime.Today)
             {
-                erroresFila.Add("El campo (Fecha Vencimiento) no puede ser hoy o anterior.");
+                erroresFila.Add($"El campo (Fecha Vencimiento) '{fechaVencimiento:dd/MM/yyyy}' no puede ser hoy o anterior.");
             }
 
             return erroresFila;

@@ -64,12 +64,12 @@ public sealed class ServiciosValidator : RowValidatorBase
 
                 if (!ValueParsers.EqualsDigitsOnly(cuitServicio, cuitPadron))
                 {
-                    erroresFila.Add($"El campo (CUIT) no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El campo (CUIT) '{cuitServicio}' no coincide con el valor del padron '{cuitPadron}' para socio '{nroSocio}'.");
                 }
 
                 if (!ValueParsers.EqualsTrimmed(beneficioServicio, beneficioPadron))
                 {
-                    erroresFila.Add($"El campo (Beneficio) no coincide con padron para socio '{nroSocio}'.");
+                    erroresFila.Add($"El campo (Beneficio) '{beneficioServicio}' no coincide con el valor del padron '{beneficioPadron}' para socio '{nroSocio}'.");
                 }
             }
 

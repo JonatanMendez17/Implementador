@@ -75,12 +75,12 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
 
                     if (!ValueParsers.EqualsDigitsOnly(cuitConsumo, cuitPadron))
                     {
-                        erroresFila.Add($"El campo (CUIT) no coincide con padron para socio '{nroSocio}'.");
+                        erroresFila.Add($"El campo (CUIT) '{cuitConsumo}' no coincide con el valor del padron '{cuitPadron}' para socio '{nroSocio}'.");
                     }
 
                     if (!ValueParsers.EqualsTrimmed(beneficioConsumo, beneficioPadron))
                     {
-                        erroresFila.Add($"El campo (Beneficio) no coincide con padron para socio '{nroSocio}'.");
+                        erroresFila.Add($"El campo (Beneficio) '{beneficioConsumo}' no coincide con el valor del padron '{beneficioPadron}' para socio '{nroSocio}'.");
                     }
                 }
             }
