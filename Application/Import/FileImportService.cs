@@ -597,13 +597,13 @@ namespace Implementador.Application.Import
 
             if (texto.Length > config.LargoMaximo)
             {
-                error = $"excede el largo maximo permitido ({config.LargoMaximo})";
+                error = $"'{texto}' excede el largo maximo permitido ({config.LargoMaximo})";
                 return false;
             }
 
             if (HasWeirdCharacters(texto))
             {
-                error = "contiene caracteres extraños";
+                error = $"'{texto}' contiene caracteres extraños";
                 return false;
             }
 
@@ -615,17 +615,17 @@ namespace Implementador.Application.Import
                         var soloDigitos = texto.All(char.IsDigit);
                         var esNotacionCientifica = texto.IndexOf('E', StringComparison.OrdinalIgnoreCase) >= 0;
                         if (esNotacionCientifica || (soloDigitos && texto.Length > 18))
-                            error = "excede el limite de digitos permitidos";
+                            error = $"'{texto}' excede el limite de digitos permitidos";
                         else if (texto.Any(char.IsLetter))
-                            error = "no puede contener letras";
+                            error = $"'{texto}' no puede contener letras";
                         else
-                            error = "no es un numero valido";
+                            error = $"'{texto}' no es un numero valido";
                         return false;
                     }
 
                     if (numero <= 0)
                     {
-                        error = "debe ser un numero entero positivo";
+                        error = $"'{texto}' debe ser un numero entero positivo";
                         return false;
                     }
 
@@ -634,7 +634,7 @@ namespace Implementador.Application.Import
                 case "decimal":
                     if (!ValueParsers.TryParseDecimalFlexible(texto, out _))
                     {
-                        error = "no es un valor de dinero valido";
+                        error = $"'{texto}' no es un valor de dinero valido";
                         return false;
                     }
 
@@ -643,7 +643,7 @@ namespace Implementador.Application.Import
                 case "date":
                     if (!ValueParsers.TryParseDateFlexible(texto, out _))
                     {
-                        error = "no es una fecha valida";
+                        error = $"'{texto}' no es una fecha valida";
                         return false;
                     }
 
@@ -652,7 +652,7 @@ namespace Implementador.Application.Import
                 case "alpha":
                     if (texto.Any(char.IsDigit))
                     {
-                        error = "no puede contener digitos";
+                        error = $"'{texto}' no puede contener digitos";
                         return false;
                     }
 

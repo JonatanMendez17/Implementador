@@ -1,6 +1,5 @@
 using Implementador.Models;
 using Implementador.Infrastructure;
-using Implementador.Data;
 using System.Globalization;
 using Implementador.Application.Validation.Common;
 using Implementador.Application.Validation.Core;
@@ -98,7 +97,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
 
             if (categoriasDisponible && !IsCategoriaValida(codigoCategoria, nombreCategoriaPadron, categoriasValidasCodigo, categoriasValidasNombre))
             {
-                erroresFila.Add("El campo (Categoria) no es valida.");
+                erroresFila.Add($"El campo (Codigo Categoria) '{codigoCategoria}' no existe en el archivo de Categorias Socios cargado.");
             }
 
             if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(codigoCategoria))
@@ -141,11 +140,11 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
                     var esNotacionCientifica = documentoNormalizado.IndexOf('E', StringComparison.OrdinalIgnoreCase) >= 0;
                     var contieneLetras = documentoNormalizado.Any(char.IsLetter);
                     if (esNotacionCientifica || (soloDigitos && documentoNormalizado.Length > 18))
-                        erroresFila.Add($"El campo (Documento) excede el limite de digitos permitidos.");
+                        erroresFila.Add($"El campo (Documento) '{documentoNormalizado}' excede el limite de digitos permitidos.");
                     else if (contieneLetras)
-                        erroresFila.Add($"El campo (Documento) no puede contener letras.");
+                        erroresFila.Add($"El campo (Documento) '{documentoNormalizado}' no puede contener letras.");
                     else
-                        erroresFila.Add($"El campo (Documento) no es un numero valido.");
+                        erroresFila.Add($"El campo (Documento) '{documentoNormalizado}' no es un numero valido.");
                 }
                 else if (!lookupDisponible)
                 {
