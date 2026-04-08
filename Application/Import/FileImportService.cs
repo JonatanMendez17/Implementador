@@ -438,7 +438,7 @@ namespace Implementador.Application.Import
 
                 if (!indice.HasValue && config.Requerida)
                 {
-                    log.Error($"{logicalName}: Falta columna requerida para '{config.Clave}'.");
+                    log.Error($"{logicalName}: Falta columna requerida: '{config.Clave}'.");
                     return null;
                 }
             }
