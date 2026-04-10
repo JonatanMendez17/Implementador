@@ -35,7 +35,7 @@ public static class ValidationLog
 {
     // ── Por fila ──────────────────────────────────────────────────────────
     public static string FilaError(string archivo, int fila, string detalle)
-        => $"{archivo} fila {fila}: {detalle}";
+        => $"{archivo}: {detalle}";
 
     // ── Carga / formato ───────────────────────────────────────────────────
     public static string ArchivoVacio(string archivo)

@@ -30,7 +30,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
         var padronDisponible = padronPorSocio.Count > 0;
         if (!padronDisponible && padronRechazadosPorSocio.Count == 0)
         {
-            log.Warn("Consumos: no se cargó archivo de Padrón de Socios. No se puede verificar que el Nro Socio corresponda al padrón.");
+            log.Warn("Consumos: No se cargó archivo de Padrón de Socios. No se puede verificar que el Nro Socio corresponda al padrón.");
         }
 
         var entidad = entidadesRef.FirstOrDefault() ?? string.Empty;
@@ -57,7 +57,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
 
             if (!entidadesRef.Contains(entidadFila!.Trim()))
             {
-                erroresFila.Add($"El campo (Entidad) '{entidadFila}' no existe en la base.");
+                erroresFila.Add($"Entidad = \"{entidadFila}\" no existe en la base.");
             }
 
             if (padronDisponible)
@@ -70,7 +70,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                         return SilentReject;
                     }
                     else
-                        erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe en el padron de socio.");
+                        erroresFila.Add($"Nro Socio = \"{nroSocio}\" no existe en el padron de socio.");
                 }
                 else
                 {
@@ -79,12 +79,12 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
 
                     if (!ValueParsers.EqualsDigitsOnly(cuitConsumo, cuitPadron))
                     {
-                        erroresFila.Add($"El campo (CUIT) '{cuitConsumo}' no coincide con el valor del padron '{cuitPadron}' para socio '{nroSocio}'.");
+                        erroresFila.Add($"CUIT = \"{cuitConsumo}\" no coincide con el valor del padron \"{cuitPadron}\" para socio \"{nroSocio}\".");
                     }
 
                     if (!ValueParsers.EqualsTrimmed(beneficioConsumo, beneficioPadron))
                     {
-                        erroresFila.Add($"El campo (Beneficio) '{beneficioConsumo}' no coincide con el valor del padron '{beneficioPadron}' para socio '{nroSocio}'.");
+                        erroresFila.Add($"Beneficio = \"{beneficioConsumo}\" no coincide con el valor del padron \"{beneficioPadron}\" para socio \"{nroSocio}\".");
                     }
                 }
             }
@@ -96,11 +96,11 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
 
             if (!codigosConsumoVistos.Add(codigoConsumo!.Trim()))
             {
-                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' se encuentra duplicado en el archivo.");
+                erroresFila.Add($"Codigo Consumo = \"{codigoConsumo}\" se encuentra duplicado en el archivo.");
             }
             else if (long.TryParse(codigoConsumo.Trim(), out var codigoLong) && dbChecker.ExisteEnBase("Codigo Consumo", codigoLong))
             {
-                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' ya existe en la base del empleador.");
+                erroresFila.Add($"Codigo Consumo = \"{codigoConsumo}\" ya existe en la base del empleador.");
             }
 
             if (!string.IsNullOrWhiteSpace(conceptoDescuentoText) &&
@@ -109,7 +109,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                 var keyConcepto = $"{entidadFila.Trim()}|{conceptoDescuentoText.Trim()}";
                 if (!conceptosDescuentoVigentes.Contains(keyConcepto))
                 {
-                    erroresFila.Add($"El campo (Concepto Descuento) '{conceptoDescuentoText}' no existe como código de descuento vigente en la base para la entidad '{entidadFila.Trim()}'.");
+                    erroresFila.Add($"Concepto Descuento = \"{conceptoDescuentoText}\" no existe como código de descuento vigente en la base para la entidad \"{entidadFila.Trim()}\".");
                 }
             }
 

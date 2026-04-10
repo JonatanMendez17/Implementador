@@ -36,7 +36,7 @@ public sealed class CategoriaValidator : RowValidatorBase
                     if (!categoriasPorEntidad.TryGetValue(entidad.Trim(), out var categorias) ||
                         !categorias.Any(c => string.Equals(c.CodigoCategoria.Trim(), codigoCategoria.Trim(), StringComparison.OrdinalIgnoreCase)))
                     {
-                        erroresFila.Add($"El campo (Código Categoría) '{codigoCategoria}' no existe en la base para la entidad '{entidad.Trim()}'.");
+                        erroresFila.Add($"Código Categoría = \"{codigoCategoria}\" no existe en la base para la entidad \"{entidad.Trim()}\".");
                     }
                 }
 

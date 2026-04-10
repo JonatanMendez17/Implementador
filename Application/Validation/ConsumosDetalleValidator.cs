@@ -28,7 +28,7 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
         var consumosDisponible = consumosPorCodigo.Count > 0;
         if (!consumosDisponible && consumosRechazadosPorCodigo.Count == 0)
         {
-            log.Warn("Consumos Detalle: no se cargó archivo de Consumos. No se puede verificar que el Codigo Consumo exista en el archivo de Consumos.");
+            log.Warn("Consumos Detalle: No se cargó archivo de Consumos. No se puede verificar que el Codigo Consumo exista en el archivo de Consumos.");
         }
 
         var detalleFiltrado = FilterValidRows(
@@ -45,7 +45,7 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
 
             if (!entidadesRef.Contains(entidad!.Trim()))
             {
-                erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
+                erroresFila.Add($"Entidad = \"{entidad}\" no existe en la base.");
             }
 
             if (consumosDisponible)
@@ -55,7 +55,7 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
                     if (consumosRechazadosPorCodigo.ContainsKey(codigoConsumo.Trim()))
                         return SilentReject;
                     else
-                        erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' no existe en archivo de Consumos.");
+                        erroresFila.Add($"Codigo Consumo = \"{codigoConsumo}\" no existe en archivo de Consumos.");
                 }
             }
             else if (consumosRechazadosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
@@ -65,11 +65,11 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
 
             if (!ValueParsers.TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
             {
-                erroresFila.Add($"El campo (Fecha Vencimiento) '{fechaVencimientoText}' no es una fecha valida.");
+                erroresFila.Add($"Fecha Vencimiento = \"{fechaVencimientoText}\" no es una fecha valida.");
             }
             else if (fechaVencimiento.Date <= DateTime.Today)
             {
-                erroresFila.Add($"El campo (Fecha Vencimiento) '{fechaVencimiento:dd/MM/yyyy}' no puede ser hoy o anterior.");
+                erroresFila.Add($"Fecha Vencimiento = \"{fechaVencimiento:dd/MM/yyyy}\" no puede ser hoy o anterior.");
             }
 
             return erroresFila;
