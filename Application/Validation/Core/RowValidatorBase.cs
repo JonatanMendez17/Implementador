@@ -5,6 +5,12 @@ namespace Implementador.Application.Validation.Core;
 
 public abstract class RowValidatorBase
 {
+    /// <summary>
+    /// Retornar esta lista desde el lambda de validación rechaza la fila sin emitir ningún log.
+    /// Útil cuando el motivo de rechazo ya fue reportado en una validación anterior.
+    /// </summary>
+    protected static readonly List<string> SilentReject = [string.Empty];
+
     protected List<Dictionary<string, string>> FilterValidRows(
         string scope,
         List<Dictionary<string, string>> sourceRows,
@@ -28,7 +34,9 @@ public abstract class RowValidatorBase
             }
 
             rejected++;
-            log.Warn(ValidationLog.FilaError(scope, rowNumber, string.Join(" | ", errors)));
+            var loggable = errors.Where(e => !string.IsNullOrEmpty(e)).ToList();
+            if (loggable.Count > 0)
+                log.Warn(ValidationLog.FilaError(scope, rowNumber, string.Join(" | ", loggable)));
         }
 
         return accepted;

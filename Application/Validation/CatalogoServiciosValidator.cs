@@ -32,20 +32,20 @@ public sealed class CatalogoServiciosValidator : RowValidatorBase
                 var clave = $"{entidad!.Trim()}|{servicio!.Trim()}";
                 if (!catalogoPorEntidadServicio.TryGetValue(clave, out var refCatalogo))
                 {
-                    erroresFila.Add($"El campo (Servicio) '{servicio}' no existe en la base para la entidad '{entidad}'.");
+                    erroresFila.Add($"Servicio = \"{servicio}\" no existe en la base para la entidad \"{entidad}\".");
                     return erroresFila;
                 }
 
                 if (!ValueParsers.TryParseDecimalFlexible(importeTexto, out var importeArchivo))
                 {
-                    erroresFila.Add($"El campo (Importe) '{importeTexto}' no es un valor valido.");
+                    erroresFila.Add($"Importe = \"{importeTexto}\" no es un valor valido.");
                     return erroresFila;
                 }
 
                 var diferencia = Math.Abs(importeArchivo - refCatalogo.Importe);
                 if (diferencia > 0.01m)
                 {
-                    erroresFila.Add($"El campo (Importe) '{importeArchivo}' no coincide con la base ({refCatalogo.Importe}).");
+                    erroresFila.Add($"Importe = \"{importeArchivo}\" no coincide con la base ({refCatalogo.Importe}).");
                 }
 
                 return erroresFila;

@@ -28,9 +28,9 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
         var padronDisponible = padronPorSocio.Count > 0;
-        if (!padronDisponible)
+        if (!padronDisponible && padronRechazadosPorSocio.Count == 0)
         {
-            log.Warn("Consumos: no se cargó archivo de Padrón de Socios. No se puede verificar que el Nro Socio corresponda al padrón.");
+            log.Warn("Consumos: No se cargó archivo de Padrón de Socios. No se puede verificar que el Nro Socio corresponda al padrón.");
         }
 
         var entidad = entidadesRef.FirstOrDefault() ?? string.Empty;
@@ -39,6 +39,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             .Build();
 
         var codigosConsumoVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var consumosRechazadosPorCodigo = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var consumosFiltrados = FilterValidRows(
             ArchivoNombre.Consumos,
             result.DatosConsumosValidados,
@@ -56,7 +57,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
 
             if (!entidadesRef.Contains(entidadFila!.Trim()))
             {
-                erroresFila.Add($"El campo (Entidad) '{entidadFila}' no existe en la base.");
+                erroresFila.Add($"Entidad = \"{entidadFila}\" no existe en la base.");
             }
 
             if (padronDisponible)
@@ -64,9 +65,12 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                 if (!padronPorSocio.TryGetValue(nroSocio!.Trim(), out var filaPadron))
                 {
                     if (padronRechazadosPorSocio.TryGetValue(nroSocio.Trim(), out var motivoRechazo))
-                        erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' existe pero fue descartado del padrón de socio dado que {motivoRechazo}");
+                    {
+                        consumosRechazadosPorCodigo[codigoConsumo!.Trim()] = string.Empty;
+                        return SilentReject;
+                    }
                     else
-                        erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe en el padron de socio.");
+                        erroresFila.Add($"Nro Socio = \"{nroSocio}\" no existe en el padron de socio.");
                 }
                 else
                 {
@@ -75,23 +79,28 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
 
                     if (!ValueParsers.EqualsDigitsOnly(cuitConsumo, cuitPadron))
                     {
-                        erroresFila.Add($"El campo (CUIT) '{cuitConsumo}' no coincide con el valor del padron '{cuitPadron}' para socio '{nroSocio}'.");
+                        erroresFila.Add($"CUIT = \"{cuitConsumo}\" no coincide con el valor del padron \"{cuitPadron}\" para socio \"{nroSocio}\".");
                     }
 
                     if (!ValueParsers.EqualsTrimmed(beneficioConsumo, beneficioPadron))
                     {
-                        erroresFila.Add($"El campo (Beneficio) '{beneficioConsumo}' no coincide con el valor del padron '{beneficioPadron}' para socio '{nroSocio}'.");
+                        erroresFila.Add($"Beneficio = \"{beneficioConsumo}\" no coincide con el valor del padron \"{beneficioPadron}\" para socio \"{nroSocio}\".");
                     }
                 }
+            }
+            else if (padronRechazadosPorSocio.ContainsKey(nroSocio!.Trim()))
+            {
+                consumosRechazadosPorCodigo[codigoConsumo!.Trim()] = string.Empty;
+                return SilentReject;
             }
 
             if (!codigosConsumoVistos.Add(codigoConsumo!.Trim()))
             {
-                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' se encuentra duplicado en el archivo.");
+                erroresFila.Add($"Codigo Consumo = \"{codigoConsumo}\" se encuentra duplicado en el archivo.");
             }
             else if (long.TryParse(codigoConsumo.Trim(), out var codigoLong) && dbChecker.ExisteEnBase("Codigo Consumo", codigoLong))
             {
-                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' ya existe en la base del empleador.");
+                erroresFila.Add($"Codigo Consumo = \"{codigoConsumo}\" ya existe en la base del empleador.");
             }
 
             if (!string.IsNullOrWhiteSpace(conceptoDescuentoText) &&
@@ -100,9 +109,12 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                 var keyConcepto = $"{entidadFila.Trim()}|{conceptoDescuentoText.Trim()}";
                 if (!conceptosDescuentoVigentes.Contains(keyConcepto))
                 {
-                    erroresFila.Add($"El campo (Concepto Descuento) '{conceptoDescuentoText}' no existe como código de descuento vigente en la base para la entidad '{entidadFila.Trim()}'.");
+                    erroresFila.Add($"Concepto Descuento = \"{conceptoDescuentoText}\" no existe como código de descuento vigente en la base para la entidad \"{entidadFila.Trim()}\".");
                 }
             }
+
+            if (erroresFila.Count > 0 && !string.IsNullOrWhiteSpace(codigoConsumo))
+                consumosRechazadosPorCodigo[codigoConsumo.Trim()] = erroresFila[0];
 
             return erroresFila;
             },
@@ -113,6 +125,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
         log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.Consumos, consumosFiltrados.Count));
 
         result.DatosConsumosValidados = consumosFiltrados;
+        result.ConsumosRechazados = consumosRechazadosPorCodigo;
     }
 
 }

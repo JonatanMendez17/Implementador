@@ -42,7 +42,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
         var categoriasDisponible = categoriasValidasCodigo.Count > 0 || categoriasValidasNombre.Count > 0;
         if (!categoriasDisponible)
         {
-            log.Warn($"{ArchivoNombre.PadronSocios}: no se cargó archivo de Categorías. No se puede verificar que el Codigo Categoría sea válido.");
+            log.Warn($"{ArchivoNombre.PadronSocios}: No se cargó archivo de Categorías. No se puede verificar que el Codigo Categoría sea válido.");
         }
 
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
@@ -81,14 +81,14 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
             var nroSocioNormalizado = nroSocio!.Trim();
             if (!sociosVistos.Add(nroSocioNormalizado))
             {
-                erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' se encuentra duplicado en el archivo.");
+                erroresFila.Add($"Nro Socio = \"{nroSocio}\" se encuentra duplicado en el archivo.");
             }
 
             var categoriaNormalizada = (codigoCategoria ?? string.Empty).Trim();
             if (socioCategoria.TryGetValue(nroSocioNormalizado, out var categoriaExistente) &&
                 !string.Equals(categoriaExistente, categoriaNormalizada, StringComparison.OrdinalIgnoreCase))
             {
-                erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' esta afiliado a mas de una categoria.");
+                erroresFila.Add($"Nro Socio = \"{nroSocio}\" esta afiliado a mas de una categoria.");
             }
             else
             {
@@ -97,7 +97,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
 
             if (categoriasDisponible && !IsCategoriaValida(codigoCategoria, nombreCategoriaPadron, categoriasValidasCodigo, categoriasValidasNombre))
             {
-                erroresFila.Add($"El campo (Codigo Categoria) '{codigoCategoria}' no existe en el archivo de Categorias Socios cargado.");
+                erroresFila.Add($"Codigo Categoria = \"{codigoCategoria}\" no existe en el archivo de Categorias Socios cargado.");
             }
 
             if (!string.IsNullOrWhiteSpace(entidad) && !string.IsNullOrWhiteSpace(codigoCategoria))
@@ -112,23 +112,23 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
 
                     if (categoriaRef == null)
                     {
-                        erroresFila.Add($"El campo (Codigo Categoria) '{codigoCategoria}' no existe en la base para la entidad '{entidadClave}'.");
+                        erroresFila.Add($"Codigo Categoria = \"{codigoCategoria}\" no existe en la base para la entidad \"{entidadClave}\".");
                     }
                 }
                 else
                 {
-                    erroresFila.Add($"El campo (Entidad) '{entidad}' no tiene categorías definidas en la base.");
+                    erroresFila.Add($"Entidad = \"{entidad}\" no tiene categorías definidas en la base.");
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(documento) && !documentosVistos.Add(documento.Trim()))
             {
-                erroresFila.Add($"El campo (Documento) '{documento}' se encuentra duplicado en el archivo.");
+                erroresFila.Add($"Documento = \"{documento}\" se encuentra duplicado en el archivo.");
             }
 
             if (!string.IsNullOrWhiteSpace(beneficio) && !beneficiosVistos.Add(beneficio.Trim()))
             {
-                erroresFila.Add($"El campo (Beneficio) '{beneficio}' se encuentra duplicado en el archivo.");
+                erroresFila.Add($"Beneficio = \"{beneficio}\" se encuentra duplicado en el archivo.");
             }
 
             if (!string.IsNullOrWhiteSpace(documento))
@@ -140,11 +140,11 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
                     var esNotacionCientifica = documentoNormalizado.IndexOf('E', StringComparison.OrdinalIgnoreCase) >= 0;
                     var contieneLetras = documentoNormalizado.Any(char.IsLetter);
                     if (esNotacionCientifica || (soloDigitos && documentoNormalizado.Length > 18))
-                        erroresFila.Add($"El campo (Documento) '{documentoNormalizado}' excede el limite de digitos permitidos.");
+                        erroresFila.Add($"Documento = \"{documentoNormalizado}\" excede el limite de digitos permitidos.");
                     else if (contieneLetras)
-                        erroresFila.Add($"El campo (Documento) '{documentoNormalizado}' no puede contener letras.");
+                        erroresFila.Add($"Documento = \"{documentoNormalizado}\" no puede contener letras.");
                     else
-                        erroresFila.Add($"El campo (Documento) '{documentoNormalizado}' no es un numero valido.");
+                        erroresFila.Add($"Documento = \"{documentoNormalizado}\" no es un numero valido.");
                 }
                 else if (!lookupDisponible)
                 {
@@ -152,13 +152,13 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
                 }
                 else if (!documentosEnBase.Contains(documentoNumero))
                 {
-                    erroresFila.Add($"El campo (Documento) '{documento}' no corresponde a ningún empleado en la base.");
+                    erroresFila.Add($"Documento = \"{documento}\" no corresponde a ningún empleado en la base.");
                 }
             }
 
             if (erroresFila.Count > 0 && !string.IsNullOrWhiteSpace(nroSocio))
             {
-                padronRechazadosPorSocio[nroSocio.Trim()] = string.Join(" | ", erroresFila);
+                padronRechazadosPorSocio[nroSocio.Trim()] = erroresFila[0];
             }
 
             return erroresFila;
