@@ -28,7 +28,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
         var padronDisponible = padronPorSocio.Count > 0;
-        if (!padronDisponible)
+        if (!padronDisponible && padronRechazadosPorSocio.Count == 0)
         {
             log.Warn("Consumos: no se cargó archivo de Padrón de Socios. No se puede verificar que el Nro Socio corresponda al padrón.");
         }
@@ -39,6 +39,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             .Build();
 
         var codigosConsumoVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var consumosRechazadosPorCodigo = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var consumosFiltrados = FilterValidRows(
             ArchivoNombre.Consumos,
             result.DatosConsumosValidados,
@@ -64,7 +65,10 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                 if (!padronPorSocio.TryGetValue(nroSocio!.Trim(), out var filaPadron))
                 {
                     if (padronRechazadosPorSocio.TryGetValue(nroSocio.Trim(), out var motivoRechazo))
-                        erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' existe pero fue descartado del padrón de socio dado que {motivoRechazo}");
+                    {
+                        consumosRechazadosPorCodigo[codigoConsumo!.Trim()] = string.Empty;
+                        return SilentReject;
+                    }
                     else
                         erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe en el padron de socio.");
                 }
@@ -83,6 +87,11 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                         erroresFila.Add($"El campo (Beneficio) '{beneficioConsumo}' no coincide con el valor del padron '{beneficioPadron}' para socio '{nroSocio}'.");
                     }
                 }
+            }
+            else if (padronRechazadosPorSocio.ContainsKey(nroSocio!.Trim()))
+            {
+                consumosRechazadosPorCodigo[codigoConsumo!.Trim()] = string.Empty;
+                return SilentReject;
             }
 
             if (!codigosConsumoVistos.Add(codigoConsumo!.Trim()))
@@ -104,6 +113,9 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                 }
             }
 
+            if (erroresFila.Count > 0 && !string.IsNullOrWhiteSpace(codigoConsumo))
+                consumosRechazadosPorCodigo[codigoConsumo.Trim()] = erroresFila[0];
+
             return erroresFila;
             },
             out var rechazadas);
@@ -113,6 +125,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
         log.Info(ValidationLog.ListasParaImplementar(ArchivoNombre.Consumos, consumosFiltrados.Count));
 
         result.DatosConsumosValidados = consumosFiltrados;
+        result.ConsumosRechazados = consumosRechazadosPorCodigo;
     }
 
 }

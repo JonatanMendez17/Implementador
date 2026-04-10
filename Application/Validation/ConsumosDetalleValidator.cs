@@ -19,13 +19,14 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
         var entidadesRef = safeSnapshot.EntidadesRef;
 
+        var consumosRechazadosPorCodigo = result.ConsumosRechazados;
         var consumosPorCodigo = result.DatosConsumosValidados
             .Where(f => !string.IsNullOrWhiteSpace(RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
             .GroupBy(f => RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
         var consumosDisponible = consumosPorCodigo.Count > 0;
-        if (!consumosDisponible)
+        if (!consumosDisponible && consumosRechazadosPorCodigo.Count == 0)
         {
             log.Warn("Consumos Detalle: no se cargó archivo de Consumos. No se puede verificar que el Codigo Consumo exista en el archivo de Consumos.");
         }
@@ -47,9 +48,19 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
                 erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
             }
 
-            if (consumosDisponible && !consumosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
+            if (consumosDisponible)
             {
-                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' no existe en archivo de Consumos.");
+                if (!consumosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
+                {
+                    if (consumosRechazadosPorCodigo.ContainsKey(codigoConsumo.Trim()))
+                        return SilentReject;
+                    else
+                        erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' no existe en archivo de Consumos.");
+                }
+            }
+            else if (consumosRechazadosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
+            {
+                return SilentReject;
             }
 
             if (!ValueParsers.TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))

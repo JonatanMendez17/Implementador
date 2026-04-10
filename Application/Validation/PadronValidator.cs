@@ -158,7 +158,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
 
             if (erroresFila.Count > 0 && !string.IsNullOrWhiteSpace(nroSocio))
             {
-                padronRechazadosPorSocio[nroSocio.Trim()] = string.Join(" | ", erroresFila);
+                padronRechazadosPorSocio[nroSocio.Trim()] = erroresFila[0];
             }
 
             return erroresFila;

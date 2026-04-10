@@ -52,8 +52,8 @@ public sealed class ServiciosValidator : RowValidatorBase
 
             if (!padronPorSocio.TryGetValue(nroSocio!.Trim(), out var filaPadron))
             {
-                if (padronRechazadosPorSocio.TryGetValue(nroSocio.Trim(), out var motivoRechazo))
-                    erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' existe pero fue descartado del padrón de socio dado que {motivoRechazo}");
+                if (padronRechazadosPorSocio.ContainsKey(nroSocio.Trim()))
+                    return SilentReject;
                 else
                     erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe en el padron de socio.");
             }
