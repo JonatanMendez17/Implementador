@@ -159,11 +159,36 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
                 continue;
             }
 
-            var sumaCoincide = Math.Abs(sumaDetalle - montoEsperado) <= 0.01m;
-            if (cuotasDetalle != cuotasEsperadas || !sumaCoincide)
+            if (cuotasDetalle != cuotasEsperadas)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log.Warn($"Consumos Detalle: La cantidad de cuotas y monto deuda no coinciden para el codigo de consumo '{codigo}'. Esperado cuotas={cuotasEsperadas}, monto={montoEsperado}. Detalle cuotas={cuotasDetalle}, monto={sumaDetalle}.");
+                log.Warn($"Consumos Detalle: La cantidad de cuotas no coincide para el codigo de consumo '{codigo}'. Esperado: {cuotasEsperadas}, Detalle: {cuotasDetalle}.");
+                continue;
+            }
+
+            var sumaCoincide = Math.Abs(sumaDetalle - montoEsperado) <= 0.01m;
+            if (!sumaCoincide)
+            {
+                codigosInvalidosPorTotales.Add(codigo);
+                log.Warn($"Consumos Detalle: El monto total no coincide para el codigo de consumo '{codigo}'. Esperado: {montoEsperado:F2}, Detalle: {sumaDetalle:F2}.");
+            }
+        }
+
+        // Verificar codigos en Consumos con cuotas > 0 que no tienen ningún registro en Consumo Detalle
+        if (consumosDisponible)
+        {
+            foreach (var kvp in consumosPorCodigo)
+            {
+                var codigo = kvp.Key;
+                if (detallePorCodigo.ContainsKey(codigo))
+                    continue; // Ya validado en el loop anterior
+
+                var cuotasPendientesText = RowValueReader.GetFirstValue(kvp.Value, "Cuotas Pendientes");
+                if (!int.TryParse(cuotasPendientesText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cuotasEsperadas)
+                    || cuotasEsperadas == 0)
+                    continue;
+
+                log.Warn($"Consumos Detalle: El codigo de consumo '{codigo}' declara {cuotasEsperadas} cuota(s) pendiente(s) en Consumos pero no tiene registros en Consumo Detalle.");
             }
         }
 

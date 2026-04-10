@@ -189,6 +189,32 @@ public class ConsumosDetalleValidatorTests
     }
 
     [Fact]
+    public void Apply_CodigoConsumoConCuotasPendientesYSinDetalle_RegistraAdvertencia()
+    {
+        // "9001" tiene detalle completo; "9002" declara 2 cuotas pero no tiene ninguna fila en Detalle.
+        var consumos = new List<Dictionary<string, string>>
+        {
+            FilaConsumo("9001", 1, 500m),
+            FilaConsumo("9002", 2, 1000m)
+        };
+        var detalle = new List<Dictionary<string, string>>
+        {
+            FilaDetalle("9001", 1, "01/06/2026", 500m)
+        };
+        var result = new ImplementationValidationResult
+        {
+            DatosConsumosValidados = consumos,
+            DatosConsumosDetalleValidados = detalle,
+            HasLoadedData = true
+        };
+
+        _sut.Apply(result, _log, SnapshotConEntidad("BDI"));
+
+        Assert.Single(result.DatosConsumosDetalleValidados);
+        Assert.True(_log.WarnMessages.Any(m => m.Contains("9002")));
+    }
+
+    [Fact]
     public void Apply_SinDetalle_NoHaceNada()
     {
         var result = new ImplementationValidationResult
