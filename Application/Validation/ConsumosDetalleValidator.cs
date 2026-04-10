@@ -19,15 +19,16 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
         var safeSnapshot = snapshot ?? ValidationReferenceData.Empty;
         var entidadesRef = safeSnapshot.EntidadesRef;
 
+        var consumosRechazadosPorCodigo = result.ConsumosRechazados;
         var consumosPorCodigo = result.DatosConsumosValidados
             .Where(f => !string.IsNullOrWhiteSpace(RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo")))
             .GroupBy(f => RowValueReader.GetFirstValue(f, "Codigo Consumo", "Código Consumo").Trim(), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
         var consumosDisponible = consumosPorCodigo.Count > 0;
-        if (!consumosDisponible)
+        if (!consumosDisponible && consumosRechazadosPorCodigo.Count == 0)
         {
-            log.Warn("Consumos Detalle: no se cargó archivo de Consumos. No se puede verificar que el Codigo Consumo exista en el archivo de Consumos.");
+            log.Warn("Consumos Detalle: No se cargó archivo de Consumos. No se puede verificar que el Codigo Consumo exista en el archivo de Consumos.");
         }
 
         var detalleFiltrado = FilterValidRows(
@@ -44,21 +45,31 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
 
             if (!entidadesRef.Contains(entidad!.Trim()))
             {
-                erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
+                erroresFila.Add($"Entidad = \"{entidad}\" no existe en la base.");
             }
 
-            if (consumosDisponible && !consumosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
+            if (consumosDisponible)
             {
-                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' no existe en archivo de Consumos.");
+                if (!consumosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
+                {
+                    if (consumosRechazadosPorCodigo.ContainsKey(codigoConsumo.Trim()))
+                        return SilentReject;
+                    else
+                        erroresFila.Add($"Codigo Consumo = \"{codigoConsumo}\" no existe en archivo de Consumos.");
+                }
+            }
+            else if (consumosRechazadosPorCodigo.ContainsKey(codigoConsumo!.Trim()))
+            {
+                return SilentReject;
             }
 
             if (!ValueParsers.TryParseDateFlexible(fechaVencimientoText, out var fechaVencimiento))
             {
-                erroresFila.Add($"El campo (Fecha Vencimiento) '{fechaVencimientoText}' no es una fecha valida.");
+                erroresFila.Add($"Fecha Vencimiento = \"{fechaVencimientoText}\" no es una fecha valida.");
             }
             else if (fechaVencimiento.Date <= DateTime.Today)
             {
-                erroresFila.Add($"El campo (Fecha Vencimiento) '{fechaVencimiento:dd/MM/yyyy}' no puede ser hoy o anterior.");
+                erroresFila.Add($"Fecha Vencimiento = \"{fechaVencimiento:dd/MM/yyyy}\" no puede ser hoy o anterior.");
             }
 
             return erroresFila;
@@ -148,11 +159,36 @@ public sealed class ConsumosDetalleValidator : RowValidatorBase
                 continue;
             }
 
-            var sumaCoincide = Math.Abs(sumaDetalle - montoEsperado) <= 0.01m;
-            if (cuotasDetalle != cuotasEsperadas || !sumaCoincide)
+            if (cuotasDetalle != cuotasEsperadas)
             {
                 codigosInvalidosPorTotales.Add(codigo);
-                log.Warn($"Consumos Detalle: La cantidad de cuotas y monto deuda no coinciden para el codigo de consumo '{codigo}'. Esperado cuotas={cuotasEsperadas}, monto={montoEsperado}. Detalle cuotas={cuotasDetalle}, monto={sumaDetalle}.");
+                log.Warn($"Consumos Detalle: La cantidad de cuotas no coincide para el codigo de consumo '{codigo}'. Esperado: {cuotasEsperadas}, Detalle: {cuotasDetalle}.");
+                continue;
+            }
+
+            var sumaCoincide = Math.Abs(sumaDetalle - montoEsperado) <= 0.01m;
+            if (!sumaCoincide)
+            {
+                codigosInvalidosPorTotales.Add(codigo);
+                log.Warn($"Consumos Detalle: El monto total no coincide para el codigo de consumo '{codigo}'. Esperado: {montoEsperado:F2}, Detalle: {sumaDetalle:F2}.");
+            }
+        }
+
+        // Verificar codigos en Consumos con cuotas > 0 que no tienen ningún registro en Consumo Detalle
+        if (consumosDisponible)
+        {
+            foreach (var kvp in consumosPorCodigo)
+            {
+                var codigo = kvp.Key;
+                if (detallePorCodigo.ContainsKey(codigo))
+                    continue; // Ya validado en el loop anterior
+
+                var cuotasPendientesText = RowValueReader.GetFirstValue(kvp.Value, "Cuotas Pendientes");
+                if (!int.TryParse(cuotasPendientesText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var cuotasEsperadas)
+                    || cuotasEsperadas == 0)
+                    continue;
+
+                log.Warn($"Consumos Detalle: El codigo de consumo '{codigo}' declara {cuotasEsperadas} cuota(s) pendiente(s) en Consumos pero no tiene registros en Consumo Detalle.");
             }
         }
 

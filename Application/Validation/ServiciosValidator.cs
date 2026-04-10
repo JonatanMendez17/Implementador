@@ -47,15 +47,15 @@ public sealed class ServiciosValidator : RowValidatorBase
 
             if (!entidadesRef.Contains(entidad!.Trim()))
             {
-                erroresFila.Add($"El campo (Entidad) '{entidad}' no existe en la base.");
+                erroresFila.Add($"Entidad = \"{entidad}\" no existe en la base.");
             }
 
             if (!padronPorSocio.TryGetValue(nroSocio!.Trim(), out var filaPadron))
             {
-                if (padronRechazadosPorSocio.TryGetValue(nroSocio.Trim(), out var motivoRechazo))
-                    erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' existe pero fue descartado del padrón de socio dado que {motivoRechazo}");
+                if (padronRechazadosPorSocio.ContainsKey(nroSocio.Trim()))
+                    return SilentReject;
                 else
-                    erroresFila.Add($"El campo (Nro Socio) '{nroSocio}' no existe en el padron de socio.");
+                    erroresFila.Add($"Nro Socio = \"{nroSocio}\" no existe en el padron de socio.");
             }
             else
             {
@@ -64,24 +64,24 @@ public sealed class ServiciosValidator : RowValidatorBase
 
                 if (!ValueParsers.EqualsDigitsOnly(cuitServicio, cuitPadron))
                 {
-                    erroresFila.Add($"El campo (CUIT) '{cuitServicio}' no coincide con el valor del padron '{cuitPadron}' para socio '{nroSocio}'.");
+                    erroresFila.Add($"CUIT = \"{cuitServicio}\" no coincide con el valor del padron \"{cuitPadron}\" para socio \"{nroSocio}\".");
                 }
 
                 if (!ValueParsers.EqualsTrimmed(beneficioServicio, beneficioPadron))
                 {
-                    erroresFila.Add($"El campo (Beneficio) '{beneficioServicio}' no coincide con el valor del padron '{beneficioPadron}' para socio '{nroSocio}'.");
+                    erroresFila.Add($"Beneficio = \"{beneficioServicio}\" no coincide con el valor del padron \"{beneficioPadron}\" para socio \"{nroSocio}\".");
                 }
             }
 
             var codigoNormalizado = codigoConsumo!.Trim();
             if (!codigosServiciosVistos.Add(codigoNormalizado))
             {
-                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' se encuentra duplicado en el archivo.");
+                erroresFila.Add($"Codigo Consumo = \"{codigoConsumo}\" se encuentra duplicado en el archivo.");
             }
 
             if (codigosConsumos.Contains(codigoNormalizado))
             {
-                erroresFila.Add($"El campo (Codigo Consumo) '{codigoConsumo}' ya existe en archivo Consumos.");
+                erroresFila.Add($"Codigo Consumo = \"{codigoConsumo}\" ya existe en archivo Consumos.");
             }
 
             return erroresFila;

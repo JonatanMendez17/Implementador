@@ -24,7 +24,7 @@ namespace Implementador.Application.Validation
 
             if (entidades.Count == 0)
             {
-                log.Error("No quedaron registros validos en los archivos cargados luego de la validacion. Verifique los errores reportados anteriormente en el log.");
+                log.Error("No quedaron registros validos en los archivos cargados luego de la validacion.");
                 return false;
             }
 

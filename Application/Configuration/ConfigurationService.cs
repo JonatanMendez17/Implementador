@@ -23,6 +23,11 @@ namespace Implementador.Application.Configuration
                 .Descendants("Archivo")
                 .Where(a => a.Attribute("nombre")?.Value == fileName)
                 .Descendants("Columna")
+                .Where(c =>
+                {
+                    var ignorarRaw = c.Attribute("ignorar")?.Value?.Trim();
+                    return !bool.TryParse(ignorarRaw, out var ignorar) || !ignorar;
+                })
                 .Select(c =>
                 {
                     var nombre = c.Attribute("nombre")?.Value?.Trim() ?? string.Empty;

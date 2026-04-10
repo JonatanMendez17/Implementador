@@ -10,6 +10,7 @@ namespace Implementador.Models
         public List<Dictionary<string, string>> DatosServiciosValidados { get; set; } = new();
         public bool HasLoadedData { get; set; }
         public Dictionary<string, string> PadronSociosRechazados { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> ConsumosRechazados { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     }
 }
 
