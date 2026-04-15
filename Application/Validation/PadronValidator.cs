@@ -63,6 +63,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
         var beneficiosVistos = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var documentosEnBase = LoadDocumentoLookup(result.DatosPadronValidados, out var lookupDisponible);
         var padronRechazadosPorSocio = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var padronDocumentoPorSocioRechazado = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var padronFiltrado = FilterValidRows(
             ArchivoNombre.PadronSocios,
             result.DatosPadronValidados,
@@ -159,6 +160,8 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
             if (erroresFila.Count > 0 && !string.IsNullOrWhiteSpace(nroSocio))
             {
                 padronRechazadosPorSocio[nroSocio.Trim()] = erroresFila[0];
+                if (!string.IsNullOrWhiteSpace(documento))
+                    padronDocumentoPorSocioRechazado[nroSocio.Trim()] = documento.Trim();
             }
 
             return erroresFila;
@@ -171,6 +174,7 @@ public sealed class PadronValidator(IAppDbContextFactory dbContextFactory) : Row
 
         result.DatosPadronValidados = padronFiltrado;
         result.PadronSociosRechazados = padronRechazadosPorSocio;
+        result.PadronDocumentoPorSocioRechazado = padronDocumentoPorSocioRechazado;
     }
 
     private HashSet<long> LoadDocumentoLookup(
