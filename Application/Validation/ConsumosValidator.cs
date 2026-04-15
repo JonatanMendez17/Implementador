@@ -22,6 +22,7 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
         var conceptosDescuentoVigentes = safeSnapshot.ConceptosDescuentoVigentes;
 
         var padronRechazadosPorSocio = result.PadronSociosRechazados;
+        var padronDocumentoPorSocioRechazado = result.PadronDocumentoPorSocioRechazado;
         var padronPorSocio = result.DatosPadronValidados
             .Where(f => RowValueReader.TryGetFirstValue(f, out var nro, "Nro Socio") && !string.IsNullOrWhiteSpace(nro))
             .GroupBy(f => RowValueReader.GetFirstValue(f, "Nro Socio").Trim(), StringComparer.OrdinalIgnoreCase)
@@ -66,6 +67,8 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                 {
                     if (padronRechazadosPorSocio.TryGetValue(nroSocio.Trim(), out var motivoRechazo))
                     {
+                        var docRechazado = padronDocumentoPorSocioRechazado.TryGetValue(nroSocio.Trim(), out var doc) ? $", correspondiente al Documento \"{doc}\"," : string.Empty;
+                        erroresFila.Add($"Nro Socio = \"{nroSocio}\"{docRechazado} existe pero fue descartado del padrón de socio.");
                         consumosRechazadosPorCodigo[codigoConsumo!.Trim()] = string.Empty;
                         return SilentReject;
                     }
@@ -88,8 +91,10 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                     }
                 }
             }
-            else if (padronRechazadosPorSocio.ContainsKey(nroSocio!.Trim()))
+            else if (padronRechazadosPorSocio.TryGetValue(nroSocio!.Trim(), out var motivoRechazoSinPadron))
             {
+                var docRechazado = padronDocumentoPorSocioRechazado.TryGetValue(nroSocio.Trim(), out var doc) ? $", correspondiente al Documento \"{doc}\"," : string.Empty;
+                erroresFila.Add($"Nro Socio = \"{nroSocio}\"{docRechazado} existe pero fue descartado del padrón de socio.");
                 consumosRechazadosPorCodigo[codigoConsumo!.Trim()] = string.Empty;
                 return SilentReject;
             }
