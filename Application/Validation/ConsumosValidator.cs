@@ -69,8 +69,8 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
                     {
                         var docRechazado = padronDocumentoPorSocioRechazado.TryGetValue(nroSocio.Trim(), out var doc) ? $", correspondiente al Documento \"{doc}\"," : string.Empty;
                         erroresFila.Add($"Nro Socio = \"{nroSocio}\"{docRechazado} existe pero fue descartado del padrón de socio.");
-                        consumosRechazadosPorCodigo[codigoConsumo!.Trim()] = string.Empty;
-                        return SilentReject;
+                        consumosRechazadosPorCodigo[codigoConsumo!.Trim()] = erroresFila[0];
+                        return erroresFila;
                     }
                     else
                         erroresFila.Add($"Nro Socio = \"{nroSocio}\" no existe en el padron de socio.");
@@ -95,8 +95,8 @@ public sealed class ConsumosValidator(IAppDbContextFactory dbContextFactory) : R
             {
                 var docRechazado = padronDocumentoPorSocioRechazado.TryGetValue(nroSocio.Trim(), out var doc) ? $", correspondiente al Documento \"{doc}\"," : string.Empty;
                 erroresFila.Add($"Nro Socio = \"{nroSocio}\"{docRechazado} existe pero fue descartado del padrón de socio.");
-                consumosRechazadosPorCodigo[codigoConsumo!.Trim()] = string.Empty;
-                return SilentReject;
+                consumosRechazadosPorCodigo[codigoConsumo!.Trim()] = erroresFila[0];
+                return erroresFila;
             }
 
             if (!codigosConsumoVistos.Add(codigoConsumo!.Trim()))
