@@ -503,10 +503,7 @@ namespace Implementador.Application.Import
 
                 totalFilasDatos++;
 
-                if (totalFilasDatos % 1000 == 0 && progress is not null)
-                {
-                    progress.Report(0);
-                }
+
             }
 
             var displayName = ArchivoNombre.FromKey(logicalName);

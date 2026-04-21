@@ -156,6 +156,54 @@ public class ConsumosValidatorTests
     }
 
     [Fact]
+    public void Apply_NroSocioRechazadoEnPadronConPadronDisponible_SeRechazaYLoguea()
+    {
+        var padron = new List<Dictionary<string, string>> { FilaPadron("10") };
+        var consumos = new List<Dictionary<string, string>>
+        {
+            Fila(("Entidad", "BDI"), ("Nro Socio", "99"),
+                 ("Código Consumo", "9001"), ("Cuotas Pendientes", "1"),
+                 ("Monto Deuda", "100"), ("Concepto Descuento", ""))
+        };
+        var result = ResultadoConPadron(padron, consumos);
+        result.PadronSociosRechazados["99"] = "DNI no encontrado en base.";
+        result.PadronDocumentoPorSocioRechazado["99"] = "30111222";
+
+        _sut.Apply(result, _log, SnapshotConEntidad("BDI"));
+
+        Assert.Empty(result.DatosConsumosValidados);
+        Assert.True(_log.HasWarnings);
+        Assert.Contains(_log.WarnMessages, m => m.Contains("fue descartado del padrón de socio"));
+        Assert.Contains(_log.WarnMessages, m => m.Contains("30111222"));
+        Assert.Equal("Nro Socio = \"99\", correspondiente al Documento \"30111222\", existe pero fue descartado del padrón de socio.", result.ConsumosRechazados["9001"]);
+    }
+
+    [Fact]
+    public void Apply_NroSocioRechazadoEnPadronSinPadronDisponible_SeRechazaYLoguea()
+    {
+        var consumos = new List<Dictionary<string, string>>
+        {
+            Fila(("Entidad", "BDI"), ("Nro Socio", "99"),
+                 ("Código Consumo", "9001"), ("Cuotas Pendientes", "1"),
+                 ("Monto Deuda", "100"), ("Concepto Descuento", ""))
+        };
+        var result = new ImplementationValidationResult
+        {
+            DatosPadronValidados = [],
+            DatosConsumosValidados = consumos,
+            HasLoadedData = true
+        };
+        result.PadronSociosRechazados["99"] = "DNI no encontrado en base.";
+
+        _sut.Apply(result, _log, SnapshotConEntidad("BDI"));
+
+        Assert.Empty(result.DatosConsumosValidados);
+        Assert.True(_log.HasWarnings);
+        Assert.Contains(_log.WarnMessages, m => m.Contains("fue descartado del padrón de socio"));
+        Assert.Equal("Nro Socio = \"99\" existe pero fue descartado del padrón de socio.", result.ConsumosRechazados["9001"]);
+    }
+
+    [Fact]
     public void Apply_SinConsumosEnResultado_NoHaceNada()
     {
         var result = new ImplementationValidationResult
